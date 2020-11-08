@@ -11,6 +11,10 @@ enum viv_cursor_mode {
 	VIV_CURSOR_RESIZE,
 };
 
+struct viv_global_config {
+    xkb_keysym_t mod_key;  /// Global modifier key
+};
+
 struct viv_server {
 	struct wl_display *wl_display;
 	struct wlr_backend *backend;
@@ -62,6 +66,8 @@ struct viv_output {
 	struct viv_server *server;
 	struct wlr_output *wlr_output;
 	struct wl_listener frame;
+
+    uint32_t needs_layout;
     struct viv_workspace *current_workspace;
 };
 
@@ -76,13 +82,20 @@ struct viv_workspace {
     struct wl_list layouts;  /// List of layouts available in this workspace
     struct viv_layout current_layout;
 
+    struct viv_output *output;
+
+    void (*do_layout)(struct wl_list *views, struct viv_output *output);
+
     struct wl_list views;  /// Ordered list of views associated with this workspace
 };
 
 
 struct viv_view {
 	struct wl_list link;
+	struct wl_list workspace_link;
+
 	struct viv_server *server;
+    struct viv_workspace *workspace;
 	struct wlr_xdg_surface *xdg_surface;
 
 	struct wl_listener map;
