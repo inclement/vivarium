@@ -82,9 +82,13 @@ struct viv_workspace {
     struct wl_list layouts;  /// List of layouts available in this workspace
     struct viv_layout current_layout;
 
+    float divide;
+
+    bool needs_layout;
+
     struct viv_output *output;
 
-    void (*do_layout)(struct wl_list *views, struct viv_output *output);
+    void (*do_layout)(struct viv_workspace *workspace);
 
     struct wl_list views;  /// Ordered list of views associated with this workspace
 };

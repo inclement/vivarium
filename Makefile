@@ -19,7 +19,7 @@ _PROTOCOLS = xdg-shell
 PROTOCOL_INCLUDES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.h,$(_PROTOCOLS))
 PROTOCOL_SOURCES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.c,$(_PROTOCOLS))
 
-_DEPS = viv_types.h viv_server.h
+_DEPS = viv_types.h viv_server.h viv_workspace.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS)) $(PROTOCOL_INCLUDES) $(PROTOCOL_SOURCES)
 
 WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
@@ -30,7 +30,7 @@ LIBS=\
 	 $(shell pkg-config --cflags --libs wayland-server) \
 	 $(shell pkg-config --cflags --libs xkbcommon)
 
-_OBJ = viv_server.o vivarium.o
+_OBJ = viv_workspace.o viv_server.o vivarium.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 $(PROTOCOLS_DIR)/xdg-shell-protocol.h:
