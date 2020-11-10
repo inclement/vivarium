@@ -26,10 +26,16 @@
 #include "viv_layout.h"
 
 
-static struct viv_workspace basic_workspace = {
-    .name = "test",
+static struct viv_workspace basic_workspace_1 = {
+    .name = "test1",
     .do_layout = &do_split_layout,
     .divide = 0.666,
+};
+
+static struct viv_workspace basic_workspace_2 = {
+    .name = "test2",
+    .do_layout = &do_split_layout,
+    .divide = 0.3333,
 };
 
 static void viv_exec(const char *bin, char *const args[]) {
@@ -44,7 +50,6 @@ static void viv_exec(const char *bin, char *const args[]) {
         _exit(EXIT_FAILURE);
     }
 }
-
 
 static void focus_view(struct viv_view *view, struct wlr_surface *surface) {
 	/* Note: this function only deals with keyboard focus. */
@@ -411,7 +416,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
 	/* Each subsequent window we render is rendered on top of the last. Because
 	 * our view list is ordered front-to-back, we iterate over it backwards. */
 	struct viv_view *view;
-	wl_list_for_each_reverse(view, &output->server->views, link) {
+	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
 		if (!view->mapped) {
 			/* An unmapped view should not be rendered. */
 			continue;
@@ -473,9 +478,8 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
 
-    output->current_workspace = &basic_workspace;
-    basic_workspace.output = output;
-    wl_list_init(&output->current_workspace->views);
+    output->current_workspace = &basic_workspace_1;
+    basic_workspace_1.output = output;
 
 	/* Adds this to the output layout. The add_auto function arranges outputs
 	 * from left-to-right in the order they appear. A more sophisticated
@@ -586,6 +590,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	/* Allocate a viv_view for this surface */
 	struct viv_view *view =
 		calloc(1, sizeof(struct viv_view));
+    view->type = VIV_VIEW_TYPE_XDG_SHELL;
 	view->server = server;
 	view->xdg_surface = xdg_surface;
 
@@ -665,15 +670,18 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
         viv_exec("alacritty", NULL);
         break;
     case XKB_KEY_i:
-        printf("l pressed\n");
         wl_list_for_each(output, &server->outputs, link) {
             viv_workspace_increment_divide(output->current_workspace, 0.05);
         }
         break;
     case XKB_KEY_j:
-        printf("h pressed\n");
         wl_list_for_each(output, &server->outputs, link) {
             viv_workspace_increment_divide(output->current_workspace, -0.05);
+        }
+        break;
+    case XKB_KEY_s:
+        wl_list_for_each(output, &server->outputs, link) {
+            viv_workspace_swap_out(output, &server->workspaces);
         }
         break;
 	default:
@@ -815,6 +823,9 @@ static void seat_request_set_selection(struct wl_listener *listener, void *data)
 
 void viv_server_init(struct viv_server *server) {
 
+    wl_list_init(&basic_workspace_1.views);
+    wl_list_init(&basic_workspace_2.views);
+
 	server->wl_display = wl_display_create();
 	server->backend = wlr_backend_autocreate(server->wl_display, NULL);
 
@@ -866,4 +877,8 @@ void viv_server_init(struct viv_server *server) {
 	server->request_set_selection.notify = seat_request_set_selection;
 	wl_signal_add(&server->seat->events.request_set_selection,
 			&server->request_set_selection);
+
+    wl_list_init(&server->workspaces);
+    wl_list_insert(&server->workspaces, &basic_workspace_2.server_link);
+    wl_list_insert(&server->workspaces, &basic_workspace_1.server_link);
 }

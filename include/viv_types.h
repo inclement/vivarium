@@ -46,6 +46,8 @@ struct viv_server {
 	struct wlr_output_layout *output_layout;
 	struct wl_list outputs;
 	struct wl_listener new_output;
+
+    struct wl_list workspaces;
 };
 
 struct viv_keybinding {
@@ -91,10 +93,17 @@ struct viv_workspace {
     void (*do_layout)(struct viv_workspace *workspace);
 
     struct wl_list views;  /// Ordered list of views associated with this workspace
+
+    struct wl_list server_link;
 };
 
+enum viv_view_type {
+    VIV_VIEW_TYPE_XDG_SHELL,
+};
 
 struct viv_view {
+    enum viv_view_type type;
+
 	struct wl_list link;
 	struct wl_list workspace_link;
 
@@ -120,5 +129,13 @@ struct viv_keyboard {
 	struct wl_listener key;
 };
 
+struct viv_keybind {
+};
+
+struct viv_config {
+    bool focus_follows_mouse;
+    struct viv_keybind *keybinds;
+    struct viv_workspace_defn *workspaces;
+};
 
 #endif
