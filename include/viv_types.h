@@ -11,6 +11,12 @@ enum viv_cursor_mode {
 	VIV_CURSOR_RESIZE,
 };
 
+enum cursor_buttons {
+    VIV_LEFT_BUTTON = 272,
+    VIV_RIGHT_BUTTON = 273,
+    VIV_MIDDLE_BUTTON = 274,
+};
+
 struct viv_global_config {
     xkb_keysym_t mod_key;  /// Global modifier key
 };
@@ -118,6 +124,8 @@ struct viv_view {
 	struct wl_listener request_resize;
 	bool mapped;
 	int x, y;
+
+    bool is_floating;
 };
 
 struct viv_keyboard {

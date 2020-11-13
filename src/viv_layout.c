@@ -34,7 +34,9 @@ void do_split_layout(struct viv_workspace *workspace) {
     uint32_t num_views = 0;
     wl_list_for_each(view, views, workspace_link) {
         if (view->mapped) {
-            num_views++;
+            if (!view->is_floating) {
+                num_views++;
+            }
         }
     }
 
@@ -61,28 +63,30 @@ void do_split_layout(struct viv_workspace *workspace) {
         struct wlr_box geo_box;
         wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
 
-        if (view_index == 0) {
-            view->x = 0 - geo_box.x;
-            view->y = 0 - geo_box.y;
-            wlr_xdg_toplevel_set_size(view->xdg_surface, split_pixel, height);
-        } else {
-            view->x = split_pixel - geo_box.x;
-            view->y = ((view_index - 1) * side_bar_view_height) - geo_box.y;
-            uint32_t target_height = side_bar_view_height;
-            if (spare_pixels) {
-                spare_pixels--;
-                spare_pixels_used++;
-                target_height++;
-                (view->y) = view->y - spare_pixels_used;
-                printf("Used a spare pixel\n");
+        if (!view->is_floating) {
+            if (view_index == 0) {
+                view->x = 0 - geo_box.x;
+                view->y = 0 - geo_box.y;
+                wlr_xdg_toplevel_set_size(view->xdg_surface, split_pixel, height);
+            } else {
+                view->x = split_pixel - geo_box.x;
+                view->y = ((view_index - 1) * side_bar_view_height) - geo_box.y;
+                uint32_t target_height = side_bar_view_height;
+                if (spare_pixels) {
+                    spare_pixels--;
+                    spare_pixels_used++;
+                    target_height++;
+                    (view->y) = view->y - spare_pixels_used;
+                    printf("Used a spare pixel\n");
+                }
+                wlr_xdg_toplevel_set_size(view->xdg_surface, width - split_pixel,
+                                        target_height);
             }
-            wlr_xdg_toplevel_set_size(view->xdg_surface, width - split_pixel,
-                                      target_height);
+
+            printf("This view's geometry became: x %d, y %d, width %d, height %d\n",
+                geo_box.x, geo_box.y, geo_box.width, geo_box.height);
+
+            view_index++;
         }
-
-        printf("This view's geometry became: x %d, y %d, width %d, height %d\n",
-               geo_box.x, geo_box.y, geo_box.width, geo_box.height);
-
-        view_index++;
     }
 }

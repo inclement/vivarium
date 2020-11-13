@@ -123,6 +123,16 @@ static struct viv_view *desktop_view_at(
 	/* This iterates over all of our surfaces and attempts to find one under the
 	 * cursor. This relies on server->views being ordered from top-to-bottom. */
 	struct viv_view *view;
+    // Try floating views first
+	wl_list_for_each(view, &server->views, link) {
+        if (!view->is_floating) {
+            continue;
+        }
+		if (view_at(view, lx, ly, surface, sx, sy)) {
+			return view;
+		}
+	}
+    // No floating view found => try other views
 	wl_list_for_each(view, &server->views, link) {
 		if (view_at(view, lx, ly, surface, sx, sy)) {
 			return view;
@@ -266,6 +276,44 @@ static void server_cursor_motion_absolute(
 	process_cursor_motion(server, event->time_msec);
 }
 
+static void begin_interactive(struct viv_view *view,
+		enum viv_cursor_mode mode, uint32_t edges) {
+	/* This function sets up an interactive move or resize operation, where the
+	 * compositor stops propegating pointer events to clients and instead
+	 * consumes them itself, to move or resize windows. */
+	struct viv_server *server = view->server;
+	struct wlr_surface *focused_surface =
+		server->seat->pointer_state.focused_surface;
+	if (view->xdg_surface->surface != focused_surface) {
+		/* Deny move/resize requests from unfocused clients. */
+		return;
+	}
+	server->grabbed_view = view;
+	server->cursor_mode = mode;
+
+    view->is_floating = true;
+    view->workspace->needs_layout = true;
+
+	if (mode == VIV_CURSOR_MOVE) {
+		server->grab_x = server->cursor->x - view->x;
+		server->grab_y = server->cursor->y - view->y;
+	} else {
+		struct wlr_box geo_box;
+		wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+
+		double border_x = (view->x + geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
+		double border_y = (view->y + geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
+		server->grab_x = server->cursor->x - border_x;
+		server->grab_y = server->cursor->y - border_y;
+
+		server->grab_geobox = geo_box;
+		server->grab_geobox.x += view->x;
+		server->grab_geobox.y += view->y;
+
+		server->resize_edges = edges;
+	}
+}
+
 static void server_cursor_button(struct wl_listener *listener, void *data) {
 	/* This event is forwarded by the cursor when a pointer emits a button
 	 * event. */
@@ -279,12 +327,32 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	struct wlr_surface *surface;
 	struct viv_view *view = desktop_view_at(server,
 			server->cursor->x, server->cursor->y, &surface, &sx, &sy);
+
+    bool alt_held = false;
+    struct viv_keyboard *keyboard;
+    uint32_t modifiers;
+    wl_list_for_each(keyboard, &server->keyboards, link) {
+        modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+        if (modifiers & WLR_MODIFIER_ALT) {
+            alt_held = true;
+        }
+    }
+
 	if (event->state == WLR_BUTTON_RELEASED) {
 		/* If you released any buttons, we exit interactive move/resize mode. */
 		server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 	} else {
 		/* Focus that client if the button was _pressed_ */
 		focus_view(view, surface);
+        if (alt_held) {
+            if (event->state == WLR_BUTTON_PRESSED) {
+                if (event->button == VIV_LEFT_BUTTON) {
+                    begin_interactive(view, VIV_CURSOR_MOVE, 0);
+                } else if (event->button == VIV_RIGHT_BUTTON) {
+                    begin_interactive(view, VIV_CURSOR_RESIZE, 6);
+                }
+            }
+        }
 	}
 }
 
@@ -415,8 +483,32 @@ static void output_frame(struct wl_listener *listener, void *data) {
 
 	/* Each subsequent window we render is rendered on top of the last. Because
 	 * our view list is ordered front-to-back, we iterate over it backwards. */
+    // First render tiled windows, then render floating windows on top (but preserving order)
 	struct viv_view *view;
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
+        if (view->is_floating) {
+            continue;
+        }
+		if (!view->mapped) {
+			/* An unmapped view should not be rendered. */
+			continue;
+		}
+		struct render_data rdata = {
+			.output = output->wlr_output,
+			.view = view,
+			.renderer = renderer,
+			.when = &now,
+		};
+		/* This calls our render_surface function for each surface among the
+		 * xdg_surface's toplevel and popups. */
+		wlr_xdg_surface_for_each_surface(view->xdg_surface,
+				render_surface, &rdata);
+	}
+
+	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
+        if (!view->is_floating) {
+            continue;
+        }
 		if (!view->mapped) {
 			/* An unmapped view should not be rendered. */
 			continue;
@@ -519,40 +611,6 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
 	free(view);
 }
 
-static void begin_interactive(struct viv_view *view,
-		enum viv_cursor_mode mode, uint32_t edges) {
-	/* This function sets up an interactive move or resize operation, where the
-	 * compositor stops propegating pointer events to clients and instead
-	 * consumes them itself, to move or resize windows. */
-	struct viv_server *server = view->server;
-	struct wlr_surface *focused_surface =
-		server->seat->pointer_state.focused_surface;
-	if (view->xdg_surface->surface != focused_surface) {
-		/* Deny move/resize requests from unfocused clients. */
-		return;
-	}
-	server->grabbed_view = view;
-	server->cursor_mode = mode;
-
-	if (mode == VIV_CURSOR_MOVE) {
-		server->grab_x = server->cursor->x - view->x;
-		server->grab_y = server->cursor->y - view->y;
-	} else {
-		struct wlr_box geo_box;
-		wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
-
-		double border_x = (view->x + geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
-		double border_y = (view->y + geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
-		server->grab_x = server->cursor->x - border_x;
-		server->grab_y = server->cursor->y - border_y;
-
-		server->grab_geobox = geo_box;
-		server->grab_geobox.x += view->x;
-		server->grab_geobox.y += view->y;
-
-		server->resize_edges = edges;
-	}
-}
 
 static void xdg_toplevel_request_move(
 		struct wl_listener *listener, void *data) {
