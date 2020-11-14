@@ -4,12 +4,16 @@ IDIR = include
 SDIR = src
 ODIR = obj
 
+CONFIG_DIR = config
+PROTOCOLS_DIR = protocols
+
 EXTRA_INCLUDES = -I/usr/include/pixman-1
 
 CFLAGS += \
 	-DWLR_USE_UNSTABLE \
 	-I$(IDIR) \
-	-Iprotocols \
+	-I$(CONFIG_DIR) \
+	-I$(PROTOCOLS_DIR) \
 	-g \
 	-Werror \
 	$(EXTRA_INCLUDES)
@@ -19,7 +23,7 @@ _PROTOCOLS = xdg-shell
 PROTOCOL_INCLUDES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.h,$(_PROTOCOLS))
 PROTOCOL_SOURCES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.c,$(_PROTOCOLS))
 
-_DEPS = viv_types.h viv_server.h viv_workspace.h viv_layout.h
+_DEPS = viv_types.h viv_server.h viv_workspace.h viv_layout.h viv_mappable_functions.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS)) $(PROTOCOL_INCLUDES) $(PROTOCOL_SOURCES)
 
 WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
@@ -30,7 +34,7 @@ LIBS=\
 	 $(shell pkg-config --cflags --libs wayland-server) \
 	 $(shell pkg-config --cflags --libs xkbcommon)
 
-_OBJ = viv_layout.o viv_workspace.o viv_server.o vivarium.o
+_OBJ = vivarium.o viv_layout.o viv_workspace.o viv_server.o viv_mappable_functions.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 $(PROTOCOLS_DIR)/xdg-shell-protocol.h:

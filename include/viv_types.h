@@ -22,6 +22,8 @@ struct viv_global_config {
 };
 
 struct viv_server {
+    struct viv_config *config;
+
 	struct wl_display *wl_display;
 	struct wlr_backend *backend;
 	struct wlr_renderer *renderer;
@@ -54,12 +56,6 @@ struct viv_server {
 	struct wl_listener new_output;
 
     struct wl_list workspaces;
-};
-
-struct viv_keybinding {
-    uint32_t modifiers;
-    xkb_keysym_t key;
-    void (*binding)(struct viv_server);
 };
 
 struct viv_keybindings {
@@ -137,13 +133,5 @@ struct viv_keyboard {
 	struct wl_listener key;
 };
 
-struct viv_keybind {
-};
-
-struct viv_config {
-    bool focus_follows_mouse;
-    struct viv_keybind *keybinds;
-    struct viv_workspace_defn *workspaces;
-};
 
 #endif

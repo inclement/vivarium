@@ -22,7 +22,35 @@
 
 #include "viv_types.h"
 
-void do_split_layout(struct viv_workspace *workspace) {
+void viv_layout_do_fullscreen(struct viv_workspace *workspace) {
+    struct wl_list *views = &workspace->views;
+    struct viv_output *output = workspace->output;
+
+    int32_t width = output->wlr_output->width;
+    int32_t height = output->wlr_output->height;
+
+        struct viv_view *view;
+    wl_list_for_each(view, views, workspace_link) {
+        if (!view->mapped) {
+            continue;
+        }
+        if (view->is_floating) {
+            continue;
+        }
+
+        struct wlr_box geo_box;
+        wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+
+        view->x = 0 - geo_box.x;
+        view->y = 0 - geo_box.y;
+        wlr_xdg_toplevel_set_size(view->xdg_surface, width, height);
+
+        printf("This view's geometry became: x %d, y %d, width %d, height %d\n",
+                geo_box.x, geo_box.y, geo_box.width, geo_box.height);
+    }
+}
+
+void viv_layout_do_split(struct viv_workspace *workspace) {
     struct wl_list *views = &workspace->views;
     struct viv_output *output = workspace->output;
 

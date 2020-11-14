@@ -3,6 +3,8 @@
 
 #include "viv_types.h"
 
-void do_split_layout(struct viv_workspace *workspace);
+void viv_layout_do_split(struct viv_workspace *workspace);
+
+void viv_layout_do_fullscreen(struct viv_workspace *workspace);
 
 #endif

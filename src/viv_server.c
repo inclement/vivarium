@@ -25,16 +25,17 @@
 #include "viv_workspace.h"
 #include "viv_layout.h"
 
+#include "viv_config.h"
 
 static struct viv_workspace basic_workspace_1 = {
     .name = "test1",
-    .do_layout = &do_split_layout,
+    .do_layout = &viv_layout_do_split,
     .divide = 0.666,
 };
 
 static struct viv_workspace basic_workspace_2 = {
     .name = "test2",
-    .do_layout = &do_split_layout,
+    .do_layout = &viv_layout_do_split,
     .divide = 0.3333,
 };
 
@@ -697,55 +698,27 @@ static void keyboard_handle_modifiers(
 }
 
 static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
-	/*
-	 * Here we handle compositor keybindings. This is when the compositor is
-	 * processing keys, rather than passing them on to the client for its own
-	 * processing.
-	 *
-	 * This function assumes Alt is held down.
-	 */
     printf("key %d pressed\n", sym);
-    struct viv_output *output;
-	switch (sym) {
-	case XKB_KEY_Escape:
-		wl_display_terminate(server->wl_display);
-		break;
-	case XKB_KEY_F1:
-		/* Cycle to the next view */
-		if (wl_list_length(&server->views) < 2) {
-			break;
-		}
-		struct viv_view *current_view = wl_container_of(
-			server->views.next, current_view, link);
-		struct viv_view *next_view = wl_container_of(
-			current_view->link.next, next_view, link);
-		focus_view(next_view, next_view->xdg_surface->surface);
-		/* Move the previous view to the end of the list */
-		wl_list_remove(&current_view->link);
-		wl_list_insert(server->views.prev, &current_view->link);
-		break;
-    case XKB_KEY_Return:
-        viv_exec("alacritty", NULL);
-        break;
-    case XKB_KEY_i:
-        wl_list_for_each(output, &server->outputs, link) {
-            viv_workspace_increment_divide(output->current_workspace, 0.05);
+    struct viv_output *output = wl_container_of(server->outputs.next, output, link);
+
+    struct viv_workspace *workspace = output->current_workspace;
+
+    uint32_t max_num_keybinds = 1000;
+    struct viv_keybind keybind;
+    for (uint32_t i = 0; i < max_num_keybinds; i++) {
+        keybind = server->config->keybinds[i];
+
+        if (keybind.key == NULL_KEY) {
+            break;
         }
-        break;
-    case XKB_KEY_j:
-        wl_list_for_each(output, &server->outputs, link) {
-            viv_workspace_increment_divide(output->current_workspace, -0.05);
+
+        if (keybind.key == sym) {
+            printf("found key binding for %d\n", sym);
+            keybind.binding(workspace, keybind.payload);
+            return true;
         }
-        break;
-    case XKB_KEY_s:
-        wl_list_for_each(output, &server->outputs, link) {
-            viv_workspace_swap_out(output, &server->workspaces);
-        }
-        break;
-	default:
-		return false;
-	}
-	return true;
+    }
+    return false;
 }
 
 static void server_keyboard_handle_key(
@@ -880,6 +853,8 @@ static void seat_request_set_selection(struct wl_listener *listener, void *data)
 
 
 void viv_server_init(struct viv_server *server) {
+    // The config is declared globally for easy configuration, we just have to use it.
+    server->config = &the_config;
 
     wl_list_init(&basic_workspace_1.views);
     wl_list_init(&basic_workspace_2.views);
