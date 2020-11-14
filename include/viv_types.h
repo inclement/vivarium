@@ -21,6 +21,8 @@ struct viv_global_config {
     xkb_keysym_t mod_key;  /// Global modifier key
 };
 
+struct viv_output;  // Forward declare for use by viv_server
+
 struct viv_server {
     struct viv_config *config;
 
@@ -52,6 +54,7 @@ struct viv_server {
 	uint32_t resize_edges;
 
 	struct wlr_output_layout *output_layout;
+    struct viv_output *active_output;
 	struct wl_list outputs;
 	struct wl_listener new_output;
 
@@ -78,6 +81,7 @@ struct viv_output {
 struct viv_layout {
     char name[100];
     void (*layout_function)(struct wl_list views, struct viv_output);  /// Function that applies the layout
+    float parameter;  // A value between 0-1 which the user may configure
     struct wl_list link;
 };
 
@@ -132,6 +136,5 @@ struct viv_keyboard {
 	struct wl_listener modifiers;
 	struct wl_listener key;
 };
-
 
 #endif

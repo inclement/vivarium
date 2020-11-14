@@ -44,6 +44,7 @@ static void viv_exec(const char *bin, char *const args[]) {
 
     pid_t p;
     if ((p = fork()) == 0) {
+        /* execl("/bin/sh", "/bin/sh", "-c", bin, (void *)NULL); */
         setsid();
         freopen("/dev/null", "w", stdout);
         freopen("/dev/null", "w", stderr);
@@ -698,14 +699,12 @@ static void keyboard_handle_modifiers(
 }
 
 static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
-    printf("key %d pressed\n", sym);
     struct viv_output *output = wl_container_of(server->outputs.next, output, link);
 
     struct viv_workspace *workspace = output->current_workspace;
 
-    uint32_t max_num_keybinds = 1000;
     struct viv_keybind keybind;
-    for (uint32_t i = 0; i < max_num_keybinds; i++) {
+    for (uint32_t i = 0; i < MAX_NUM_KEYBINDS; i++) {
         keybind = server->config->keybinds[i];
 
         if (keybind.key == NULL_KEY) {
@@ -713,7 +712,6 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
         }
 
         if (keybind.key == sym) {
-            printf("found key binding for %d\n", sym);
             keybind.binding(workspace, keybind.payload);
             return true;
         }
@@ -723,7 +721,6 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
 
 static void server_keyboard_handle_key(
 		struct wl_listener *listener, void *data) {
-	/* This event is raised when a key is pressed or released. */
 	struct viv_keyboard *keyboard =
 		wl_container_of(listener, keyboard, key);
 	struct viv_server *server = keyboard->server;
@@ -732,17 +729,16 @@ static void server_keyboard_handle_key(
 
 	/* Translate libinput keycode -> xkbcommon */
 	uint32_t keycode = event->keycode + 8;
-	/* Get a list of keysyms based on the keymap for this keyboard */
 	const xkb_keysym_t *syms;
 	int nsyms = xkb_state_key_get_syms(
 			keyboard->device->keyboard->xkb_state, keycode, &syms);
 
+
 	bool handled = false;
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-	if ((modifiers & WLR_MODIFIER_ALT) && event->state == WLR_KEY_PRESSED) {
-		/* If alt is held down and this button was _pressed_, we attempt to
-		 * process it as a compositor keybinding. */
+	if ((modifiers & server->config->global_meta_key) && event->state == WLR_KEY_PRESSED) {
 		for (int i = 0; i < nsyms; i++) {
+            wlr_log(WLR_DEBUG, "Key %d pressed\n", syms[i]);
 			handled = handle_keybinding(server, syms[i]);
 		}
 	}
@@ -856,6 +852,9 @@ void viv_server_init(struct viv_server *server) {
     // The config is declared globally for easy configuration, we just have to use it.
     server->config = &the_config;
 
+    // Initialise logging, NULL indicates no callback so default logger is used
+    wlr_log_init(WLR_DEBUG, NULL);
+
     wl_list_init(&basic_workspace_1.views);
     wl_list_init(&basic_workspace_2.views);
 
@@ -914,4 +913,6 @@ void viv_server_init(struct viv_server *server) {
     wl_list_init(&server->workspaces);
     wl_list_insert(&server->workspaces, &basic_workspace_2.server_link);
     wl_list_insert(&server->workspaces, &basic_workspace_1.server_link);
+
+    wlr_log(WLR_INFO, "New viv_server initialised");
 }
