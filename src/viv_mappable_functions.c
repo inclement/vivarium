@@ -26,6 +26,7 @@ void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_pa
 }
 
 void viv_mappable_increment_divide(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable increment divide by %f\n", payload.increment_divide.increment);
     viv_workspace_increment_divide(workspace, payload.increment_divide.increment);
 }
 
@@ -40,9 +41,22 @@ void viv_mappable_swap_out(struct viv_workspace *workspace, union viv_mappable_p
 
 void viv_mappable_next_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     wlr_log(WLR_DEBUG, "Mappable next_window");
+    viv_workspace_next_window(workspace);
 }
 
 void viv_mappable_prev_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable prev_window");
+    viv_workspace_prev_window(workspace);
+}
+
+void viv_mappable_shift_active_window_down(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable shift_window_down");
+    viv_workspace_shift_active_window_down(workspace);
+}
+
+void viv_mappable_shift_active_window_up(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable shift_window_up");
+    viv_workspace_shift_active_window_up(workspace);
 }
 
 void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {

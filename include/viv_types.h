@@ -3,6 +3,7 @@
 
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_box.h>
+#include <wlr/types/wlr_xdg_shell.h>
 #include <xkbcommon/xkbcommon.h>
 
 enum viv_cursor_mode {
@@ -84,24 +85,6 @@ struct viv_layout {
     struct wl_list link;
 };
 
-struct viv_workspace {
-    char name[100];
-    struct wl_list layouts;  /// List of layouts available in this workspace
-    struct viv_layout current_layout;
-
-    float divide;
-
-    bool needs_layout;
-
-    struct viv_output *output;
-
-    void (*do_layout)(struct viv_workspace *workspace);
-
-    struct wl_list views;  /// Ordered list of views associated with this workspace
-
-    struct wl_list server_link;
-};
-
 enum viv_view_type {
     VIV_VIEW_TYPE_XDG_SHELL,
 };
@@ -124,6 +107,27 @@ struct viv_view {
 	int x, y;
 
     bool is_floating;
+    float floating_width, floating_height;  /// width and height to be used if the view becomes floating
+};
+
+struct viv_workspace {
+    char name[100];
+    struct wl_list layouts;  /// List of layouts available in this workspace
+    struct viv_layout current_layout;
+
+    float divide;  /// User-configurable float between 0 and 1
+    uint32_t counter;  /// User-configurable int, effectively unbounded
+
+    bool needs_layout;
+
+    struct viv_output *output;
+
+    void (*do_layout)(struct viv_workspace *workspace);
+
+    struct wl_list views;  /// Ordered list of views associated with this workspace
+    struct viv_view *active_view;  /// The view that currently has focus within the workspace
+
+    struct wl_list server_link;
 };
 
 struct viv_keyboard {

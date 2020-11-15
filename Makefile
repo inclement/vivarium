@@ -18,12 +18,11 @@ CFLAGS += \
 	-Werror \
 	$(EXTRA_INCLUDES)
 
-
 _PROTOCOLS = xdg-shell
 PROTOCOL_INCLUDES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.h,$(_PROTOCOLS))
 PROTOCOL_SOURCES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.c,$(_PROTOCOLS))
 
-_DEPS = viv_types.h viv_server.h viv_workspace.h viv_layout.h viv_mappable_functions.h
+_DEPS = viv_types.h viv_server.h viv_workspace.h viv_layout.h viv_mappable_functions.h viv_view.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS)) $(PROTOCOL_INCLUDES) $(PROTOCOL_SOURCES)
 
 WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
@@ -34,7 +33,7 @@ LIBS=\
 	 $(shell pkg-config --cflags --libs wayland-server) \
 	 $(shell pkg-config --cflags --libs xkbcommon)
 
-_OBJ = vivarium.o viv_layout.o viv_workspace.o viv_server.o viv_mappable_functions.o
+_OBJ = vivarium.o viv_layout.o viv_workspace.o viv_server.o viv_mappable_functions.o viv_view.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 $(PROTOCOLS_DIR)/xdg-shell-protocol.h:

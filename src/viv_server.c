@@ -24,6 +24,7 @@
 #include "viv_server.h"
 #include "viv_workspace.h"
 #include "viv_layout.h"
+#include "viv_view.h"
 
 #include "viv_config.h"
 
@@ -39,43 +40,6 @@ static struct viv_workspace basic_workspace_2 = {
     .divide = 0.3333,
 };
 
-/// Give the current view keyboard focus _and_ bring to the front if floating
-static void focus_view(struct viv_view *view, struct wlr_surface *surface) {
-	if (view == NULL) {
-		return;
-	}
-	struct viv_server *server = view->server;
-	struct wlr_seat *seat = server->seat;
-	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
-	if (prev_surface == surface) {
-		/* Don't re-focus an already focused surface. */
-		return;
-	}
-	if (prev_surface) {
-		/*
-		 * Deactivate the previously focused surface. This lets the client know
-		 * it no longer has focus and the client will repaint accordingly, e.g.
-		 * stop displaying a caret.
-		 */
-		struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(
-					seat->keyboard_state.focused_surface);
-		wlr_xdg_toplevel_set_activated(previous, false);
-	}
-	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
-
-    // Let the workspace do anything necessary for the view to be focused
-    viv_workspace_order_view_as_focused(view);
-
-	/* Activate the new surface */
-	wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
-	/*
-	 * Tell the seat to have the keyboard enter this surface. wlroots will keep
-	 * track of this and automatically send key events to the appropriate
-	 * clients without additional work on your part.
-	 */
-	wlr_seat_keyboard_notify_enter(seat, view->xdg_surface->surface,
-		keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
-}
 
 
 static bool view_at(struct viv_view *view,
@@ -331,9 +295,10 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 		/* If you released any buttons, we exit interactive move/resize mode. */
 		server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 	} else {
-		/* Focus that client if the button was _pressed_ */
-		focus_view(view, surface);
+		/* Focus that client if the button was pressed */
+		viv_view_focus(view, surface);
         if (alt_held) {
+            viv_view_bring_to_front(view);
             if (event->state == WLR_BUTTON_PRESSED) {
                 if (event->button == VIV_LEFT_BUTTON) {
                     begin_interactive(view, VIV_CURSOR_MOVE, 0);
@@ -580,7 +545,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
-	focus_view(view, view->xdg_surface->surface);
+	viv_view_focus(view, view->xdg_surface->surface);
 
     struct viv_workspace *workspace = view->workspace;
     workspace->output->needs_layout += 1;
