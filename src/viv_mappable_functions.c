@@ -44,3 +44,6 @@ void viv_mappable_next_window(struct viv_workspace *workspace, union viv_mappabl
 
 void viv_mappable_prev_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
 }
+
+void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+}

@@ -27,6 +27,8 @@ GENERATE_DECLARATION(next_window)
 
 GENERATE_DECLARATION(prev_window)
 
+GENERATE_DECLARATION(tile_window)
+
 union viv_mappable_payload {
     struct viv_mappable_payload_do_exec do_exec;
     struct viv_mappable_payload_increment_divide increment_divide;
@@ -34,6 +36,7 @@ union viv_mappable_payload {
     struct viv_mappable_payload_swap_out swap_out;
     struct viv_mappable_payload_next_window next_window;
     struct viv_mappable_payload_prev_window prev_window;
+    struct viv_mappable_payload_prev_window tile_window;
 };
 
 # endif

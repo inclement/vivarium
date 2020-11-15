@@ -39,22 +39,8 @@ static struct viv_workspace basic_workspace_2 = {
     .divide = 0.3333,
 };
 
-static void viv_exec(const char *bin, char *const args[]) {
-    printf("Executing %s\n", bin);
-
-    pid_t p;
-    if ((p = fork()) == 0) {
-        /* execl("/bin/sh", "/bin/sh", "-c", bin, (void *)NULL); */
-        setsid();
-        freopen("/dev/null", "w", stdout);
-        freopen("/dev/null", "w", stderr);
-        execvp(bin, args);
-        _exit(EXIT_FAILURE);
-    }
-}
-
+/// Give the current view keyboard focus _and_ bring to the front if floating
 static void focus_view(struct viv_view *view, struct wlr_surface *surface) {
-	/* Note: this function only deals with keyboard focus. */
 	if (view == NULL) {
 		return;
 	}
@@ -76,9 +62,10 @@ static void focus_view(struct viv_view *view, struct wlr_surface *surface) {
 		wlr_xdg_toplevel_set_activated(previous, false);
 	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
-	/* Move the view to the front */
-	wl_list_remove(&view->link);
-	wl_list_insert(&server->views, &view->link);
+
+    // Let the workspace do anything necessary for the view to be focused
+    viv_workspace_order_view_as_focused(view);
+
 	/* Activate the new surface */
 	wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
 	/*
@@ -126,7 +113,7 @@ static struct viv_view *desktop_view_at(
 	 * cursor. This relies on server->views being ordered from top-to-bottom. */
 	struct viv_view *view;
     // Try floating views first
-	wl_list_for_each(view, &server->views, link) {
+	wl_list_for_each(view, &server->active_output->current_workspace->views, workspace_link) {
         if (!view->is_floating) {
             continue;
         }
@@ -135,7 +122,7 @@ static struct viv_view *desktop_view_at(
 		}
 	}
     // No floating view found => try other views
-	wl_list_for_each(view, &server->views, link) {
+	wl_list_for_each(view, &server->active_output->current_workspace->views, workspace_link) {
 		if (view_at(view, lx, ly, surface, sx, sy)) {
 			return view;
 		}
@@ -585,6 +572,8 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	 * output (such as DPI, scale factor, manufacturer, etc).
 	 */
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
+
+    server->active_output = output;
 }
 
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
@@ -609,7 +598,7 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct viv_view *view = wl_container_of(listener, view, destroy);
-	wl_list_remove(&view->link);
+	wl_list_remove(&view->workspace_link);
 	free(view);
 }
 
@@ -668,9 +657,6 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	wl_signal_add(&toplevel->events.request_move, &view->request_move);
 	view->request_resize.notify = xdg_toplevel_request_resize;
 	wl_signal_add(&toplevel->events.request_resize, &view->request_resize);
-
-	/* Add it to the list of views. */
-	wl_list_insert(&server->views, &view->link);
 
     /* Add it to the current workspace */
     struct viv_output *output;
@@ -873,7 +859,6 @@ void viv_server_init(struct viv_server *server) {
 	server->new_output.notify = server_new_output;
 	wl_signal_add(&server->backend->events.new_output, &server->new_output);
 
-	wl_list_init(&server->views);
 	server->xdg_shell = wlr_xdg_shell_create(server->wl_display);
 	server->new_xdg_surface.notify = server_new_xdg_surface;
 	wl_signal_add(&server->xdg_shell->events.new_surface,

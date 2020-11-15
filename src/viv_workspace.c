@@ -36,3 +36,15 @@ void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspace
 
     printf("Workspace changed from %s to %s\n", old_workspace->name, new_workspace->name);
 }
+
+void viv_workspace_order_view_as_focused(struct viv_view *view) {
+    struct viv_workspace *workspace = view->workspace;
+    if (!view->is_floating) {
+        // Nothing to do, non-floating windows are tiled to not overlap.
+        return;
+    }
+
+    // Bring the floating window to the front
+    wl_list_remove(&view->workspace_link);
+    wl_list_insert(&workspace->views, &view->workspace_link);
+}

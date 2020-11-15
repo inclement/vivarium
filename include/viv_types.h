@@ -32,7 +32,6 @@ struct viv_server {
 
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;
-	struct wl_list views;
 
 	struct wlr_cursor *cursor;
 	struct wlr_xcursor_manager *cursor_mgr;
@@ -110,7 +109,6 @@ enum viv_view_type {
 struct viv_view {
     enum viv_view_type type;
 
-	struct wl_list link;
 	struct wl_list workspace_link;
 
 	struct viv_server *server;

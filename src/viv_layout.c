@@ -22,6 +22,60 @@
 
 #include "viv_types.h"
 
+/**
+ *  |--------------|----|----|
+ *  |              | 4  |    |
+ *  |              |----| 3  |
+ *  |              | 5  |    |
+ *  |     MAIN     |----|----|
+ *  |              |         |
+ *  |              |    2    |
+ *  |              |         |
+ *  |--------------|---------|
+ */
+void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace) {
+}
+
+/**
+ *  |------|----------|------|
+ *  |      |          |  2   |
+ *  |  3   |          |------|
+ *  |      |          |  4   |
+ *  |------|   MAIN   |      |
+ *  |      |          |------|
+ *  |  5   |          |  6   |
+ *  |      |          |      |
+ *  |------|----------|------|
+ */
+void viv_layout_do_central_column(struct viv_workspace *workspace) {
+}
+
+
+/**
+ *          |--------|
+ *          |   2    |
+ *      |---|        |---|
+ *  |---|   |--------|   |---|
+ *  | 5 |      MAIN      | 3 |
+ *  |---|                |---|
+ *      |----------------|
+ *          |   4    |
+ *          |--------|
+ */
+void viv_layout_do_indented_tabs(struct viv_workspace *workspace) {
+}
+
+/**
+ *  |------------------------|
+ *  |                        |
+ *  |                        |
+ *  |                        |
+ *  |          MAIN          |
+ *  |                        |
+ *  |                        |
+ *  |                        |
+ *  |------------------------|
+ */
 void viv_layout_do_fullscreen(struct viv_workspace *workspace) {
     struct wl_list *views = &workspace->views;
     struct viv_output *output = workspace->output;
@@ -50,6 +104,17 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace) {
     }
 }
 
+/**
+ *  |--------------|---------|
+ *  |              |    2    |
+ *  |              |---------|
+ *  |              |    3    |
+ *  |     MAIN     |---------|
+ *  |              |    4    |
+ *  |              |---------|
+ *  |              |    5    |
+ *  |--------------|---------|
+ */
 void viv_layout_do_split(struct viv_workspace *workspace) {
     struct wl_list *views = &workspace->views;
     struct viv_output *output = workspace->output;
