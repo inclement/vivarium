@@ -25,6 +25,19 @@ void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_pa
     }
 }
 
+void viv_mappable_do_shell(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    printf("Executing %s\n", payload.do_exec.executable);
+
+    pid_t p;
+    if ((p = fork()) == 0) {
+        setsid();
+        freopen("/dev/null", "w", stdout);
+        freopen("/dev/null", "w", stderr);
+        execl("/bin/sh", "/bin/sh", "-c", payload.do_shell.command, (void *)NULL);
+        _exit(EXIT_FAILURE);
+    }
+}
+
 void viv_mappable_increment_divide(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     wlr_log(WLR_DEBUG, "Mappable increment divide by %f\n", payload.increment_divide.increment);
     viv_workspace_increment_divide(workspace, payload.increment_divide.increment);

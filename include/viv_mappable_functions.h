@@ -18,6 +18,7 @@ union viv_mappable_payload;
 
 
 GENERATE_DECLARATION(do_exec, char executable[100]; char *args[100];)
+GENERATE_DECLARATION(do_shell, char command[100];)
 GENERATE_DECLARATION(increment_divide, float increment; )
 GENERATE_DECLARATION(terminate)
 GENERATE_DECLARATION(swap_out)
@@ -29,6 +30,7 @@ GENERATE_DECLARATION(tile_window)
 
 union viv_mappable_payload {
     GENERATE_UNION_ENTRY(do_exec);
+    GENERATE_UNION_ENTRY(do_shell);
     GENERATE_UNION_ENTRY(increment_divide);
     GENERATE_UNION_ENTRY(terminate);
     GENERATE_UNION_ENTRY(swap_out);
