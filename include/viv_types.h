@@ -74,7 +74,7 @@ struct viv_output {
 	struct wlr_output *wlr_output;
 	struct wl_listener frame;
 
-    uint32_t needs_layout;
+    bool needs_layout;
     struct viv_workspace *current_workspace;
 };
 

@@ -410,15 +410,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
 		wl_container_of(listener, output, frame);
 	struct wlr_renderer *renderer = output->server->renderer;
 
-    // TODO this probably shouldn't be here?
-    struct viv_workspace *workspace = output->current_workspace;
-    if ((output->needs_layout > 0) | (output->current_workspace->needs_layout)) {
-        workspace->do_layout(workspace);
-        /* output->needs_layout--; */
-        output->needs_layout = 0;
-        output->current_workspace->needs_layout = false;
-    }
-
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
@@ -491,6 +482,16 @@ static void output_frame(struct wl_listener *listener, void *data) {
 	 * on-screen. */
 	wlr_renderer_end(renderer);
 	wlr_output_commit(output->wlr_output);
+
+    // TODO this probably shouldn't be here?  For now do layout right after committing a
+    // frame, to give time for clients to re-draw before the next one. There's probably a
+    // better way to do this.
+    struct viv_workspace *workspace = output->current_workspace;
+    if (output->needs_layout | (output->current_workspace->needs_layout)) {
+        workspace->do_layout(workspace);
+        output->needs_layout = false;
+        output->current_workspace->needs_layout = false;
+    }
 }
 
 static void server_new_output(struct wl_listener *listener, void *data) {
