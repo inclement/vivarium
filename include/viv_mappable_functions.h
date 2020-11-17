@@ -14,31 +14,29 @@ union viv_mappable_payload;
     void viv_mappable_ ## FUNCTION_NAME(struct viv_workspace *workspace, union viv_mappable_payload payload); \
     GENERATE_PAYLOAD_STRUCT(FUNCTION_NAME, ARGS)
 
-#define GENERATE_UNION_ENTRY(FUNCTION_NAME) struct viv_mappable_payload_ ## FUNCTION_NAME FUNCTION_NAME
+#define GENERATE_UNION_ENTRY(FUNCTION_NAME, ARGS...) struct viv_mappable_payload_ ## FUNCTION_NAME FUNCTION_NAME ;
 
+// Mappable functions have a specific form to make them easy for a user to bind to keys, but this
+// also means we need to generate both a declaration and a union parameter to pass to their generic
+// keyword argument mechanism. This macro defines the table of mappable functions.
+#define MACRO_FOR_EACH_MAPPABLE(MACRO)                                    \
+    MACRO(do_exec, char executable[100]; char *args[100];) \
+    MACRO(do_shell, char command[100];)                    \
+    MACRO(increment_divide, float increment; )             \
+    MACRO(terminate)                                       \
+    MACRO(swap_out)                                        \
+    MACRO(next_window)                                     \
+    MACRO(prev_window)                                     \
+    MACRO(shift_active_window_down)                        \
+    MACRO(shift_active_window_up)                          \
+    MACRO(tile_window)                                     \
 
-GENERATE_DECLARATION(do_exec, char executable[100]; char *args[100];)
-GENERATE_DECLARATION(do_shell, char command[100];)
-GENERATE_DECLARATION(increment_divide, float increment; )
-GENERATE_DECLARATION(terminate)
-GENERATE_DECLARATION(swap_out)
-GENERATE_DECLARATION(next_window)
-GENERATE_DECLARATION(prev_window)
-GENERATE_DECLARATION(shift_active_window_down)
-GENERATE_DECLARATION(shift_active_window_up)
-GENERATE_DECLARATION(tile_window)
+// Declare each mappable function and generate a payload struct to pass as its argument
+MACRO_FOR_EACH_MAPPABLE(GENERATE_DECLARATION)
 
 union viv_mappable_payload {
-    GENERATE_UNION_ENTRY(do_exec);
-    GENERATE_UNION_ENTRY(do_shell);
-    GENERATE_UNION_ENTRY(increment_divide);
-    GENERATE_UNION_ENTRY(terminate);
-    GENERATE_UNION_ENTRY(swap_out);
-    GENERATE_UNION_ENTRY(next_window);
-    GENERATE_UNION_ENTRY(prev_window);
-    GENERATE_UNION_ENTRY(tile_window);
-    GENERATE_UNION_ENTRY(shift_active_window_down);
-    GENERATE_UNION_ENTRY(shift_active_window_up);
+    // Pack all the possible payload structs into a union type
+    MACRO_FOR_EACH_MAPPABLE(GENERATE_UNION_ENTRY)
 };
 
 # endif
