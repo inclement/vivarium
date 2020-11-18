@@ -83,7 +83,7 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace) {
     int32_t width = output->wlr_output->width;
     int32_t height = output->wlr_output->height;
 
-        struct viv_view *view;
+    struct viv_view *view;
     wl_list_for_each(view, views, workspace_link) {
         if (!view->mapped) {
             continue;

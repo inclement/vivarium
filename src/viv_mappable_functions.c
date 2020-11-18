@@ -73,4 +73,33 @@ void viv_mappable_shift_active_window_up(struct viv_workspace *workspace, union 
 }
 
 void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable tile_window");
+
+    struct viv_view *view = workspace->active_view;
+
+    if (!view->is_floating) {
+        wlr_log(WLR_DEBUG, "Cannot tile active view, it is not floating");
+        return;
+    }
+
+    bool any_not_floating = false;
+    struct viv_view *non_floating_view;
+    wl_list_for_each(non_floating_view, &workspace->views, workspace_link) {
+        if (!non_floating_view->is_floating) {
+            any_not_floating = true;
+            break;
+        }
+    }
+
+    view->is_floating = false;
+    workspace->needs_layout = true;
+
+    wl_list_remove(&view->workspace_link);
+    if (any_not_floating) {
+        // Insert right before the first non-floating view
+        wl_list_insert(non_floating_view->workspace_link.prev, &view->workspace_link);
+    } else {
+        // Move to the end of the views (as all are floating)
+        wl_list_insert(workspace->views.prev, &view->workspace_link);
+    }
 }

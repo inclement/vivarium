@@ -495,7 +495,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
 }
 
 static void server_new_output(struct wl_listener *listener, void *data) {
-	/* This event is rasied by the backend when a new output (aka a display or
+	/* This event is raised by the backend when a new output (aka a display or
 	 * monitor) becomes available. */
 	struct viv_server *server =
 		wl_container_of(listener, server, new_output);
