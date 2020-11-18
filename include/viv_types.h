@@ -80,8 +80,11 @@ struct viv_output {
 
 struct viv_layout {
     char name[100];
-    void (*layout_function)(struct wl_list views, struct viv_output);  /// Function that applies the layout
+    void (*layout_function)(struct viv_workspace *workspace);  /// Function that applies the layout
+
     float parameter;  // A value between 0-1 which the user may configure
+    uint32_t counter;  /// User-configurable int, effectively unbounded
+
     struct wl_list link;
 };
 
