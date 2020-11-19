@@ -30,6 +30,7 @@ union viv_mappable_payload;
     MACRO(shift_active_window_down)                        \
     MACRO(shift_active_window_up)                          \
     MACRO(tile_window)                                     \
+    MACRO(user_function, void (*function)(struct viv_workspace *workspace);) \
 
 // Declare each mappable function and generate a payload struct to pass as its argument
 MACRO_FOR_EACH_MAPPABLE(GENERATE_DECLARATION)

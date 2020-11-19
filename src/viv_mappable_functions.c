@@ -13,7 +13,7 @@
 #include "viv_workspace.h"
 
 void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    printf("Executing %s\n", payload.do_exec.executable);
+    wlr_log(WLR_DEBUG, "Mappable do_exec %s\n", payload.do_exec.executable);
 
     pid_t p;
     if ((p = fork()) == 0) {
@@ -26,7 +26,7 @@ void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_pa
 }
 
 void viv_mappable_do_shell(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    printf("Executing %s\n", payload.do_exec.executable);
+    wlr_log(WLR_DEBUG, "Mappable do_shell %s\n", payload.do_shell.command);
 
     pid_t p;
     if ((p = fork()) == 0) {
@@ -44,11 +44,12 @@ void viv_mappable_increment_divide(struct viv_workspace *workspace, union viv_ma
 }
 
 void viv_mappable_terminate(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable terminate");
     wl_display_terminate(workspace->output->server->wl_display);
 }
 
 void viv_mappable_swap_out(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    printf("Attempting swap-out\n");
+    wlr_log(WLR_DEBUG, "Mappable swap_out");
     viv_workspace_swap_out(workspace->output, &workspace->output->server->workspaces);
 }
 
@@ -102,4 +103,11 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
         // Move to the end of the views (as all are floating)
         wl_list_insert(workspace->views.prev, &view->workspace_link);
     }
+}
+
+void viv_mappable_user_function(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable user_function");
+
+    // Pass through the call to the user-provided function, but without the pointless payload argument
+    (*payload.user_function.function)(workspace);
 }
