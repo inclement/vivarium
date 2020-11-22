@@ -61,6 +61,7 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(M, shift_active_window_up),
     KEYBIND_MAPPABLE(s, swap_out),
     KEYBIND_MAPPABLE(f, tile_window),
+    KEYBIND_MAPPABLE(space, next_layout),
     KEYBIND_USER_FUNCTION(F, &example_user_function),
     TERMINATE_KEYBINDS_LIST()
 };

@@ -105,6 +105,16 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
     }
 }
 
+void viv_mappable_next_layout(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable next_layout");
+    viv_workspace_next_layout(workspace);
+}
+
+void viv_mappable_prev_layout(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable prev_layout");
+    viv_workspace_prev_layout(workspace);
+}
+
 void viv_mappable_user_function(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     wlr_log(WLR_DEBUG, "Mappable user_function");
 

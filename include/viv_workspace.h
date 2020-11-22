@@ -14,4 +14,7 @@ void viv_workspace_prev_window(struct viv_workspace *workspace);
 void viv_workspace_shift_active_window_down(struct viv_workspace *workspace);
 void viv_workspace_shift_active_window_up(struct viv_workspace *workspace);
 
+void viv_workspace_next_layout(struct viv_workspace *workspace);
+void viv_workspace_prev_layout(struct viv_workspace *workspace);
+
 #endif

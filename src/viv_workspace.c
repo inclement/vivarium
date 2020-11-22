@@ -162,3 +162,25 @@ void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspace
 
     printf("Workspace changed from %s to %s\n", old_workspace->name, new_workspace->name);
 }
+
+void viv_workspace_next_layout(struct viv_workspace *workspace) {
+    struct wl_list *next_layout_link = workspace->active_layout->workspace_link.next;
+    if (next_layout_link == &workspace->layouts) {
+        next_layout_link = next_layout_link->next;
+    }
+    struct viv_layout *next_layout = wl_container_of(next_layout_link, next_layout, workspace_link);
+    wlr_log(WLR_DEBUG, "Switching to layout with name %s", next_layout->name);
+    workspace->active_layout = next_layout;
+    workspace->needs_layout = true;
+}
+
+void viv_workspace_prev_layout(struct viv_workspace *workspace) {
+    struct wl_list *prev_layout_link = workspace->active_layout->workspace_link.prev;
+    if (prev_layout_link == &workspace->layouts) {
+        prev_layout_link = prev_layout_link->prev;
+    }
+    struct viv_layout *prev_layout = wl_container_of(prev_layout_link, prev_layout, workspace_link);
+    wlr_log(WLR_DEBUG, "Switching to layout with name %s", prev_layout->name);
+    workspace->active_layout = prev_layout;
+    workspace->needs_layout = true;
+}
