@@ -431,6 +431,10 @@ static void output_frame(struct wl_listener *listener, void *data) {
 			/* An unmapped view should not be rendered. */
 			continue;
 		}
+        if (view == output->current_workspace->active_view) {
+            // The active view always gets rendered on top
+            continue;
+        }
 		struct render_data rdata = {
 			.output = output->wlr_output,
 			.view = view,
@@ -442,6 +446,22 @@ static void output_frame(struct wl_listener *listener, void *data) {
 		wlr_xdg_surface_for_each_surface(view->xdg_surface,
 				render_surface, &rdata);
 	}
+
+    if (output->current_workspace->active_view != NULL) {
+        if (output->current_workspace->active_view->mapped &
+            !output->current_workspace->active_view->is_floating) {
+            // Render the active view
+            struct render_data rdata = {
+                .output = output->wlr_output,
+                .view = output->current_workspace->active_view,
+                .renderer = renderer,
+                .when = &now,
+            };
+            wlr_xdg_surface_for_each_surface(output->current_workspace->active_view->xdg_surface,
+                                            render_surface, &rdata);
+        }
+    }
+
 
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
         if (!view->is_floating) {
