@@ -85,7 +85,7 @@ struct viv_layout {
     float parameter;  // A value between 0-1 which the user may configure
     uint32_t counter;  /// User-configurable int, effectively unbounded
 
-    struct wl_list link;
+    struct wl_list workspace_link;
 };
 
 enum viv_view_type {
@@ -116,16 +116,13 @@ struct viv_view {
 struct viv_workspace {
     char name[100];
     struct wl_list layouts;  /// List of layouts available in this workspace
-    struct viv_layout current_layout;
-
-    float divide;  /// User-configurable float between 0 and 1
-    uint32_t counter;  /// User-configurable int, effectively unbounded
+    struct viv_layout *active_layout;
 
     bool needs_layout;
 
     struct viv_output *output;
 
-    void (*do_layout)(struct viv_workspace *workspace);
+    /* void (*do_layout)(struct viv_workspace *workspace); */
 
     struct wl_list views;  /// Ordered list of views associated with this workspace
     struct viv_view *active_view;  /// The view that currently has focus within the workspace

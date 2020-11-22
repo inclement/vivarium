@@ -133,7 +133,7 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
         }
     }
 
-    float split_dist = workspace->divide;
+    float split_dist = workspace->active_layout->parameter;
     if (num_views == 1) {
         split_dist = 1.0;
     }

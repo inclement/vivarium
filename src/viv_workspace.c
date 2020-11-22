@@ -126,11 +126,11 @@ void viv_workspace_shift_active_window_down(struct viv_workspace *workspace) {
 }
 
 void viv_workspace_increment_divide(struct viv_workspace *workspace, float increment) {
-    workspace->divide += increment;
-    if (workspace->divide > 1) {
-        workspace->divide = 1;
-    } else if (workspace->divide < 0) {
-        workspace->divide = 0;
+    workspace->active_layout->parameter += increment;
+    if (workspace->active_layout->parameter > 1) {
+        workspace->active_layout->parameter = 1;
+    } else if (workspace->active_layout->parameter < 0) {
+        workspace->active_layout->parameter = 0;
     }
 
     workspace->needs_layout = true;
@@ -143,6 +143,7 @@ void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspace
     }
 
     struct wl_list *new_workspace_link = workspaces->prev;
+
     struct viv_workspace *new_workspace = wl_container_of(new_workspace_link, new_workspace, server_link);
     struct viv_workspace *old_workspace = wl_container_of(workspaces->next, old_workspace, server_link);
 
@@ -153,7 +154,7 @@ void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspace
     new_workspace->output = output;
     output->current_workspace = new_workspace;
 
-    output->needs_layout = 1;
+    output->needs_layout = true;
 
     printf("Workspace changed from %s to %s\n", old_workspace->name, new_workspace->name);
 }

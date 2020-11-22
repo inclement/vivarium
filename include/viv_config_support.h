@@ -9,6 +9,7 @@
 #define MAX_NUM_KEYBINDS 10000
 #define MAX_WORKSPACE_NAME_LENGTH 80
 #define MAX_NUM_WORKSPACES 50
+#define MAX_NUM_LAYOUTS 50
 
 #define KEYBIND_MAPPABLE(KEY, BINDING, ARGS...) \
     {                                           \

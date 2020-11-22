@@ -27,19 +27,12 @@
 #include "viv_view.h"
 
 #include "viv_config.h"
+#include "viv_config_support.h"
 
-static struct viv_workspace basic_workspace_1 = {
-    .name = "test1",
-    .do_layout = &viv_layout_do_split,
-    .divide = 0.666,
-};
 
-static struct viv_workspace basic_workspace_2 = {
-    .name = "test2",
-    .do_layout = &viv_layout_do_split,
-    .divide = 0.3333,
-};
-
+#define EXIT_WITH_MESSAGE(MESSAGE) \
+    wlr_log(WLR_ERROR, MESSAGE);   \
+    exit(EXIT_FAILURE);
 
 
 static bool view_at(struct viv_view *view,
@@ -488,7 +481,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
     // better way to do this.
     struct viv_workspace *workspace = output->current_workspace;
     if (output->needs_layout | (output->current_workspace->needs_layout)) {
-        workspace->do_layout(workspace);
+        workspace->active_layout->layout_function(workspace);
         output->needs_layout = false;
         output->current_workspace->needs_layout = false;
     }
@@ -525,8 +518,9 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
 
-    output->current_workspace = &basic_workspace_1;
-    basic_workspace_1.output = output;
+    struct viv_workspace *current_workspace = wl_container_of(server->workspaces.next, current_workspace, server_link);
+    output->current_workspace = current_workspace;
+    current_workspace->output = output;
 
 	/* Adds this to the output layout. The add_auto function arranges outputs
 	 * from left-to-right in the order they appear. A more sophisticated
@@ -800,15 +794,69 @@ static void seat_request_set_selection(struct wl_listener *listener, void *data)
 }
 
 
-void viv_server_init(struct viv_server *server) {
-    // The config is declared globally for easy configuration, we just have to use it.
-    server->config = &the_config;
+/// Copy each of the layouts in the input list into a wl_list, and return this new list
+static void init_layouts(struct wl_list *layouts_list, struct viv_layout *layouts) {
+    wl_list_init(layouts_list);
 
+    struct viv_layout layout_definition;
+    struct viv_layout *layout_instance;
+    for (size_t i = 0; i < MAX_NUM_LAYOUTS; i++) {
+        layout_definition = layouts[i];
+        if (strcmp(layout_definition.name, "") == 0) {
+            if (i == 0) {
+                EXIT_WITH_MESSAGE("No layout definitions found in config");
+            }
+            break;
+        }
+
+        layout_instance = calloc(1, sizeof(struct viv_layout));
+        memcpy(layout_instance, &layout_definition, sizeof(struct viv_layout));
+        wl_list_insert(layouts_list->prev, &layout_instance->workspace_link);
+        wlr_log(WLR_DEBUG, "Initialised layout with name %s", layout_instance->name);
+    }
+}
+
+/// For each workspace name, create an initialise a ::viv_workspace with the specified
+/// layouts.
+static void init_workspaces(struct wl_list *workspaces_list,
+                                       char workspace_names[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH],
+                                       struct viv_layout *layouts) {
+    wlr_log(WLR_INFO, "Making workspaces");
+
+    wl_list_init(workspaces_list);
+
+    char *name;
+    struct viv_workspace *workspace;
+    for (size_t i = 0; i < MAX_NUM_WORKSPACES; i++) {
+        name = workspace_names[i];
+        if (!strlen(name)) {
+            wlr_log(WLR_DEBUG, "No more workspace names found");
+            break;
+        }
+        wlr_log(WLR_DEBUG, "Making workspace with name %s", name);
+
+        // Allocate the workspace and add to the return list
+        workspace = calloc(1, sizeof(struct viv_workspace));
+        memcpy(workspace->name, name, sizeof(char) * MAX_WORKSPACE_NAME_LENGTH);
+        wl_list_init(&workspace->views);
+        wl_list_insert(workspaces_list->prev, &workspace->server_link);
+
+        // Set up layouts for the new workspace
+        init_layouts(&workspace->layouts, layouts);
+        struct viv_layout *active_layout = wl_container_of(workspace->layouts.next, active_layout, workspace_link);
+        workspace->active_layout = active_layout;
+    }
+}
+
+
+void viv_server_init(struct viv_server *server) {
     // Initialise logging, NULL indicates no callback so default logger is used
     wlr_log_init(WLR_DEBUG, NULL);
 
-    wl_list_init(&basic_workspace_1.views);
-    wl_list_init(&basic_workspace_2.views);
+    // The config is declared globally for easy configuration, we just have to use it.
+    server->config = &the_config;
+
+    init_workspaces(&server->workspaces, server->config->workspaces, server->config->layouts);
 
 	server->wl_display = wl_display_create();
 	server->backend = wlr_backend_autocreate(server->wl_display, NULL);
@@ -860,10 +908,6 @@ void viv_server_init(struct viv_server *server) {
 	server->request_set_selection.notify = seat_request_set_selection;
 	wl_signal_add(&server->seat->events.request_set_selection,
 			&server->request_set_selection);
-
-    wl_list_init(&server->workspaces);
-    wl_list_insert(&server->workspaces, &basic_workspace_2.server_link);
-    wl_list_insert(&server->workspaces, &basic_workspace_1.server_link);
 
     wlr_log(WLR_INFO, "New viv_server initialised");
 }
