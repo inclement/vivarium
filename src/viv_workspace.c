@@ -156,5 +156,9 @@ void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspace
 
     output->needs_layout = true;
 
+    if (new_workspace->active_view != NULL) {
+        viv_view_focus(new_workspace->active_view, new_workspace->active_view->xdg_surface->surface);
+    }
+
     printf("Workspace changed from %s to %s\n", old_workspace->name, new_workspace->name);
 }
