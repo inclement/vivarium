@@ -554,7 +554,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
 		/* This calls our render_surface function for each surface among the
 		 * xdg_surface's toplevel and popups. */
         render_view(view, &rdata);
-        render_borders(view, false);
+        bool is_active_window = (output->current_workspace->active_view == view);
+        render_borders(view, is_active_window);
 	}
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
