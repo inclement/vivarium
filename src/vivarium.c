@@ -67,12 +67,18 @@ int main(int argc, char *argv[]) {
 
 	/* Set the WAYLAND_DISPLAY environment variable to our socket and run the
 	 * startup command if requested. */
+    unsetenv("DISPLAY");
 	setenv("WAYLAND_DISPLAY", socket, true);
 	if (startup_cmd) {
 		if (fork() == 0) {
 			execl("/bin/sh", "/bin/sh", "-c", startup_cmd, (void *)NULL);
 		}
 	}
+
+    // Set up env vars to encourage applications to use wayland if possible
+    setenv("QT_QPA_PLATFORM", "wayland", true);
+    setenv("GDK_BACKEND", "wayland", true);
+
 	/* Run the Wayland event loop. This does not return until you exit the
 	 * compositor. Starting the backend rigged up all of the necessary event
 	 * loop configuration to listen to libinput events, DRM events, generate
