@@ -23,25 +23,14 @@
 #define CONFIG_LAYOUT_PARAMETER_DEFAULT 0.666
 #define CONFIG_LAYOUT_COUNTER_DEFAULT 1
 
+#define CONFIG_BORDER_WIDTH_DEFAULT 2
+#define CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT {1, 0, 0.7, 1}
+#define CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT {0.7, 0.7, 0.7, 1}
+
 struct viv_keybind {
     xkb_keysym_t key;
     void (*binding)(struct viv_workspace *workspace, union viv_mappable_payload payload);
     union viv_mappable_payload payload;
-};
-
-struct viv_config {
-    bool focus_follows_mouse;
-
-    enum wlr_keyboard_modifier global_meta_key;
-
-    enum cursor_buttons win_move_cursor_button;
-    enum cursor_buttons win_resize_cursor_button;
-
-    struct viv_keybind *keybinds;
-
-    struct viv_layout *layouts;
-
-    char workspaces[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH];
 };
 
 /// Example to demonstrate how a user-defined function can be passed as a keybinding
@@ -94,6 +83,10 @@ static struct viv_config the_config = {
     .layouts = the_layouts,
 
     .workspaces = { "1", "2", "3" },
+
+    .border_width = CONFIG_BORDER_WIDTH_DEFAULT,
+    .active_border_colour = CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT,
+    .inactive_border_colour = CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT,
 };
 
 

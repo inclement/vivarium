@@ -99,6 +99,11 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace) {
         view->y = 0 - geo_box.y;
         wlr_xdg_toplevel_set_size(view->xdg_surface, width, height);
 
+        view->target_x = 0;
+        view->target_y = 0;
+        view->target_width = (int)width;
+        view->target_height = (int)height;
+
         printf("This view's geometry became: x %d, y %d, width %d, height %d\n",
                 geo_box.x, geo_box.y, geo_box.width, geo_box.height);
     }
@@ -147,6 +152,8 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
     printf("Have to use %d spare pixels\n", spare_pixels);
     printf("Laying out %d views\n", num_views);
 
+    int border_width = output->server->config->border_width;
+
     uint32_t view_index = 0;
     wl_list_for_each(view, views, workspace_link) {
         if (!view->mapped) {
@@ -158,12 +165,19 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
 
         if (!view->is_floating) {
             if (view_index == 0) {
-                view->x = 0 - geo_box.x;
-                view->y = 0 - geo_box.y;
-                wlr_xdg_toplevel_set_size(view->xdg_surface, split_pixel, height);
+                view->x = 0 - geo_box.x + border_width;
+                view->y = 0 - geo_box.y + border_width;
+                wlr_xdg_toplevel_set_size(view->xdg_surface,
+                                          split_pixel - 2 * border_width,
+                                          height - 2 * border_width);
+
+                view->target_x = 0;
+                view->target_y = 0;
+                view->target_width = (int)split_pixel;
+                view->target_height = (int)height;
             } else {
-                view->x = split_pixel - geo_box.x;
-                view->y = ((view_index - 1) * side_bar_view_height) - geo_box.y;
+                view->x = split_pixel - geo_box.x + border_width;
+                view->y = ((view_index - 1) * side_bar_view_height) - geo_box.y + border_width;
                 uint32_t target_height = side_bar_view_height;
                 if (spare_pixels) {
                     spare_pixels--;
@@ -172,8 +186,14 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
                     (view->y) = view->y - spare_pixels_used;
                     printf("Used a spare pixel\n");
                 }
-                wlr_xdg_toplevel_set_size(view->xdg_surface, width - split_pixel,
-                                        target_height);
+                wlr_xdg_toplevel_set_size(view->xdg_surface,
+                                          width - split_pixel - 2 * border_width,
+                                          target_height - 2 * border_width);
+
+                view->target_x = split_pixel;
+                view->target_y = (view_index - 1) * side_bar_view_height - spare_pixels_used;
+                view->target_width = (int)(width - split_pixel);
+                view->target_height = (int)target_height;
             }
 
             printf("This view's geometry became: x %d, y %d, width %d, height %d\n",

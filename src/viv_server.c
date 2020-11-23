@@ -396,6 +396,65 @@ static void render_surface(struct wlr_surface *surface,
 	wlr_surface_send_frame_done(surface, rdata->when);
 }
 
+static void render_view(struct viv_view *view, struct render_data *rdata) {
+    struct viv_output *output = view->workspace->output;
+	struct wlr_renderer *renderer = output->server->renderer;
+
+    /* This calls our render_surface function for each surface among the
+        * xdg_surface's toplevel and popups. */
+    wlr_xdg_surface_for_each_surface(view->xdg_surface, render_surface, rdata);
+}
+
+static void render_borders(struct viv_view *view, bool is_active) {
+    struct viv_output *output = view->workspace->output;
+	struct wlr_renderer *renderer = output->server->renderer;
+
+    struct viv_server *server = output->server;
+
+    struct wlr_box geo_box;
+    wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+    int x = view->target_x;
+    int y = view->target_y;
+    int width = view->target_width;
+    int height = view->target_height;
+    float *colour = (is_active ?
+                     server->config->active_border_colour :
+                     server->config->inactive_border_colour);
+
+    int line_width = server->config->border_width;
+
+    struct wlr_box box;
+
+    // bottom
+    box.x = x;
+    box.y = y;
+    box.width = width;
+    box.height = line_width;
+    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+
+    // top
+    box.x = x;
+    box.y = y + height - line_width;
+    box.width = width;
+    box.height = line_width;
+    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+
+    // left
+    box.x = x;
+    box.y = y;
+    box.width = line_width;
+    box.height = height;
+    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+
+    // right
+    box.x = x + width - line_width;
+    box.y = y;
+    box.width = line_width;
+    box.height = height;
+    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+
+}
+
 static void output_frame(struct wl_listener *listener, void *data) {
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
@@ -441,10 +500,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
 			.renderer = renderer,
 			.when = &now,
 		};
-		/* This calls our render_surface function for each surface among the
-		 * xdg_surface's toplevel and popups. */
-		wlr_xdg_surface_for_each_surface(view->xdg_surface,
-				render_surface, &rdata);
+        render_view(view, &rdata);
+        render_borders(view, false);
 	}
 
     if (output->current_workspace->active_view != NULL) {
@@ -457,8 +514,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
                 .renderer = renderer,
                 .when = &now,
             };
-            wlr_xdg_surface_for_each_surface(output->current_workspace->active_view->xdg_surface,
-                                            render_surface, &rdata);
+            render_view(output->current_workspace->active_view, &rdata);
+            render_borders(output->current_workspace->active_view, true);
         }
     }
 
@@ -479,8 +536,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
 		};
 		/* This calls our render_surface function for each surface among the
 		 * xdg_surface's toplevel and popups. */
-		wlr_xdg_surface_for_each_surface(view->xdg_surface,
-				render_surface, &rdata);
+        render_view(view, &rdata);
+        render_borders(view, false);
 	}
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be

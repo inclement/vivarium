@@ -6,6 +6,8 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "viv_config_support.h"
+
 enum viv_cursor_mode {
 	VIV_CURSOR_PASSTHROUGH,
 	VIV_CURSOR_MOVE,
@@ -109,6 +111,10 @@ struct viv_view {
 	bool mapped;
 	int x, y;
 
+    // Target positions, where the layout is trying to place the view
+    int target_x, target_y;
+    int target_width, target_height;
+
     bool is_floating;
     float floating_width, floating_height;  /// width and height to be used if the view becomes floating
 };
@@ -138,5 +144,25 @@ struct viv_keyboard {
 	struct wl_listener modifiers;
 	struct wl_listener key;
 };
+
+struct viv_config {
+    bool focus_follows_mouse;
+
+    enum wlr_keyboard_modifier global_meta_key;
+
+    enum cursor_buttons win_move_cursor_button;
+    enum cursor_buttons win_resize_cursor_button;
+
+    int border_width;
+    float active_border_colour[4];
+    float inactive_border_colour[4];
+
+    struct viv_keybind *keybinds;
+
+    struct viv_layout *layouts;
+
+    char workspaces[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH];
+};
+
 
 #endif
