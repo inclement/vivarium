@@ -162,6 +162,8 @@ struct viv_config {
     struct viv_layout *layouts;
 
     char workspaces[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH];
+
+    struct xkb_rule_names xkb_rules;
 };
 
 

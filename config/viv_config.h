@@ -42,14 +42,15 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(q, terminate),
     KEYBIND_MAPPABLE(Return, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(w, do_exec, .executable = "weston-terminal"),
-    KEYBIND_MAPPABLE(i, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
-    KEYBIND_MAPPABLE(j, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
-    KEYBIND_MAPPABLE(u, next_window),
-    KEYBIND_MAPPABLE(m, prev_window),
-    KEYBIND_MAPPABLE(U, shift_active_window_down),
-    KEYBIND_MAPPABLE(M, shift_active_window_up),
+    KEYBIND_MAPPABLE(h, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
+    KEYBIND_MAPPABLE(l, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
+    KEYBIND_MAPPABLE(j, next_window),
+    KEYBIND_MAPPABLE(k, prev_window),
+    KEYBIND_MAPPABLE(J, shift_active_window_down),
+    KEYBIND_MAPPABLE(K, shift_active_window_up),
     KEYBIND_MAPPABLE(s, swap_out),
-    KEYBIND_MAPPABLE(f, tile_window),
+    KEYBIND_MAPPABLE(t, tile_window),
+    KEYBIND_MAPPABLE(o, do_shell, .command = "okular"),
     KEYBIND_MAPPABLE(space, next_layout),
     KEYBIND_USER_FUNCTION(F, &example_user_function),
     TERMINATE_KEYBINDS_LIST()
@@ -87,6 +88,13 @@ static struct viv_config the_config = {
     .border_width = CONFIG_BORDER_WIDTH_DEFAULT,
     .active_border_colour = CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT,
     .inactive_border_colour = CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT,
+
+	.xkb_rules = {
+        .model = "pc104",
+        .layout = "widecolemak",
+        .variant = "widecolemak",
+        .options = "ctrl:nocaps",
+    },
 };
 
 

@@ -783,9 +783,9 @@ static void server_new_keyboard(struct viv_server *server,
 
 	/* We need to prepare an XKB keymap and assign it to the keyboard. This
 	 * assumes the defaults (e.g. layout = "us"). */
-	struct xkb_rule_names rules = { 0 };
+    struct xkb_rule_names *rules = &server->config->xkb_rules;
 	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	struct xkb_keymap *keymap = xkb_map_new_from_names(context, &rules,
+	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules,
 		XKB_KEYMAP_COMPILE_NO_FLAGS);
 
 	wlr_keyboard_set_keymap(device->keyboard, keymap);
