@@ -146,10 +146,9 @@ struct viv_keyboard {
 };
 
 struct viv_config {
-    bool focus_follows_mouse;
-
     enum wlr_keyboard_modifier global_meta_key;
 
+    bool focus_follows_mouse;
     enum cursor_buttons win_move_cursor_button;
     enum cursor_buttons win_resize_cursor_button;
 

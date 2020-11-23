@@ -167,7 +167,11 @@ static void process_cursor_motion(struct viv_server *server, uint32_t time) {
 		 * around the screen, not over any views. */
 		wlr_xcursor_manager_set_cursor_image(
 				server->cursor_mgr, "left_ptr", server->cursor);
-	}
+	} else {
+        // There is a view under the cursor, so also focus it if appropriate
+		viv_view_focus(view, surface);
+    }
+
 	if (surface) {
 		bool focus_changed = seat->pointer_state.focused_surface != surface;
 		/*
@@ -635,7 +639,17 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct viv_view *view = wl_container_of(listener, view, destroy);
+
+    struct viv_workspace *workspace = view->workspace;
+
 	wl_list_remove(&view->workspace_link);
+
+    if (wl_list_length(&workspace->views) > 0) {
+        struct viv_view *new_active_view = wl_container_of(workspace->views.next, new_active_view, workspace_link);
+        workspace->active_view = new_active_view;
+        viv_view_focus(workspace->active_view, view->xdg_surface->surface);
+    }
+
 	free(view);
 }
 
@@ -781,8 +795,6 @@ static void server_new_keyboard(struct viv_server *server,
 	keyboard->server = server;
 	keyboard->device = device;
 
-	/* We need to prepare an XKB keymap and assign it to the keyboard. This
-	 * assumes the defaults (e.g. layout = "us"). */
     struct xkb_rule_names *rules = &server->config->xkb_rules;
 	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules,
