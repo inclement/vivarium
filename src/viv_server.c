@@ -88,9 +88,15 @@ static struct viv_view *desktop_view_at(
 }
 
 static void process_cursor_move(struct viv_server *server, uint32_t time) {
+    int old_x = server->grabbed_view->x;
+    int old_y = server->grabbed_view->y;
+
 	/* Move the grabbed view to the new position. */
 	server->grabbed_view->x = server->cursor->x - server->grab_x;
 	server->grabbed_view->y = server->cursor->y - server->grab_y;
+
+    server->grabbed_view->target_x += (server->grabbed_view->x - old_x);
+    server->grabbed_view->target_y += (server->grabbed_view->y - old_y);
 }
 
 static void process_cursor_resize(struct viv_server *server, uint32_t time) {
@@ -143,6 +149,11 @@ static void process_cursor_resize(struct viv_server *server, uint32_t time) {
 	int new_width = new_right - new_left;
 	int new_height = new_bottom - new_top;
 	wlr_xdg_toplevel_set_size(view->xdg_surface, new_width, new_height);
+
+    view->target_x = new_left;
+    view->target_y = new_top;
+    view->target_width = new_width;
+    view->target_height = new_height;
 }
 
 static void process_cursor_motion(struct viv_server *server, uint32_t time) {
@@ -169,7 +180,9 @@ static void process_cursor_motion(struct viv_server *server, uint32_t time) {
 				server->cursor_mgr, "left_ptr", server->cursor);
 	} else {
         // There is a view under the cursor, so also focus it if appropriate
-		viv_view_focus(view, surface);
+        if (server->config->focus_follows_mouse) {
+            viv_view_focus(view, surface);
+        }
     }
 
 	if (surface) {
@@ -300,7 +313,7 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
                 if (event->button == VIV_LEFT_BUTTON) {
                     begin_interactive(view, VIV_CURSOR_MOVE, 0);
                 } else if (event->button == VIV_RIGHT_BUTTON) {
-                    begin_interactive(view, VIV_CURSOR_RESIZE, 6);
+                    begin_interactive(view, VIV_CURSOR_RESIZE, WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT);
                 }
             }
         }
