@@ -26,3 +26,12 @@
     }
 
 #endif
+
+#define EXIT_WITH_MESSAGE(MESSAGE)             \
+    wlr_log(WLR_ERROR, MESSAGE);                  \
+    exit(EXIT_FAILURE);
+
+#define CHECK_ALLOCATION(POINTER)                           \
+    if (!POINTER) {                                         \
+        EXIT_WITH_MESSAGE("ALLOCATION FAILURE: " #POINTER); \
+    }

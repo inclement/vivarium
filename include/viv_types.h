@@ -20,10 +20,6 @@ enum cursor_buttons {
     VIV_MIDDLE_BUTTON = 274,
 };
 
-struct viv_global_config {
-    xkb_keysym_t mod_key;  /// Global modifier key
-};
-
 struct viv_output;  // Forward declare for use by viv_server
 
 struct viv_server {

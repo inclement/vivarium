@@ -30,10 +30,6 @@
 #include "viv_config_support.h"
 
 
-#define EXIT_WITH_MESSAGE(MESSAGE) \
-    wlr_log(WLR_ERROR, MESSAGE);   \
-    exit(EXIT_FAILURE);
-
 
 static bool view_at(struct viv_view *view,
 		double lx, double ly, struct wlr_surface **surface,
@@ -214,13 +210,12 @@ static void server_cursor_motion(struct wl_listener *listener, void *data) {
 	struct viv_server *server =
 		wl_container_of(listener, server, cursor_motion);
 	struct wlr_event_pointer_motion *event = data;
-	/* The cursor doesn't move unless we tell it to. The cursor automatically
-	 * handles constraining the motion to the output layout, as well as any
-	 * special configuration applied for the specific input device which
-	 * generated the event. You can pass NULL for the device if you want to move
-	 * the cursor around without any input. */
+
+    // Pass the movement along (i.e. allow the cursor to actually move)
 	wlr_cursor_move(server->cursor, event->device,
 			event->delta_x, event->delta_y);
+
+    // Do our own processing of the motion if necessary
 	process_cursor_motion(server, event->time_msec);
 }
 
@@ -254,8 +249,7 @@ static void begin_interactive(struct viv_view *view,
 	server->grabbed_view = view;
 	server->cursor_mode = mode;
 
-    view->is_floating = true;
-    view->workspace->needs_layout = true;
+    viv_view_ensure_floating(view);
 
 	if (mode == VIV_CURSOR_MOVE) {
 		server->grab_x = server->cursor->x - view->x;
@@ -536,7 +530,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
         }
     }
 
-
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
         if (!view->is_floating) {
             continue;
@@ -604,8 +597,9 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	}
 
 	/* Allocates and configures our state for this output */
-	struct viv_output *output =
-		calloc(1, sizeof(struct viv_output));
+	struct viv_output *output = calloc(1, sizeof(struct viv_output));
+    CHECK_ALLOCATION(output);
+
 	output->wlr_output = wlr_output;
 	output->server = server;
 	/* Sets up a listener for the frame notify event. */
@@ -702,8 +696,9 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	}
 
 	/* Allocate a viv_view for this surface */
-	struct viv_view *view =
-		calloc(1, sizeof(struct viv_view));
+	struct viv_view *view = calloc(1, sizeof(struct viv_view));
+    CHECK_ALLOCATION(view);
+
     view->type = VIV_VIEW_TYPE_XDG_SHELL;
 	view->server = server;
 	view->xdg_surface = xdg_surface;
@@ -804,8 +799,9 @@ static void server_keyboard_handle_key(
 
 static void server_new_keyboard(struct viv_server *server,
 		struct wlr_input_device *device) {
-	struct viv_keyboard *keyboard =
-		calloc(1, sizeof(struct viv_keyboard));
+	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
+    CHECK_ALLOCATION(keyboard);
+
 	keyboard->server = server;
 	keyboard->device = device;
 
@@ -913,6 +909,8 @@ static void init_layouts(struct wl_list *layouts_list, struct viv_layout *layout
         }
 
         layout_instance = calloc(1, sizeof(struct viv_layout));
+        CHECK_ALLOCATION(layout_instance);
+
         memcpy(layout_instance, &layout_definition, sizeof(struct viv_layout));
         wl_list_insert(layouts_list->prev, &layout_instance->workspace_link);
         wlr_log(WLR_DEBUG, "Initialised layout with name %s", layout_instance->name);
@@ -940,6 +938,8 @@ static void init_workspaces(struct wl_list *workspaces_list,
 
         // Allocate the workspace and add to the return list
         workspace = calloc(1, sizeof(struct viv_workspace));
+        CHECK_ALLOCATION(workspace);
+
         memcpy(workspace->name, name, sizeof(char) * MAX_WORKSPACE_NAME_LENGTH);
         wl_list_init(&workspace->views);
         wl_list_insert(workspaces_list->prev, &workspace->server_link);
@@ -959,35 +959,49 @@ void viv_server_init(struct viv_server *server) {
     // The config is declared globally for easy configuration, we just have to use it.
     server->config = &the_config;
 
+    // Dynamically create workspaces according to the user configuration
     init_workspaces(&server->workspaces, server->config->workspaces, server->config->layouts);
 
+    // Prepare our app's wl_display
 	server->wl_display = wl_display_create();
+
+    // Create a wlroots backend. This will automatically handle creating a suitable
+    // backend for the environment, e.g. an X11 window if running under X.
 	server->backend = wlr_backend_autocreate(server->wl_display, NULL);
 
+    // Init the default wlroots GLES2 renderer
 	server->renderer = wlr_backend_get_renderer(server->backend);
 	wlr_renderer_init_wl_display(server->renderer, server->wl_display);
 
+    // Create some default wlroots interfaces:
+    // Compositor to handle surface allocation
 	wlr_compositor_create(server->wl_display, server->renderer);
+    // Data device manager to handle the clipboard
 	wlr_data_device_manager_create(server->wl_display);
 
+    // Create an output layout, for handling the arrangement of multiple outputs
 	server->output_layout = wlr_output_layout_create();
 
+    // Init server outputs list and handling for new outputs
 	wl_list_init(&server->outputs);
 	server->new_output.notify = server_new_output;
 	wl_signal_add(&server->backend->events.new_output, &server->new_output);
 
+    // Set up the xdg-shell
 	server->xdg_shell = wlr_xdg_shell_create(server->wl_display);
 	server->new_xdg_surface.notify = server_new_xdg_surface;
 	wl_signal_add(&server->xdg_shell->events.new_surface,
 			&server->new_xdg_surface);
 
+    // Create a wlroots cursor for handling the cursor image shown on the screen
 	server->cursor = wlr_cursor_create();
 	wlr_cursor_attach_output_layout(server->cursor, server->output_layout);
 
+    // Use a wlroots xcursor manager to handle the cursor theme
 	server->cursor_mgr = wlr_xcursor_manager_create(NULL, 24);
 	wlr_xcursor_manager_load(server->cursor_mgr, 1);
 
-
+    // Set up events to be able to move our cursor in response to inputs
 	server->cursor_motion.notify = server_cursor_motion;
 	wl_signal_add(&server->cursor->events.motion, &server->cursor_motion);
 	server->cursor_motion_absolute.notify = server_cursor_motion_absolute;
@@ -1000,7 +1014,7 @@ void viv_server_init(struct viv_server *server) {
 	server->cursor_frame.notify = server_cursor_frame;
 	wl_signal_add(&server->cursor->events.frame, &server->cursor_frame);
 
-
+    // Set up a wlroots "seat" handling the combination of user input devices
 	wl_list_init(&server->keyboards);
 	server->new_input.notify = server_new_input;
 	wl_signal_add(&server->backend->events.new_input, &server->new_input);
@@ -1013,4 +1027,5 @@ void viv_server_init(struct viv_server *server) {
 			&server->request_set_selection);
 
     wlr_log(WLR_INFO, "New viv_server initialised");
+
 }

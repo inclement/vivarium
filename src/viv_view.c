@@ -1,5 +1,6 @@
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/util/log.h>
 
 #include "viv_types.h"
 
@@ -43,4 +44,12 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 		keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
 
     view->workspace->active_view = view;
+}
+
+void viv_view_ensure_floating(struct viv_view *view) {
+    if (!view->is_floating) {
+        // If the view is already floating, no additional layout is necessary
+        view->workspace->needs_layout = true;
+    }
+    view->is_floating = true;
 }
