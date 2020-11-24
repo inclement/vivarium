@@ -43,3 +43,6 @@
 
 #define UNREACHABLE() \
     EXIT_WITH_MESSAGE("UNREACHABLE");
+
+#define UNUSED(SYMBOL) \
+    (void)(SYMBOL);

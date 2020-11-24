@@ -28,6 +28,9 @@
 
 
 int main(int argc, char *argv[]) {
+    UNUSED(argc);
+    UNUSED(argv);
+
 	wlr_log_init(WLR_DEBUG, NULL);
 
     // Initialise our vivarium server. This sets up all the event bindings so that inputs,

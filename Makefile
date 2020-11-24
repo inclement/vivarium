@@ -16,6 +16,8 @@ CFLAGS += \
 	-I$(PROTOCOLS_DIR) \
 	-g \
 	-Werror \
+	-Wall \
+	-Wextra \
 	$(EXTRA_INCLUDES)
 
 _PROTOCOLS = xdg-shell

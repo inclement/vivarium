@@ -34,6 +34,7 @@
  *  |--------------|---------|
  */
 void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace) {
+    UNUSED(workspace);
 }
 
 /**
@@ -48,6 +49,7 @@ void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace) {
  *  |------|----------|------|
  */
 void viv_layout_do_central_column(struct viv_workspace *workspace) {
+    UNUSED(workspace);
 }
 
 
@@ -63,6 +65,7 @@ void viv_layout_do_central_column(struct viv_workspace *workspace) {
  *          |--------|
  */
 void viv_layout_do_indented_tabs(struct viv_workspace *workspace) {
+    UNUSED(workspace);
 }
 
 /**

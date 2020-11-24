@@ -92,6 +92,7 @@ static struct viv_view *desktop_view_at(
 }
 
 static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
+    UNUSED(time);
     int old_x = server->grab_state.view->x;
     int old_y = server->grab_state.view->y;
 
@@ -104,6 +105,7 @@ static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
 }
 
 static void process_cursor_resize_view(struct viv_server *server, uint32_t time) {
+    UNUSED(time);
 	/*
 	 * Resizing the grabbed view can be a little bit complicated, because we
 	 * could be resizing from any corner or edge. This not only resizes the view
@@ -344,6 +346,7 @@ static void server_cursor_axis(struct wl_listener *listener, void *data) {
 }
 
 static void server_cursor_frame(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	/* This event is forwarded by the cursor when a pointer emits an frame
 	 * event. Frame events are sent after regular pointer events to group
 	 * multiple events together. For instance, two axis events may happen at the
@@ -481,6 +484,7 @@ static void render_borders(struct viv_view *view, bool is_active) {
 }
 
 static void output_frame(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
 	struct viv_output *output =
@@ -640,6 +644,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 }
 
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
@@ -650,6 +655,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 }
 
 static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	struct viv_view *view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
@@ -659,6 +665,7 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 }
 
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct viv_view *view = wl_container_of(listener, view, destroy);
 
@@ -676,8 +683,8 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
 }
 
 
-static void xdg_toplevel_request_move(
-		struct wl_listener *listener, void *data) {
+static void xdg_toplevel_request_move(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	/* This event is raised when a client would like to begin an interactive
 	 * move, typically because the user clicked on their client-side
 	 * decorations. Note that a more sophisticated compositor should check the
@@ -687,8 +694,7 @@ static void xdg_toplevel_request_move(
 	begin_interactive(view, VIV_CURSOR_MOVE, 0);
 }
 
-static void xdg_toplevel_request_resize(
-		struct wl_listener *listener, void *data) {
+static void xdg_toplevel_request_resize(struct wl_listener *listener, void *data) {
 	/* This event is raised when a client would like to begin an interactive
 	 * resize, typically because the user clicked on their client-side
 	 * decorations. Note that a more sophisticated compositor should check the
@@ -740,8 +746,8 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     }
 }
 
-static void keyboard_handle_modifiers(
-		struct wl_listener *listener, void *data) {
+static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	/* This event is raised when a modifier key, such as shift or alt, is
 	 * pressed. We simply communicate this to the client. */
 	struct viv_keyboard *keyboard =

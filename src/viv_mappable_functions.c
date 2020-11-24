@@ -13,6 +13,7 @@
 #include "viv_workspace.h"
 
 void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(workspace);
     wlr_log(WLR_DEBUG, "Mappable do_exec %s\n", payload.do_exec.executable);
 
     pid_t p;
@@ -26,6 +27,7 @@ void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_pa
 }
 
 void viv_mappable_do_shell(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(workspace);
     wlr_log(WLR_DEBUG, "Mappable do_shell %s\n", payload.do_shell.command);
 
     pid_t p;
@@ -44,36 +46,43 @@ void viv_mappable_increment_divide(struct viv_workspace *workspace, union viv_ma
 }
 
 void viv_mappable_terminate(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable terminate");
     wl_display_terminate(workspace->output->server->wl_display);
 }
 
 void viv_mappable_swap_out(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable swap_out");
     viv_workspace_swap_out(workspace->output, &workspace->output->server->workspaces);
 }
 
 void viv_mappable_next_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable next_window");
     viv_workspace_next_window(workspace);
 }
 
 void viv_mappable_prev_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable prev_window");
     viv_workspace_prev_window(workspace);
 }
 
 void viv_mappable_shift_active_window_down(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable shift_window_down");
     viv_workspace_shift_active_window_down(workspace);
 }
 
 void viv_mappable_shift_active_window_up(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable shift_window_up");
     viv_workspace_shift_active_window_up(workspace);
 }
 
 void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable tile_window");
 
     struct viv_view *view = workspace->active_view;
@@ -106,11 +115,13 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
 }
 
 void viv_mappable_next_layout(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable next_layout");
     viv_workspace_next_layout(workspace);
 }
 
 void viv_mappable_prev_layout(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable prev_layout");
     viv_workspace_prev_layout(workspace);
 }
