@@ -35,3 +35,11 @@
     if (!POINTER) {                                         \
         EXIT_WITH_MESSAGE("ALLOCATION FAILURE: " #POINTER); \
     }
+
+#define ASSERT(EXPR)                                \
+    if (!(EXPR)) {                                  \
+        EXIT_WITH_MESSAGE("Assert failed: " #EXPR); \
+    }
+
+#define UNREACHABLE() \
+    EXIT_WITH_MESSAGE("UNREACHABLE");

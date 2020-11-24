@@ -9,9 +9,9 @@
 #include "viv_config_support.h"
 
 enum viv_cursor_mode {
-	VIV_CURSOR_PASSTHROUGH,
-	VIV_CURSOR_MOVE,
-	VIV_CURSOR_RESIZE,
+	VIV_CURSOR_PASSTHROUGH,  /// Pass through cursor data to views
+	VIV_CURSOR_MOVE,  /// A view is being moved
+	VIV_CURSOR_RESIZE,  /// A view is being resized
 };
 
 enum cursor_buttons {
@@ -46,10 +46,14 @@ struct viv_server {
 	struct wl_listener request_set_selection;
 	struct wl_list keyboards;
 	enum viv_cursor_mode cursor_mode;
-	struct viv_view *grabbed_view;
-	double grab_x, grab_y;
-	struct wlr_box grab_geobox;
-	uint32_t resize_edges;
+
+    /// State relating to any currently-grabbed view
+    struct {
+        struct viv_view *view;  /// Currently-grabbed view
+        double x, y;
+        struct wlr_box geobox;
+        uint32_t resize_edges;  /// union of ::wlr_edges along which the view is being resized
+    } grab_state;
 
 	struct wlr_output_layout *output_layout;
     struct viv_output *active_output;

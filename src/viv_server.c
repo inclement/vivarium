@@ -31,16 +31,19 @@
 
 
 
+/** Test if any surfaces of the given view are at the given layout coordinates, including
+    nested surfaces (e.g. popup windows, tooltips).  If so, return the surface data.
+    @param view Pointer to the view to test
+    @param lx Position to test in layout coordinates
+    @param ly Position to test in layout coordinates
+    @param surface wlr_surface via which to return if found
+    @param sx Surface coordinate to return (relative to surface top left corner)
+    @param sy Surface coordinate to return (relative to surface top left corner)
+    @returns true if a surface was found, else false
+*/
 static bool view_at(struct viv_view *view,
 		double lx, double ly, struct wlr_surface **surface,
 		double *sx, double *sy) {
-	/*
-	 * XDG toplevels may have nested surfaces, such as popup windows for context
-	 * menus or tooltips. This function tests if any of those are underneath the
-	 * coordinates lx and ly (in output Layout Coordinates). If so, it sets the
-	 * surface pointer to that wlr_surface and the sx and sy coordinates to the
-	 * coordinates relative to that surface's top-left corner.
-	 */
 	double view_sx = lx - view->x;
 	double view_sy = ly - view->y;
 
@@ -59,11 +62,16 @@ static bool view_at(struct viv_view *view,
 	return false;
 }
 
+/** Test if any views being handled by the compositor are present at the given layout
+    coordinates lx,ly.
+ */
 static struct viv_view *desktop_view_at(
 		struct viv_server *server, double lx, double ly,
 		struct wlr_surface **surface, double *sx, double *sy) {
-	/* This iterates over all of our surfaces and attempts to find one under the
-	 * cursor. This relies on server->views being ordered from top-to-bottom. */
+
+    // Note: this all relies on the list of surfaces held by a workspace being ordered
+    // from top to bottom
+
 	struct viv_view *view;
     // Try floating views first
 	wl_list_for_each(view, &server->active_output->current_workspace->views, workspace_link) {
@@ -83,19 +91,19 @@ static struct viv_view *desktop_view_at(
 	return NULL;
 }
 
-static void process_cursor_move(struct viv_server *server, uint32_t time) {
-    int old_x = server->grabbed_view->x;
-    int old_y = server->grabbed_view->y;
+static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
+    int old_x = server->grab_state.view->x;
+    int old_y = server->grab_state.view->y;
 
 	/* Move the grabbed view to the new position. */
-	server->grabbed_view->x = server->cursor->x - server->grab_x;
-	server->grabbed_view->y = server->cursor->y - server->grab_y;
+	server->grab_state.view->x = server->cursor->x - server->grab_state.x;
+	server->grab_state.view->y = server->cursor->y - server->grab_state.y;
 
-    server->grabbed_view->target_x += (server->grabbed_view->x - old_x);
-    server->grabbed_view->target_y += (server->grabbed_view->y - old_y);
+    server->grab_state.view->target_x += (server->grab_state.view->x - old_x);
+    server->grab_state.view->target_y += (server->grab_state.view->y - old_y);
 }
 
-static void process_cursor_resize(struct viv_server *server, uint32_t time) {
+static void process_cursor_resize_view(struct viv_server *server, uint32_t time) {
 	/*
 	 * Resizing the grabbed view can be a little bit complicated, because we
 	 * could be resizing from any corner or edge. This not only resizes the view
@@ -106,31 +114,31 @@ static void process_cursor_resize(struct viv_server *server, uint32_t time) {
 	 * you'd wait for the client to prepare a buffer at the new size, then
 	 * commit any movement that was prepared.
 	 */
-	struct viv_view *view = server->grabbed_view;
-	double border_x = server->cursor->x - server->grab_x;
-	double border_y = server->cursor->y - server->grab_y;
-	int new_left = server->grab_geobox.x;
-	int new_right = server->grab_geobox.x + server->grab_geobox.width;
-	int new_top = server->grab_geobox.y;
-	int new_bottom = server->grab_geobox.y + server->grab_geobox.height;
+	struct viv_view *view = server->grab_state.view;
+	double border_x = server->cursor->x - server->grab_state.x;
+	double border_y = server->cursor->y - server->grab_state.y;
+	int new_left = server->grab_state.geobox.x;
+	int new_right = server->grab_state.geobox.x + server->grab_state.geobox.width;
+	int new_top = server->grab_state.geobox.y;
+	int new_bottom = server->grab_state.geobox.y + server->grab_state.geobox.height;
 
-	if (server->resize_edges & WLR_EDGE_TOP) {
+	if (server->grab_state.resize_edges & WLR_EDGE_TOP) {
 		new_top = border_y;
 		if (new_top >= new_bottom) {
 			new_top = new_bottom - 1;
 		}
-	} else if (server->resize_edges & WLR_EDGE_BOTTOM) {
+	} else if (server->grab_state.resize_edges & WLR_EDGE_BOTTOM) {
 		new_bottom = border_y;
 		if (new_bottom <= new_top) {
 			new_bottom = new_top + 1;
 		}
 	}
-	if (server->resize_edges & WLR_EDGE_LEFT) {
+	if (server->grab_state.resize_edges & WLR_EDGE_LEFT) {
 		new_left = border_x;
 		if (new_left >= new_right) {
 			new_left = new_right - 1;
 		}
-	} else if (server->resize_edges & WLR_EDGE_RIGHT) {
+	} else if (server->grab_state.resize_edges & WLR_EDGE_RIGHT) {
 		new_right = border_x;
 		if (new_right <= new_left) {
 			new_right = new_left + 1;
@@ -152,17 +160,8 @@ static void process_cursor_resize(struct viv_server *server, uint32_t time) {
     view->target_height = new_height;
 }
 
-static void process_cursor_motion(struct viv_server *server, uint32_t time) {
-	/* If the mode is non-passthrough, delegate to those functions. */
-	if (server->cursor_mode == VIV_CURSOR_MOVE) {
-		process_cursor_move(server, time);
-		return;
-	} else if (server->cursor_mode == VIV_CURSOR_RESIZE) {
-		process_cursor_resize(server, time);
-		return;
-	}
-
-	/* Otherwise, find the view under the pointer and send the event along. */
+/// Find the view under the pointer (if any) and pass the event data along
+static void process_cursor_pass_through_to_view(struct viv_server *server, uint32_t time) {
 	double sx, sy;
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *surface = NULL;
@@ -202,6 +201,24 @@ static void process_cursor_motion(struct viv_server *server, uint32_t time) {
 		 * the last client to have the cursor over it. */
 		wlr_seat_pointer_clear_focus(seat);
 	}
+}
+
+/** Handle new cursor data, i.e. acting on an in-progress move or resize, or otherwise
+    passing through the event to a view.
+*/
+static void process_cursor_motion(struct viv_server *server, uint32_t time) {
+    switch (server->cursor_mode) {
+    case VIV_CURSOR_MOVE:
+		process_cursor_move_view(server, time);
+        break;
+    case VIV_CURSOR_RESIZE:
+        process_cursor_resize_view(server, time);
+        break;
+    case VIV_CURSOR_PASSTHROUGH:
+        process_cursor_pass_through_to_view(server, time);
+        break;
+    }
+
 }
 
 static void server_cursor_motion(struct wl_listener *listener, void *data) {
@@ -246,28 +263,28 @@ static void begin_interactive(struct viv_view *view,
 		/* Deny move/resize requests from unfocused clients. */
 		return;
 	}
-	server->grabbed_view = view;
+	server->grab_state.view = view;
 	server->cursor_mode = mode;
 
     viv_view_ensure_floating(view);
 
 	if (mode == VIV_CURSOR_MOVE) {
-		server->grab_x = server->cursor->x - view->x;
-		server->grab_y = server->cursor->y - view->y;
+		server->grab_state.x = server->cursor->x - view->x;
+		server->grab_state.y = server->cursor->y - view->y;
 	} else {
 		struct wlr_box geo_box;
 		wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
 
 		double border_x = (view->x + geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
 		double border_y = (view->y + geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
-		server->grab_x = server->cursor->x - border_x;
-		server->grab_y = server->cursor->y - border_y;
+		server->grab_state.x = server->cursor->x - border_x;
+		server->grab_state.y = server->cursor->y - border_y;
 
-		server->grab_geobox = geo_box;
-		server->grab_geobox.x += view->x;
-		server->grab_geobox.y += view->y;
+		server->grab_state.geobox = geo_box;
+		server->grab_state.geobox.x += view->x;
+		server->grab_state.geobox.y += view->y;
 
-		server->resize_edges = edges;
+		server->grab_state.resize_edges = edges;
 	}
 }
 
@@ -408,9 +425,6 @@ static void render_surface(struct wlr_surface *surface,
 }
 
 static void render_view(struct viv_view *view, struct render_data *rdata) {
-    struct viv_output *output = view->workspace->output;
-	struct wlr_renderer *renderer = output->server->renderer;
-
     /* This calls our render_surface function for each surface among the
         * xdg_surface's toplevel and popups. */
     wlr_xdg_surface_for_each_surface(view->xdg_surface, render_surface, rdata);
