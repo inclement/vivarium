@@ -25,7 +25,9 @@
 
 #define CONFIG_BORDER_WIDTH_DEFAULT 2
 #define CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT {1, 0, 0.7, 1}
-#define CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT {0.7, 0.7, 0.7, 1}
+#define CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT {0.6, 0.6, 0.9, 1}
+
+#define CONFIG_CLEAR_COLOUR_DEFAULT {0.3, 0.3, 0.3, 1.0}
 
 struct viv_keybind {
     xkb_keysym_t key;
@@ -88,6 +90,7 @@ static struct viv_config the_config = {
     .border_width = CONFIG_BORDER_WIDTH_DEFAULT,
     .active_border_colour = CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT,
     .inactive_border_colour = CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT,
+    .clear_colour = CONFIG_CLEAR_COLOUR_DEFAULT,
 
 	.xkb_rules = {
         .model = "pc104",

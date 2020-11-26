@@ -504,8 +504,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
 	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
 	wlr_renderer_begin(renderer, width, height);
 
-	float color[4] = {0.3, 0.3, 0.3, 1.0};
-	wlr_renderer_clear(renderer, color);
+	wlr_renderer_clear(renderer, output->server->config->clear_colour);
 
 	/* Each subsequent window we render is rendered on top of the last. Because
 	 * our view list is ordered front-to-back, we iterate over it backwards. */
