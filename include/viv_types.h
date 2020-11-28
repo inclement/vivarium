@@ -169,5 +169,15 @@ struct viv_config {
     struct xkb_rule_names xkb_rules;
 };
 
+/* Used to move all of the data necessary to render a surface from the top-level
+ * frame handler to the per-surface render function. */
+// TODO: should this be internal to viv_render.c?
+struct viv_render_data {
+	struct wlr_output *output;
+	struct wlr_renderer *renderer;
+	struct viv_view *view;
+	struct timespec *when;
+};
+
 
 #endif

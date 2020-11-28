@@ -25,6 +25,7 @@
 #include "viv_workspace.h"
 #include "viv_layout.h"
 #include "viv_output.h"
+#include "viv_render.h"
 #include "viv_view.h"
 
 #include "viv_config.h"
@@ -233,131 +234,7 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
 	wlr_seat_pointer_notify_frame(server->seat);
 }
 
-/* Used to move all of the data necessary to render a surface from the top-level
- * frame handler to the per-surface render function. */
-struct render_data {
-	struct wlr_output *output;
-	struct wlr_renderer *renderer;
-	struct viv_view *view;
-	struct timespec *when;
-};
 
-static void render_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
-	/* This function is called for every surface that needs to be rendered. */
-	struct render_data *rdata = data;
-	struct viv_view *view = rdata->view;
-	struct wlr_output *output = rdata->output;
-
-	/* We first obtain a wlr_texture, which is a GPU resource. wlroots
-	 * automatically handles negotiating these with the client. The underlying
-	 * resource could be an opaque handle passed from the client, or the client
-	 * could have sent a pixel buffer which we copied to the GPU, or a few other
-	 * means. You don't have to worry about this, wlroots takes care of it. */
-	struct wlr_texture *texture = wlr_surface_get_texture(surface);
-	if (texture == NULL) {
-		return;
-	}
-
-	/* The view has a position in layout coordinates. If you have two displays,
-	 * one next to the other, both 1080p, a view on the rightmost display might
-	 * have layout coordinates of 2000,100. We need to translate that to
-	 * output-local coordinates, or (2000 - 1920). */
-	double ox = 0, oy = 0;
-	wlr_output_layout_output_coords(
-			view->server->output_layout, output, &ox, &oy);
-	ox += view->x + sx, oy += view->y + sy;
-    UNUSED(ox); UNUSED(oy); UNUSED(sx); UNUSED(sy);
-
-	/* We also have to apply the scale factor for HiDPI outputs. This is only
-	 * part of the puzzle, vivarium does not fully support HiDPI. */
-	struct wlr_box box = {
-		.x = ox * output->scale,
-		.y = oy * output->scale,
-		.width = surface->current.width * output->scale,
-		.height = surface->current.height * output->scale,
-	};
-
-	/*
-	 * Those familiar with OpenGL are also familiar with the role of matricies
-	 * in graphics programming. We need to prepare a matrix to render the view
-	 * with. wlr_matrix_project_box is a helper which takes a box with a desired
-	 * x, y coordinates, width and height, and an output geometry, then
-	 * prepares an orthographic projection and multiplies the necessary
-	 * transforms to produce a model-view-projection matrix.
-	 *
-	 * Naturally you can do this any way you like, for example to make a 3D
-	 * compositor.
-	 */
-	float matrix[9];
-	enum wl_output_transform transform =
-		wlr_output_transform_invert(surface->current.transform);
-	wlr_matrix_project_box(matrix, &box, transform, 0,
-		output->transform_matrix);
-
-	/* This takes our matrix, the texture, and an alpha, and performs the actual
-	 * rendering on the GPU. */
-	wlr_render_texture_with_matrix(rdata->renderer, texture, matrix, 1);
-
-	/* This lets the client know that we've displayed that frame and it can
-	 * prepare another one now if it likes. */
-	wlr_surface_send_frame_done(surface, rdata->when);
-}
-
-static void render_view(struct viv_view *view, struct render_data *rdata) {
-    /* This calls our render_surface function for each surface among the
-        * xdg_surface's toplevel and popups. */
-    wlr_xdg_surface_for_each_surface(view->xdg_surface, render_surface, rdata);
-}
-
-static void render_borders(struct viv_view *view, bool is_active) {
-    struct viv_output *output = view->workspace->output;
-	struct wlr_renderer *renderer = output->server->renderer;
-
-    struct viv_server *server = output->server;
-
-    struct wlr_box geo_box;
-    wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
-    int x = view->target_x;
-    int y = view->target_y;
-    int width = view->target_width;
-    int height = view->target_height;
-    float *colour = (is_active ?
-                     server->config->active_border_colour :
-                     server->config->inactive_border_colour);
-
-    int line_width = server->config->border_width;
-
-    struct wlr_box box;
-
-    // bottom
-    box.x = x;
-    box.y = y;
-    box.width = width;
-    box.height = line_width;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
-
-    // top
-    box.x = x;
-    box.y = y + height - line_width;
-    box.width = width;
-    box.height = line_width;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
-
-    // left
-    box.x = x;
-    box.y = y;
-    box.width = line_width;
-    box.height = height;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
-
-    // right
-    box.x = x + width - line_width;
-    box.y = y;
-    box.width = line_width;
-    box.height = height;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
-
-}
 
 static void output_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -397,29 +274,26 @@ static void output_frame(struct wl_listener *listener, void *data) {
             // The active view always gets rendered on top
             continue;
         }
-		struct render_data rdata = {
+		struct viv_render_data rdata = {
 			.output = output->wlr_output,
 			.view = view,
 			.renderer = renderer,
 			.when = &now,
 		};
-        render_view(view, &rdata);
-        render_borders(view, false);
+        viv_render_view(view, &rdata);
 	}
 
     if (output->current_workspace->active_view != NULL) {
         if (output->current_workspace->active_view->mapped &
             !output->current_workspace->active_view->is_floating) {
             // Render the active view
-            struct render_data rdata = {
+            struct viv_render_data rdata = {
                 .output = output->wlr_output,
                 .view = output->current_workspace->active_view,
                 .renderer = renderer,
                 .when = &now,
             };
-            render_view(output->current_workspace->active_view, &rdata);
-            bool output_is_active = (output == output->server->active_output);
-            render_borders(output->current_workspace->active_view, output_is_active);
+            viv_render_view(output->current_workspace->active_view, &rdata);
         }
     }
 
@@ -431,7 +305,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
 			/* An unmapped view should not be rendered. */
 			continue;
 		}
-		struct render_data rdata = {
+		struct viv_render_data rdata = {
 			.output = output->wlr_output,
 			.view = view,
 			.renderer = renderer,
@@ -439,9 +313,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
 		};
 		/* This calls our render_surface function for each surface among the
 		 * xdg_surface's toplevel and popups. */
-        render_view(view, &rdata);
-        bool is_active_window = (output->current_workspace->active_view == view);
-        render_borders(view, is_active_window);
+        viv_render_view(view, &rdata);
 	}
 
     struct wlr_box output_marker_box = {
