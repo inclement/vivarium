@@ -142,6 +142,7 @@ static void begin_interactive(struct viv_view *view,
 	server->grab_state.view = view;
 	server->cursor_mode = mode;
 
+    // Any view can be interacted with, but this automatically pulls it out of tiling
     viv_view_ensure_floating(view);
 
 	if (mode == VIV_CURSOR_MOVE) {
@@ -164,6 +165,17 @@ static void begin_interactive(struct viv_view *view,
 	}
 }
 
+static bool global_meta_held(struct viv_server *server) {
+    struct viv_keyboard *keyboard;
+    wl_list_for_each(keyboard, &server->keyboards, link) {
+        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+        if (modifiers & server->config->global_meta_key) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static void server_cursor_button(struct wl_listener *listener, void *data) {
 	/* This event is forwarded by the cursor when a pointer emits a button
 	 * event. */
@@ -178,23 +190,13 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	struct viv_view *view = viv_server_view_at(server,
 			server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 
-    bool alt_held = false;
-    struct viv_keyboard *keyboard;
-    uint32_t modifiers;
-    wl_list_for_each(keyboard, &server->keyboards, link) {
-        modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-        if (modifiers & WLR_MODIFIER_ALT) {
-            alt_held = true;
-        }
-    }
-
 	if (event->state == WLR_BUTTON_RELEASED) {
 		/* If you released any buttons, we exit interactive move/resize mode. */
 		server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 	} else {
 		/* Focus that client if the button was pressed */
 		viv_view_focus(view, surface);
-        if (alt_held) {
+        if (global_meta_held(server)) {
             viv_view_bring_to_front(view);
             if (event->state == WLR_BUTTON_PRESSED) {
                 if (event->button == VIV_LEFT_BUTTON) {
