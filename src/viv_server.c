@@ -29,6 +29,28 @@
 #include "viv_config.h"
 #include "viv_config_support.h"
 
+static struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
+
+    struct wlr_output *wlr_output_at_point = wlr_output_layout_output_at(server->output_layout, lx, ly);
+
+    struct viv_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (output->wlr_output == wlr_output_at_point) {
+            return output;
+        }
+    }
+    return NULL;
+}
+
+static void viv_output_make_active(struct viv_output *output) {
+    if (output == NULL) {
+        // It's acceptable to be asked to make a NULL output active
+        // TODO: is it really?
+        return;
+    }
+
+    output->server->active_output = output;
+}
 
 
 /** Test if any surfaces of the given view are at the given layout coordinates, including
@@ -167,6 +189,7 @@ static void process_cursor_pass_through_to_view(struct viv_server *server, uint3
 	double sx, sy;
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *surface = NULL;
+    // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
 	struct viv_view *view = desktop_view_at(server,
 			server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 	if (!view) {
@@ -209,6 +232,13 @@ static void process_cursor_pass_through_to_view(struct viv_server *server, uint3
     passing through the event to a view.
 */
 static void process_cursor_motion(struct viv_server *server, uint32_t time) {
+    // Always update the current output if necessary
+	double cursor_x = server->cursor->x;
+	double cursor_y = server->cursor->y;
+    struct viv_output *output_at_point = viv_output_at(server, cursor_x, cursor_y);
+    viv_output_make_active(output_at_point);
+
+    // Respond to the specific cursor movement
     switch (server->cursor_mode) {
     case VIV_CURSOR_MOVE:
 		process_cursor_move_view(server, time);
@@ -234,6 +264,7 @@ static void server_cursor_motion(struct wl_listener *listener, void *data) {
 	wlr_cursor_move(server->cursor, event->device,
 			event->delta_x, event->delta_y);
 
+    wlr_log(WLR_DEBUG, "Cursor at %f, %f", server->cursor->x, server->cursor->y);
     // Do our own processing of the motion if necessary
 	process_cursor_motion(server, event->time_msec);
 }
@@ -250,6 +281,7 @@ static void server_cursor_motion_absolute(
 		wl_container_of(listener, server, cursor_motion_absolute);
 	struct wlr_event_pointer_motion_absolute *event = data;
 	wlr_cursor_warp_absolute(server->cursor, event->device, event->x, event->y);
+    wlr_log(WLR_DEBUG, "Cursor at %f, %f", server->cursor->x, server->cursor->y);
 	process_cursor_motion(server, event->time_msec);
 }
 
@@ -366,8 +398,7 @@ struct render_data {
 	struct timespec *when;
 };
 
-static void render_surface(struct wlr_surface *surface,
-		int sx, int sy, void *data) {
+static void render_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
 	/* This function is called for every surface that needs to be rendered. */
 	struct render_data *rdata = data;
 	struct viv_view *view = rdata->view;
@@ -391,9 +422,10 @@ static void render_surface(struct wlr_surface *surface,
 	wlr_output_layout_output_coords(
 			view->server->output_layout, output, &ox, &oy);
 	ox += view->x + sx, oy += view->y + sy;
+    UNUSED(ox); UNUSED(oy); UNUSED(sx); UNUSED(sy);
 
 	/* We also have to apply the scale factor for HiDPI outputs. This is only
-	 * part of the puzzle, Viv does not fully support HiDPI. */
+	 * part of the puzzle, vivarium does not fully support HiDPI. */
 	struct wlr_box box = {
 		.x = ox * output->scale,
 		.y = oy * output->scale,
@@ -487,8 +519,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	/* This function is called every time an output is ready to display a frame,
 	 * generally at the output's refresh rate (e.g. 60Hz). */
-	struct viv_output *output =
-		wl_container_of(listener, output, frame);
+	struct viv_output *output = wl_container_of(listener, output, frame);
 	struct wlr_renderer *renderer = output->server->renderer;
 
 	struct timespec now;
@@ -515,7 +546,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
             continue;
         }
 		if (!view->mapped) {
-			/* An unmapped view should not be rendered. */
+			// An unmapped view should not be rendered.
 			continue;
 		}
         if (view == output->current_workspace->active_view) {
@@ -567,6 +598,14 @@ static void output_frame(struct wl_listener *listener, void *data) {
         bool is_active_window = (output->current_workspace->active_view == view);
         render_borders(view, is_active_window);
 	}
+
+    struct wlr_box output_marker_box = {
+        .x = 0, .y = 0, .width = 10, .height = 10
+    };
+    float output_marker_colour[4] = {0.5, 0.5, 1, 0.5};
+    if (output == output->server->active_output) {
+        wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
+    }
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
 	 * moved around without re-rendering what's beneath them - which is more
@@ -624,9 +663,15 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
 
+    static size_t count = 0;
     struct viv_workspace *current_workspace = wl_container_of(server->workspaces.next, current_workspace, server_link);
+    for (size_t i = 0; i < count; i++) {
+        current_workspace = wl_container_of(current_workspace->server_link.next, current_workspace, server_link);
+    }
+    count++;
     output->current_workspace = current_workspace;
     current_workspace->output = output;
+    wlr_log(WLR_INFO, "Assigning new output workspace %s", current_workspace->name);
 
 	/* Adds this to the output layout. The add_auto function arranges outputs
 	 * from left-to-right in the order they appear. A more sophisticated
@@ -697,11 +742,33 @@ static void xdg_toplevel_request_resize(struct wl_listener *listener, void *data
 	/* This event is raised when a client would like to begin an interactive
 	 * resize, typically because the user clicked on their client-side
 	 * decorations. Note that a more sophisticated compositor should check the
-	 * provied serial against a list of button press serials sent to this
+	 * provided serial against a list of button press serials sent to this
 	 * client, to prevent the client from requesting this whenever they want. */
 	struct wlr_xdg_toplevel_resize_event *event = data;
 	struct viv_view *view = wl_container_of(listener, view, request_resize);
 	begin_interactive(view, VIV_CURSOR_RESIZE, event->edges);
+}
+
+static void xdg_toplevel_request_maximize(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_view *view = wl_container_of(listener, view, request_maximize);
+    const char *app_id = view->xdg_surface->toplevel->app_id;
+    wlr_log(WLR_ERROR, "\"%s\" requested maximise, ignoring", app_id);
+}
+
+static void xdg_toplevel_request_minimize(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_view *view = wl_container_of(listener, view, request_minimize);
+    const char *app_id = view->xdg_surface->toplevel->app_id;
+    wlr_log(WLR_ERROR, "\"%s\" requested minimise, ignoring", app_id);
+}
+
+static void xdg_toplevel_set_title(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_view *view = wl_container_of(listener, view, set_title);
+    const char *title = view->xdg_surface->toplevel->title;
+    const char *app_id = view->xdg_surface->toplevel->app_id;
+    wlr_log(WLR_DEBUG, "\"%s\" set title \"%s\"", app_id, title);
 }
 
 static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
@@ -736,13 +803,22 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	wl_signal_add(&toplevel->events.request_move, &view->request_move);
 	view->request_resize.notify = xdg_toplevel_request_resize;
 	wl_signal_add(&toplevel->events.request_resize, &view->request_resize);
+	view->request_maximize.notify = xdg_toplevel_request_maximize;
+	wl_signal_add(&toplevel->events.request_maximize, &view->request_maximize);
+	view->request_minimize.notify = xdg_toplevel_request_minimize;
+	wl_signal_add(&toplevel->events.request_minimize, &view->request_minimize);
+	view->set_title.notify = xdg_toplevel_set_title;
+	wl_signal_add(&toplevel->events.set_title, &view->set_title);
 
-    /* Add it to the current workspace */
-    struct viv_output *output;
-    wl_list_for_each(output, &server->outputs, link) {
-        wl_list_insert(&output->current_workspace->views, &view->workspace_link);
-        view->workspace = output->current_workspace;
+    /* Add it to a workspace */
+    static size_t count = 0;
+    struct viv_output *output = wl_container_of(server->outputs.next, output, link);
+    if (count % 2 == 0) {
+        output = wl_container_of(output->link.next, output, link);
     }
+    count++;
+    wl_list_insert(&output->current_workspace->views, &view->workspace_link);
+    view->workspace = output->current_workspace;
 }
 
 static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
@@ -803,7 +879,7 @@ static void server_keyboard_handle_key(
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
 	if ((modifiers & server->config->global_meta_key) && event->state == WLR_KEY_PRESSED) {
 		for (int i = 0; i < nsyms; i++) {
-            wlr_log(WLR_DEBUG, "Key %d pressed\n", syms[i]);
+            wlr_log(WLR_DEBUG, "Key %d pressed", syms[i]);
 			handled = handle_keybinding(server, syms[i]);
 		}
 	}

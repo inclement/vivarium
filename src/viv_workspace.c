@@ -138,7 +138,7 @@ void viv_workspace_increment_divide(struct viv_workspace *workspace, float incre
 
 void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspaces) {
     if (wl_list_length(workspaces) < 2) {
-        printf("Not switching workspaces as only %d present\n", wl_list_length(workspaces));
+        wlr_log(WLR_DEBUG, "Not switching workspaces as only %d present\n", wl_list_length(workspaces));
         return;
     }
 
@@ -160,7 +160,7 @@ void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspace
         viv_view_focus(new_workspace->active_view, new_workspace->active_view->xdg_surface->surface);
     }
 
-    printf("Workspace changed from %s to %s\n", old_workspace->name, new_workspace->name);
+    wlr_log(WLR_INFO, "Workspace changed from %s to %s", old_workspace->name, new_workspace->name);
 }
 
 void viv_workspace_next_layout(struct viv_workspace *workspace) {

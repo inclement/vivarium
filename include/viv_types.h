@@ -108,6 +108,9 @@ struct viv_view {
 	struct wl_listener destroy;
 	struct wl_listener request_move;
 	struct wl_listener request_resize;
+	struct wl_listener request_maximize;
+	struct wl_listener request_minimize;
+	struct wl_listener set_title;
 	bool mapped;
 	int x, y;
 
@@ -155,6 +158,7 @@ struct viv_config {
     int border_width;
     float active_border_colour[4];
     float inactive_border_colour[4];
+    float clear_colour[4];
 
     struct viv_keybind *keybinds;
 
