@@ -574,7 +574,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
                 .when = &now,
             };
             render_view(output->current_workspace->active_view, &rdata);
-            render_borders(output->current_workspace->active_view, true);
+            bool output_is_active = (output == output->server->active_output);
+            render_borders(output->current_workspace->active_view, output_is_active);
         }
     }
 
