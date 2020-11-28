@@ -100,6 +100,10 @@ void viv_render_view(struct viv_view *view, struct viv_render_data *rdata) {
     // Note this renders both the toplevel and any popups
     wlr_xdg_surface_for_each_surface(view->xdg_surface, render_surface, rdata);
 
+    // TODO: We should actually do the following in order:
+    // - render the toplevel (but only the region within the intended layout area)
+    // - render the borders
+    // - render any popups
     struct viv_output *output = view->workspace->output;
     bool is_active = ((output == output->server->active_output) &
                       (view == view->workspace->active_view));

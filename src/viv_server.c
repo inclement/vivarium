@@ -258,8 +258,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
 
 	wlr_renderer_clear(renderer, output->server->config->clear_colour);
 
-	/* Each subsequent window we render is rendered on top of the last. Because
-	 * our view list is ordered front-to-back, we iterate over it backwards. */
     // First render tiled windows, then render floating windows on top (but preserving order)
 	struct viv_view *view;
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
@@ -283,18 +281,17 @@ static void output_frame(struct wl_listener *listener, void *data) {
         viv_render_view(view, &rdata);
 	}
 
-    if (output->current_workspace->active_view != NULL) {
-        if (output->current_workspace->active_view->mapped &
-            !output->current_workspace->active_view->is_floating) {
-            // Render the active view
-            struct viv_render_data rdata = {
-                .output = output->wlr_output,
-                .view = output->current_workspace->active_view,
-                .renderer = renderer,
-                .when = &now,
-            };
-            viv_render_view(output->current_workspace->active_view, &rdata);
-        }
+    // Always render the active view on top of other tiled views
+    if ((output->current_workspace->active_view != NULL) &&
+        (output->current_workspace->active_view->mapped) &&
+        (!output->current_workspace->active_view->is_floating)) {
+        struct viv_render_data rdata = {
+            .output = output->wlr_output,
+            .view = output->current_workspace->active_view,
+            .renderer = renderer,
+            .when = &now,
+        };
+        viv_render_view(output->current_workspace->active_view, &rdata);
     }
 
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
@@ -316,6 +313,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
         viv_render_view(view, &rdata);
 	}
 
+#ifdef DEBUG
+    // Mark the currently-active output
     struct wlr_box output_marker_box = {
         .x = 0, .y = 0, .width = 10, .height = 10
     };
@@ -323,6 +322,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
     if (output == output->server->active_output) {
         wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
     }
+#endif
 
 	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
 	 * moved around without re-rendering what's beneath them - which is more

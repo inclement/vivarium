@@ -20,6 +20,10 @@ CFLAGS += \
 	-Wextra \
 	$(EXTRA_INCLUDES)
 
+ifdef DEBUG
+CFLAGS += -DDEBUG
+endif
+
 _PROTOCOLS = xdg-shell
 PROTOCOL_INCLUDES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.h,$(_PROTOCOLS))
 PROTOCOL_SOURCES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.c,$(_PROTOCOLS))
