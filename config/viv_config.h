@@ -57,6 +57,8 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(o, do_shell, .command = "okular"),
     KEYBIND_MAPPABLE(space, next_layout),
     KEYBIND_USER_FUNCTION(F, &example_user_function),
+    KEYBIND_MAPPABLE(exclam, shift_active_window_to_workspace, .workspace_name = "1"),
+    KEYBIND_MAPPABLE(quotedbl, shift_active_window_to_workspace, .workspace_name = "2"),
     TERMINATE_KEYBINDS_LIST()
 };
 

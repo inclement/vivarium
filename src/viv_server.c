@@ -32,6 +32,17 @@
 #include "viv_config.h"
 #include "viv_config_support.h"
 
+struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
+    struct viv_workspace *workspace;
+    wl_list_for_each(workspace, &server->workspaces, server_link) {
+        if (strcmp(workspace->name, name) == 0) {
+            return workspace;
+        }
+    }
+    wlr_log(WLR_ERROR, "Could not find workspace with name %s", name);
+    return NULL;
+}
+
 /** Test if any surfaces of the given view are at the given layout coordinates, including
     nested surfaces (e.g. popup windows, tooltips).  If so, return the surface data.
     @param view Pointer to the view to test

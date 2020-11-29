@@ -11,7 +11,9 @@
 #include "viv_mappable_functions.h"
 
 #include "viv_output.h"
+#include "viv_server.h"
 #include "viv_types.h"
+#include "viv_view.h"
 #include "viv_workspace.h"
 
 void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_payload payload) {
@@ -151,4 +153,18 @@ void viv_mappable_left_output(struct viv_workspace *workspace, union viv_mappabl
 
     struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_LEFT);
     viv_output_make_active(next_output);
+}
+
+void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    char *name = payload.shift_active_window_to_workspace.workspace_name;
+    wlr_log(WLR_DEBUG, "Mappable shift_active_window_to_workspace with name %s", name);
+
+    struct viv_output *cur_output = workspace->output;
+    struct viv_view *cur_view = workspace->active_view;
+
+    struct viv_workspace *target_workspace = viv_server_retrieve_workspace_by_name(cur_output->server, name);
+    ASSERT(target_workspace != NULL);
+
+    viv_view_shift_to_workspace(cur_view, target_workspace);
 }
