@@ -368,15 +368,14 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
 
-    static size_t count = 0;
-    struct viv_workspace *current_workspace = wl_container_of(server->workspaces.next, current_workspace, server_link);
-    for (size_t i = 0; i < count; i++) {
-        current_workspace = wl_container_of(current_workspace->server_link.next, current_workspace, server_link);
+    struct viv_workspace *current_workspace;
+    wl_list_for_each(current_workspace, &server->workspaces, server_link) {
+        if (current_workspace->output == NULL) {
+            wlr_log(WLR_INFO, "Assigning new output workspace %s", current_workspace->name);
+            viv_workspace_assign_to_output(current_workspace, output);
+            break;
+        }
     }
-    count++;
-    output->current_workspace = current_workspace;
-    current_workspace->output = output;
-    wlr_log(WLR_INFO, "Assigning new output workspace %s", current_workspace->name);
 
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
@@ -398,12 +397,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     struct viv_view *view = viv_xdg_view_init(server, xdg_surface);
 
     // Make sure the view gets added to a workspace
-    static size_t count = 0;
-    struct viv_output *output = wl_container_of(server->outputs.next, output, link);
-    if (count % 2 == 0) {
-        output = wl_container_of(output->link.next, output, link);
-    }
-    count++;
+    struct viv_output *output = server->active_output;
     wl_list_insert(&output->current_workspace->views, &view->workspace_link);
     view->workspace = output->current_workspace;
 }

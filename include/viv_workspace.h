@@ -17,4 +17,8 @@ void viv_workspace_shift_active_window_up(struct viv_workspace *workspace);
 void viv_workspace_next_layout(struct viv_workspace *workspace);
 void viv_workspace_prev_layout(struct viv_workspace *workspace);
 
+/// Set the given output's workspace to the given workspace, switching with the previous
+/// one if necessary
+void viv_workspace_assign_to_output(struct viv_workspace *workspace, struct viv_output *output);
+
 #endif

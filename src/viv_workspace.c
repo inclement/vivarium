@@ -184,3 +184,13 @@ void viv_workspace_prev_layout(struct viv_workspace *workspace) {
     workspace->active_layout = prev_layout;
     workspace->needs_layout = true;
 }
+
+void viv_workspace_assign_to_output(struct viv_workspace *workspace, struct viv_output *output) {
+    // TODO add workspace switching between outputs
+    if (workspace->output != NULL) {
+        wlr_log(WLR_ERROR, "Changed the output of a workspace that already has an output");
+    }
+
+    output->current_workspace = workspace;
+    workspace->output = output;
+}
