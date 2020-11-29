@@ -90,9 +90,7 @@ static void xdg_toplevel_set_title(struct wl_listener *listener, void *data) {
     wlr_log(WLR_DEBUG, "\"%s\" set title \"%s\"", app_id, title);
 }
 
-struct viv_view *viv_xdg_view_create(struct viv_server *server, struct wlr_xdg_surface *xdg_surface) {
-	struct viv_view *view = calloc(1, sizeof(struct viv_view));
-    CHECK_ALLOCATION(view);
+void viv_xdg_view_init(struct viv_view *view, struct viv_server *server, struct wlr_xdg_surface *xdg_surface) {
 
     view->type = VIV_VIEW_TYPE_XDG_SHELL;
 	view->server = server;
@@ -119,5 +117,4 @@ struct viv_view *viv_xdg_view_create(struct viv_server *server, struct wlr_xdg_s
 	view->set_title.notify = xdg_toplevel_set_title;
 	wl_signal_add(&toplevel->events.set_title, &view->set_title);
 
-    return view;
 }

@@ -3,7 +3,8 @@
 
 #include "viv_types.h"
 
-/// Create, init and return a viv_view to represent the given xdg_surface
-struct viv_view *viv_xdg_view_create(struct viv_server *server, struct wlr_xdg_surface *xdg_surface);
+/// init and return a viv_view to represent the given xdg_surface
+void viv_xdg_view_init(struct viv_view *view, struct viv_server *server, struct wlr_xdg_surface *xdg_surface);
+
 
 #endif

@@ -5,6 +5,7 @@
 #include "viv_view.h"
 
 #include "viv_types.h"
+#include "viv_wl_list_utils.h"
 
 void viv_view_bring_to_front(struct viv_view *view) {
     struct wl_list *link = &view->workspace_link;
@@ -88,4 +89,24 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
         workspace->active_view = view;
     }
     view->workspace = workspace;
+}
+
+struct viv_view *viv_view_next_in_workspace(struct viv_view *view) {
+    struct viv_workspace *workspace = view->workspace;
+
+    struct wl_list *next_link = viv_wl_list_next_ignoring_root(&view->workspace_link, &workspace->views);
+
+    struct viv_view *next_view = wl_container_of(next_link, next_view, workspace_link);
+
+    return next_view;
+}
+
+struct viv_view *viv_view_prev_in_workspace(struct viv_view *view) {
+    struct viv_workspace *workspace = view->workspace;
+
+    struct wl_list *prev_link = viv_wl_list_prev_ignoring_root(&view->workspace_link, &workspace->views);
+
+    struct viv_view *prev_view = wl_container_of(prev_link, prev_view, workspace_link);
+
+    return prev_view;
 }

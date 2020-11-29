@@ -44,17 +44,7 @@ void viv_workspace_next_window(struct viv_workspace *workspace) {
         return;
     }
 
-    struct wl_list *next_link = active_view->workspace_link.next;
-    if (next_link == &workspace->views) {
-        next_link = next_link->next;
-    }
-
-    if (next_link == &workspace->views) {
-        wlr_log(WLR_ERROR, "Next window couldn't be found\n");
-        return;
-    }
-
-    struct viv_view *next_view = wl_container_of(next_link, next_view, workspace_link);
+    struct viv_view *next_view = viv_view_next_in_workspace(workspace->active_view);
 
     viv_view_focus(next_view, next_view->xdg_surface->surface);
 }
@@ -66,17 +56,7 @@ void viv_workspace_prev_window(struct viv_workspace *workspace) {
         return;
     }
 
-    struct wl_list *prev_link = active_view->workspace_link.prev;
-    if (prev_link == &workspace->views) {
-        prev_link = prev_link->prev;
-    }
-
-    if (prev_link == &workspace->views) {
-        wlr_log(WLR_ERROR, "Prev window couldn't be found\n");
-        return;
-    }
-
-    struct viv_view *prev_view = wl_container_of(prev_link, prev_view, workspace_link);
+    struct viv_view *prev_view = viv_view_prev_in_workspace(workspace->active_view);
 
     viv_view_focus(prev_view, prev_view->xdg_surface->surface);
 }

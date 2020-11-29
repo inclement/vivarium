@@ -14,4 +14,8 @@ void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mo
 
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name);
 
+/// Check through all data held by the server to check for consistency, e.g. all
+/// view->workspace is equal to the workspace of their workspace_link.
+void viv_check_data_consistency(struct viv_server *server);
+
 #endif

@@ -11,6 +11,12 @@
 #define MAX_NUM_WORKSPACES 50
 #define MAX_NUM_LAYOUTS 50
 
+#define EXIT_FAILURE 1
+
+#include <stdlib.h>
+
+#include <wlr/util/log.h>
+
 #define KEYBIND_MAPPABLE(KEY, BINDING, ARGS...) \
     {                                           \
         .key = XKB_KEY_ ## KEY,                 \
@@ -24,8 +30,6 @@
         .binding = &viv_mappable_user_function,                 \
         .payload = { .user_function = { .function = BINDING } } \
     }
-
-#endif
 
 #define EXIT_WITH_MESSAGE(MESSAGE)             \
     wlr_log(WLR_ERROR, MESSAGE);                  \
@@ -46,3 +50,5 @@
 
 #define UNUSED(SYMBOL) \
     (void)(SYMBOL);
+
+#endif
