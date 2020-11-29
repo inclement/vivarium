@@ -32,6 +32,11 @@
 #include "viv_config.h"
 #include "viv_config_support.h"
 
+#define DEBUG_ASSERT_EQUAL(EXPR1, EXPR2)                                \
+    if ((EXPR1) != (EXPR2)) {                                           \
+        wlr_log(WLR_ERROR, "ERROR IN DEBUG ASSERT: " #EXPR1 " != " #EXPR2); \
+    }
+
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
     struct viv_workspace *workspace;
     wl_list_for_each(workspace, &server->workspaces, server_link) {
@@ -246,10 +251,15 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
 /// Handle a render frame event
 static void output_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
+
     // This has been called because a specific output is ready to display a frame,
     // retrieve this info
 	struct viv_output *output = wl_container_of(listener, output, frame);
 	struct wlr_renderer *renderer = output->server->renderer;
+
+#ifdef DEBUG
+    viv_check_data_consistency(output->server);
+#endif
 
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -403,7 +413,9 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	}
 
     // Create a viv_view to track the xdg surface
-    struct viv_view *view = viv_xdg_view_create(server, xdg_surface);
+	struct viv_view *view = calloc(1, sizeof(struct viv_view));
+    CHECK_ALLOCATION(view);
+    viv_xdg_view_init(view, server, xdg_surface);
 
     // Make sure the view gets added to a workspace
     struct viv_output *output = server->active_output;
@@ -620,6 +632,29 @@ static void init_workspaces(struct wl_list *workspaces_list,
         init_layouts(&workspace->layouts, layouts);
         struct viv_layout *active_layout = wl_container_of(workspace->layouts.next, active_layout, workspace_link);
         workspace->active_layout = active_layout;
+    }
+}
+
+void viv_check_data_consistency(struct viv_server *server) {
+    struct viv_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        DEBUG_ASSERT_EQUAL(output->server, server);
+        DEBUG_ASSERT_EQUAL(output->current_workspace->output, output);
+    }
+
+    struct viv_workspace *workspace;
+    wl_list_for_each(workspace, &server->workspaces, server_link) {
+        // Check that each view in the workspace is back-linked correctly
+        struct viv_view *view;
+        bool active_view_in_views = false;
+        wl_list_for_each(view, &workspace->views, workspace_link) {
+            DEBUG_ASSERT_EQUAL(view->workspace, workspace);
+            if (view == workspace->active_view) {
+                active_view_in_views = true;
+            }
+        }
+        bool active_view_is_null = (workspace->active_view == NULL);
+        DEBUG_ASSERT_EQUAL(active_view_in_views || active_view_is_null, true);
     }
 }
 
