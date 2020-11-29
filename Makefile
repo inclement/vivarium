@@ -28,7 +28,7 @@ _PROTOCOLS = xdg-shell
 PROTOCOL_INCLUDES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.h,$(_PROTOCOLS))
 PROTOCOL_SOURCES = $(patsubst %,$(PROTOCOLS_DIR)/%-protocol.c,$(_PROTOCOLS))
 
-_DEPS = viv_types.h viv_server.h viv_workspace.h viv_layout.h viv_mappable_functions.h viv_view.h viv_output.h viv_cursor.h viv_render.h
+_DEPS = viv_types.h viv_server.h viv_workspace.h viv_layout.h viv_mappable_functions.h viv_view.h viv_output.h viv_cursor.h viv_render.h viv_xdg_shell.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS)) $(PROTOCOL_INCLUDES) $(PROTOCOL_SOURCES)
 
 WAYLAND_PROTOCOLS=$(shell pkg-config --variable=pkgdatadir wayland-protocols)
@@ -39,7 +39,7 @@ LIBS=\
 	 $(shell pkg-config --cflags --libs wayland-server) \
 	 $(shell pkg-config --cflags --libs xkbcommon)
 
-_OBJ = vivarium.o viv_layout.o viv_workspace.o viv_server.o viv_mappable_functions.o viv_view.o viv_output.o viv_cursor.o viv_render.o
+_OBJ = vivarium.o viv_layout.o viv_workspace.o viv_server.o viv_mappable_functions.o viv_view.o viv_output.o viv_cursor.o viv_render.o viv_xdg_shell.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 $(PROTOCOLS_DIR)/xdg-shell-protocol.h:

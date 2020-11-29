@@ -27,6 +27,7 @@
 #include "viv_output.h"
 #include "viv_render.h"
 #include "viv_view.h"
+#include "viv_xdg_shell.h"
 
 #include "viv_config.h"
 #include "viv_config_support.h"
@@ -128,8 +129,7 @@ static void server_cursor_motion_absolute(
 	viv_cursor_process_cursor_motion(server, event->time_msec);
 }
 
-static void begin_interactive(struct viv_view *view,
-		enum viv_cursor_mode mode, uint32_t edges) {
+void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mode, uint32_t edges) {
 	/* This function sets up an interactive move or resize operation, where the
 	 * compositor stops propegating pointer events to clients and instead
 	 * consumes them itself, to move or resize windows. */
@@ -201,9 +201,9 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
             viv_view_bring_to_front(view);
             if (event->state == WLR_BUTTON_PRESSED) {
                 if (event->button == VIV_LEFT_BUTTON) {
-                    begin_interactive(view, VIV_CURSOR_MOVE, 0);
+                    viv_server_begin_interactive(view, VIV_CURSOR_MOVE, 0);
                 } else if (event->button == VIV_RIGHT_BUTTON) {
-                    begin_interactive(view, VIV_CURSOR_RESIZE, WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT);
+                    viv_server_begin_interactive(view, VIV_CURSOR_RESIZE, WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT);
                 }
             }
         }
@@ -324,16 +324,11 @@ static void output_frame(struct wl_listener *listener, void *data) {
     }
 #endif
 
-	/* Hardware cursors are rendered by the GPU on a separate plane, and can be
-	 * moved around without re-rendering what's beneath them - which is more
-	 * efficient. However, not all hardware supports hardware cursors. For this
-	 * reason, wlroots provides a software fallback, which we ask it to render
-	 * here. wlr_cursor handles configuring hardware vs software cursors for you,
-	 * and this function is a no-op when hardware cursors are in use. */
+    // Have wlroots render software cursors if necessary (does nothing
+    // if hardware cursors available)
 	wlr_output_render_software_cursors(output->wlr_output, NULL);
 
-	/* Conclude rendering and swap the buffers, showing the final frame
-	 * on-screen. */
+	// Conclude rendering and swap the buffers
 	wlr_renderer_end(renderer);
 	wlr_output_commit(output->wlr_output);
 
@@ -348,18 +343,14 @@ static void output_frame(struct wl_listener *listener, void *data) {
     }
 }
 
+/// Respond to a new output becoming available
 static void server_new_output(struct wl_listener *listener, void *data) {
-	/* This event is raised by the backend when a new output (aka a display or
-	 * monitor) becomes available. */
 	struct viv_server *server =
 		wl_container_of(listener, server, new_output);
 	struct wlr_output *wlr_output = data;
 
-	/* Some backends don't have modes. DRM+KMS does, and we need to set a mode
-	 * before we can use the output. The mode is a tuple of (width, height,
-	 * refresh rate), and each monitor supports only a specific set of modes. We
-	 * just pick the monitor's preferred mode, a more sophisticated compositor
-	 * would let the user configure it. */
+    // Use the monitor's preferred mode for now
+    // TODO: Make this configuarble
 	if (!wl_list_empty(&wlr_output->modes)) {
 		struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output);
 		wlr_output_set_mode(wlr_output, mode);
@@ -404,90 +395,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
     server->active_output = output;
 }
 
-static void xdg_surface_map(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	/* Called when the surface is mapped, or ready to display on-screen. */
-	struct viv_view *view = wl_container_of(listener, view, map);
-	view->mapped = true;
-	viv_view_focus(view, view->xdg_surface->surface);
-
-    struct viv_workspace *workspace = view->workspace;
-    workspace->output->needs_layout += 1;
-}
-
-static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	/* Called when the surface is unmapped, and should no longer be shown. */
-	struct viv_view *view = wl_container_of(listener, view, unmap);
-	view->mapped = false;
-
-    struct viv_workspace *workspace = view->workspace;
-    workspace->output->needs_layout += 1;
-}
-
-static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	/* Called when the surface is destroyed and should never be shown again. */
-	struct viv_view *view = wl_container_of(listener, view, destroy);
-
-    struct viv_workspace *workspace = view->workspace;
-
-	wl_list_remove(&view->workspace_link);
-
-    if (wl_list_length(&workspace->views) > 0) {
-        struct viv_view *new_active_view = wl_container_of(workspace->views.next, new_active_view, workspace_link);
-        workspace->active_view = new_active_view;
-        viv_view_focus(workspace->active_view, view->xdg_surface->surface);
-    }
-
-	free(view);
-}
-
-
-static void xdg_toplevel_request_move(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	/* This event is raised when a client would like to begin an interactive
-	 * move, typically because the user clicked on their client-side
-	 * decorations. Note that a more sophisticated compositor should check the
-	 * provied serial against a list of button press serials sent to this
-	 * client, to prevent the client from requesting this whenever they want. */
-	struct viv_view *view = wl_container_of(listener, view, request_move);
-	begin_interactive(view, VIV_CURSOR_MOVE, 0);
-}
-
-static void xdg_toplevel_request_resize(struct wl_listener *listener, void *data) {
-	/* This event is raised when a client would like to begin an interactive
-	 * resize, typically because the user clicked on their client-side
-	 * decorations. Note that a more sophisticated compositor should check the
-	 * provided serial against a list of button press serials sent to this
-	 * client, to prevent the client from requesting this whenever they want. */
-	struct wlr_xdg_toplevel_resize_event *event = data;
-	struct viv_view *view = wl_container_of(listener, view, request_resize);
-	begin_interactive(view, VIV_CURSOR_RESIZE, event->edges);
-}
-
-static void xdg_toplevel_request_maximize(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	struct viv_view *view = wl_container_of(listener, view, request_maximize);
-    const char *app_id = view->xdg_surface->toplevel->app_id;
-    wlr_log(WLR_ERROR, "\"%s\" requested maximise, ignoring", app_id);
-}
-
-static void xdg_toplevel_request_minimize(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	struct viv_view *view = wl_container_of(listener, view, request_minimize);
-    const char *app_id = view->xdg_surface->toplevel->app_id;
-    wlr_log(WLR_ERROR, "\"%s\" requested minimise, ignoring", app_id);
-}
-
-static void xdg_toplevel_set_title(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	struct viv_view *view = wl_container_of(listener, view, set_title);
-    const char *title = view->xdg_surface->toplevel->title;
-    const char *app_id = view->xdg_surface->toplevel->app_id;
-    wlr_log(WLR_DEBUG, "\"%s\" set title \"%s\"", app_id, title);
-}
-
+/// Create a new viv_view to track a new xdg surface
 static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
 	 * client, either a toplevel (application window) or popup. */
@@ -498,36 +406,10 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 		return;
 	}
 
-	/* Allocate a viv_view for this surface */
-	struct viv_view *view = calloc(1, sizeof(struct viv_view));
-    CHECK_ALLOCATION(view);
+    // Create a viv_view to track the xdg surface
+    struct viv_view *view = viv_xdg_view_init(server, xdg_surface);
 
-    view->type = VIV_VIEW_TYPE_XDG_SHELL;
-	view->server = server;
-	view->xdg_surface = xdg_surface;
-
-	/* Listen to the various events it can emit */
-	view->map.notify = xdg_surface_map;
-	wl_signal_add(&xdg_surface->events.map, &view->map);
-	view->unmap.notify = xdg_surface_unmap;
-	wl_signal_add(&xdg_surface->events.unmap, &view->unmap);
-	view->destroy.notify = xdg_surface_destroy;
-	wl_signal_add(&xdg_surface->events.destroy, &view->destroy);
-
-	/* cotd */
-	struct wlr_xdg_toplevel *toplevel = xdg_surface->toplevel;
-	view->request_move.notify = xdg_toplevel_request_move;
-	wl_signal_add(&toplevel->events.request_move, &view->request_move);
-	view->request_resize.notify = xdg_toplevel_request_resize;
-	wl_signal_add(&toplevel->events.request_resize, &view->request_resize);
-	view->request_maximize.notify = xdg_toplevel_request_maximize;
-	wl_signal_add(&toplevel->events.request_maximize, &view->request_maximize);
-	view->request_minimize.notify = xdg_toplevel_request_minimize;
-	wl_signal_add(&toplevel->events.request_minimize, &view->request_minimize);
-	view->set_title.notify = xdg_toplevel_set_title;
-	wl_signal_add(&toplevel->events.set_title, &view->set_title);
-
-    /* Add it to a workspace */
+    // Make sure the view gets added to a workspace
     static size_t count = 0;
     struct viv_output *output = wl_container_of(server->outputs.next, output, link);
     if (count % 2 == 0) {

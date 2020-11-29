@@ -9,4 +9,7 @@ struct viv_view *viv_server_view_at(
 		struct viv_server *server, double lx, double ly,
 		struct wlr_surface **surface, double *sx, double *sy);
 
+
+void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mode, uint32_t edges);
+
 #endif
