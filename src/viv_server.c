@@ -109,7 +109,6 @@ static void server_cursor_motion(struct wl_listener *listener, void *data) {
 	wlr_cursor_move(server->cursor, event->device,
 			event->delta_x, event->delta_y);
 
-    wlr_log(WLR_DEBUG, "Cursor at %f, %f", server->cursor->x, server->cursor->y);
     // Do our own processing of the motion if necessary
 	viv_cursor_process_cursor_motion(server, event->time_msec);
 }
@@ -122,7 +121,6 @@ static void server_cursor_motion_absolute(
 		wl_container_of(listener, server, cursor_motion_absolute);
 	struct wlr_event_pointer_motion_absolute *event = data;
 	wlr_cursor_warp_absolute(server->cursor, event->device, event->x, event->y);
-    wlr_log(WLR_DEBUG, "Cursor at %f, %f", server->cursor->x, server->cursor->y);
 	viv_cursor_process_cursor_motion(server, event->time_msec);
 }
 
