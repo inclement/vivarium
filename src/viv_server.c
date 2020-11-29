@@ -97,6 +97,7 @@ struct viv_view *viv_server_view_at(
 	return NULL;
 }
 
+/// Handle a cursor motion event
 static void server_cursor_motion(struct wl_listener *listener, void *data) {
 	/* This event is forwarded by the cursor when a pointer emits a _relative_
 	 * pointer motion event (i.e. a delta) */
@@ -113,14 +114,10 @@ static void server_cursor_motion(struct wl_listener *listener, void *data) {
 	viv_cursor_process_cursor_motion(server, event->time_msec);
 }
 
+/// Handle an absolute cursor motion event. This happens when runing under a Wayland
+/// window rather than KMS+DRM.
 static void server_cursor_motion_absolute(
 		struct wl_listener *listener, void *data) {
-	/* This event is forwarded by the cursor when a pointer emits an _absolute_
-	 * motion event, from 0..1 on each axis. This happens, for example, when
-	 * wlroots is running under a Wayland window rather than KMS+DRM, and you
-	 * move the mouse over the window. You could enter the window from any edge,
-	 * so we have to warp the mouse there. There is also some hardware which
-	 * emits these events. */
 	struct viv_server *server =
 		wl_container_of(listener, server, cursor_motion_absolute);
 	struct wlr_event_pointer_motion_absolute *event = data;
@@ -129,6 +126,8 @@ static void server_cursor_motion_absolute(
 	viv_cursor_process_cursor_motion(server, event->time_msec);
 }
 
+/// Begin a cursor interaction with the given view: this stores the view at server root
+/// level so that future cursor movements can be applied to it.
 void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mode, uint32_t edges) {
 	/* This function sets up an interactive move or resize operation, where the
 	 * compositor stops propegating pointer events to clients and instead
@@ -166,6 +165,7 @@ void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mo
 	}
 }
 
+/// True if the global meta key from the config is currently held, else false
 static bool global_meta_held(struct viv_server *server) {
     struct viv_keyboard *keyboard;
     wl_list_for_each(keyboard, &server->keyboards, link) {
@@ -177,6 +177,7 @@ static bool global_meta_held(struct viv_server *server) {
     return false;
 }
 
+/// Handle cursor button press event
 static void server_cursor_button(struct wl_listener *listener, void *data) {
 	/* This event is forwarded by the cursor when a pointer emits a button
 	 * event. */
@@ -210,9 +211,8 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	}
 }
 
+/// Handle cursor axis event, e.g. from scroll wheel
 static void server_cursor_axis(struct wl_listener *listener, void *data) {
-	/* This event is forwarded by the cursor when a pointer emits an axis event,
-	 * for example when you move the scroll wheel. */
 	struct viv_server *server =
 		wl_container_of(listener, server, cursor_axis);
 	struct wlr_event_pointer_axis *event = data;
@@ -222,12 +222,11 @@ static void server_cursor_axis(struct wl_listener *listener, void *data) {
 			event->delta_discrete, event->source);
 }
 
+/// Handle cursor frame event. Frame events are sent after normal pointer events to group
+/// multiple events together, e.g. to indicate that two axis events happened at the same
+/// time.
 static void server_cursor_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	/* This event is forwarded by the cursor when a pointer emits an frame
-	 * event. Frame events are sent after regular pointer events to group
-	 * multiple events together. For instance, two axis events may happen at the
-	 * same time, in which case a frame event won't be sent in between. */
 	struct viv_server *server =
 		wl_container_of(listener, server, cursor_frame);
 	/* Notify the client with pointer focus of the frame event. */
@@ -235,18 +234,17 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
 }
 
 
-
+/// Handle a render frame event
 static void output_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	/* This function is called every time an output is ready to display a frame,
-	 * generally at the output's refresh rate (e.g. 60Hz). */
+    // This has been called because a specific output is ready to display a frame,
+    // retrieve this info
 	struct viv_output *output = wl_container_of(listener, output, frame);
 	struct wlr_renderer *renderer = output->server->renderer;
 
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
-	/* wlr_output_attach_render makes the OpenGL context current. */
 	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
 		return;
 	}
@@ -294,6 +292,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
         viv_render_view(output->current_workspace->active_view, &rdata);
     }
 
+    // Finally render all floating views (which may include the active view)
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
         if (!view->is_floating) {
             continue;
@@ -308,8 +307,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
 			.renderer = renderer,
 			.when = &now,
 		};
-		/* This calls our render_surface function for each surface among the
-		 * xdg_surface's toplevel and popups. */
         viv_render_view(view, &rdata);
 	}
 
@@ -381,15 +378,6 @@ static void server_new_output(struct wl_listener *listener, void *data) {
     current_workspace->output = output;
     wlr_log(WLR_INFO, "Assigning new output workspace %s", current_workspace->name);
 
-	/* Adds this to the output layout. The add_auto function arranges outputs
-	 * from left-to-right in the order they appear. A more sophisticated
-	 * compositor would let the user configure the arrangement of outputs in the
-	 * layout.
-	 *
-	 * The output layout utility automatically adds a wl_output global to the
-	 * display, which Wayland clients can see to find out information about the
-	 * output (such as DPI, scale factor, manufacturer, etc).
-	 */
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
 
     server->active_output = output;
@@ -420,24 +408,20 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     view->workspace = output->current_workspace;
 }
 
+/// Handle a modifier key press event
 static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	/* This event is raised when a modifier key, such as shift or alt, is
-	 * pressed. We simply communicate this to the client. */
 	struct viv_keyboard *keyboard =
 		wl_container_of(listener, keyboard, modifiers);
-	/*
-	 * A seat can only have one keyboard, but this is a limitation of the
-	 * Wayland protocol - not wlroots. We assign all connected keyboards to the
-	 * same seat. You can swap out the underlying wlr_keyboard like this and
-	 * wlr_seat handles this transparently.
-	 */
+    // Let the seat know about the key press: it handles all connected keyboards
 	wlr_seat_set_keyboard(keyboard->server->seat, keyboard->device);
-	/* Send modifiers to the client. */
+
+    // Send modifiers to the current client
 	wlr_seat_keyboard_notify_modifiers(keyboard->server->seat,
 		&keyboard->device->keyboard->modifiers);
 }
 
+/// Look up a key press in the configured keybindings, and run the bound function if found
 static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
     struct viv_output *output = wl_container_of(server->outputs.next, output, link);
 
@@ -459,6 +443,7 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
     return false;
 }
 
+/// Handle a key press event
 static void server_keyboard_handle_key(
 		struct wl_listener *listener, void *data) {
 	struct viv_keyboard *keyboard =
@@ -467,13 +452,14 @@ static void server_keyboard_handle_key(
 	struct wlr_event_keyboard_key *event = data;
 	struct wlr_seat *seat = server->seat;
 
-	/* Translate libinput keycode -> xkbcommon */
+	// Translate libinput keycode -> xkbcommon
 	uint32_t keycode = event->keycode + 8;
 	const xkb_keysym_t *syms;
 	int nsyms = xkb_state_key_get_syms(
 			keyboard->device->keyboard->xkb_state, keycode, &syms);
 
 
+    // If the key completes a configured keybinding, run the configured response function
 	bool handled = false;
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
 	if ((modifiers & server->config->global_meta_key) && event->state == WLR_KEY_PRESSED) {
@@ -483,14 +469,15 @@ static void server_keyboard_handle_key(
 		}
 	}
 
+    // If the key wasn't a shortcut, pass it through to the focused view
 	if (!handled) {
-		/* Otherwise, we pass it along to the client. */
 		wlr_seat_set_keyboard(seat, keyboard->device);
 		wlr_seat_keyboard_notify_key(seat, event->time_msec,
 			event->keycode, event->state);
 	}
 }
 
+/// Handle a new-keyboard event
 static void server_new_keyboard(struct viv_server *server,
 		struct wlr_input_device *device) {
 	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
@@ -521,18 +508,15 @@ static void server_new_keyboard(struct viv_server *server,
 	wl_list_insert(&server->keyboards, &keyboard->link);
 }
 
+/// Handle a new-pointer event
 static void server_new_pointer(struct viv_server *server,
 		struct wlr_input_device *device) {
-	/* We don't do anything special with pointers. All of our pointer handling
-	 * is proxied through wlr_cursor. On another compositor, you might take this
-	 * opportunity to do libinput configuration on the device to set
-	 * acceleration, etc. */
+    //  TODO: Maybe set acceleration etc. here (and make that configurable)
 	wlr_cursor_attach_input_device(server->cursor, device);
 }
 
+/// Handle a new-input event
 static void server_new_input(struct wl_listener *listener, void *data) {
-	/* This event is raised by the backend when a new input device becomes
-	 * available. */
 	struct viv_server *server =
 		wl_container_of(listener, server, new_input);
 	struct wlr_input_device *device = data;
@@ -546,9 +530,9 @@ static void server_new_input(struct wl_listener *listener, void *data) {
 	default:
 		break;
 	}
-	/* We need to let the wlr_seat know what our capabilities are, which is
-	 * communiciated to the client. In Viv we always have a cursor, even if
-	 * there are no pointer devices, so we always include that capability. */
+
+    // Let the wlr_seat know what our capabilities are. This information is available to
+    // clients. We always support a cursor even if no input device can actually move it.
 	uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
 	if (!wl_list_empty(&server->keyboards)) {
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
@@ -556,36 +540,27 @@ static void server_new_input(struct wl_listener *listener, void *data) {
 	wlr_seat_set_capabilities(server->seat, caps);
 }
 
+/// Handle a cursor request (i.e. client requesting a specific image)
 static void seat_request_cursor(struct wl_listener *listener, void *data) {
 	struct viv_server *server = wl_container_of(
 			listener, server, request_cursor);
-	/* This event is rasied by the seat when a client provides a cursor image */
 	struct wlr_seat_pointer_request_set_cursor_event *event = data;
 	struct wlr_seat_client *focused_client =
 		server->seat->pointer_state.focused_client;
-	/* This can be sent by any client, so we check to make sure this one is
-	 * actually has pointer focus first. */
+    // Ignore the request if the client isn't currently pointer-focused
 	if (focused_client == event->seat_client) {
-		/* Once we've vetted the client, we can tell the cursor to use the
-		 * provided surface as the cursor image. It will set the hardware cursor
-		 * on the output that it's currently on and continue to do so as the
-		 * cursor moves between outputs. */
 		wlr_cursor_set_surface(server->cursor, event->surface,
 				event->hotspot_x, event->hotspot_y);
 	}
 }
 
+/// Handle a request to set the selection
 static void seat_request_set_selection(struct wl_listener *listener, void *data) {
-	/* This event is raised by the seat when a client wants to set the selection,
-	 * usually when the user copies something. wlroots allows compositors to
-	 * ignore such requests if they so choose, but in viv we always honor
-	 */
 	struct viv_server *server = wl_container_of(
 			listener, server, request_set_selection);
 	struct wlr_seat_request_set_selection_event *event = data;
 	wlr_seat_set_selection(server->seat, event->source, event->serial);
 }
-
 
 /// Copy each of the layouts in the input list into a wl_list, and return this new list
 static void init_layouts(struct wl_list *layouts_list, struct viv_layout *layouts) {
@@ -645,7 +620,9 @@ static void init_workspaces(struct wl_list *workspaces_list,
     }
 }
 
-
+/** Initialise the viv_server by setting up all the global state: the wayland display and
+    renderer, output layout, event bindings etc.
+ */
 void viv_server_init(struct viv_server *server) {
     // Initialise logging, NULL indicates no callback so default logger is used
     wlr_log_init(WLR_DEBUG, NULL);
