@@ -19,20 +19,25 @@ union viv_mappable_payload;
 // Mappable functions have a specific form to make them easy for a user to bind to keys, but this
 // also means we need to generate both a declaration and a union parameter to pass to their generic
 // keyword argument mechanism. This macro defines the table of mappable functions.
-#define MACRO_FOR_EACH_MAPPABLE(MACRO)                     \
-    MACRO(do_exec, char executable[100]; char *args[100];) \
-    MACRO(do_shell, char command[100];)                    \
-    MACRO(increment_divide, float increment; )             \
-    MACRO(terminate)                                       \
-    MACRO(swap_out)                                        \
-    MACRO(next_window)                                     \
-    MACRO(prev_window)                                     \
-    MACRO(shift_active_window_down)                        \
-    MACRO(shift_active_window_up)                          \
-    MACRO(tile_window)                                     \
-    MACRO(next_layout)                                     \
+#define MACRO_FOR_EACH_MAPPABLE(MACRO)                                  \
+    MACRO(do_exec, char executable[100]; char *args[100];)              \
+    MACRO(do_shell, char command[100];)                                 \
+    MACRO(increment_divide, float increment ; )                         \
+    MACRO(terminate)                                                    \
+    MACRO(swap_out)                                                     \
+    MACRO(next_window)                                                  \
+    MACRO(prev_window)                                                  \
+    MACRO(shift_active_window_down)                                     \
+    MACRO(shift_active_window_up)                                       \
+    MACRO(tile_window)                                                  \
+    MACRO(next_layout)                                                  \
     MACRO(prev_layout)                                                  \
     MACRO(user_function, void (*function)(struct viv_workspace *workspace);) \
+    MACRO(right_output)                                                  \
+    MACRO(left_output)                                                  \
+    MACRO(shift_to_workspace)                                           \
+    MACRO(shift_to_output)                                              \
+    MACRO(swap_with_main_window)                                        \
 
 // Declare each mappable function and generate a payload struct to pass as its argument
 MACRO_FOR_EACH_MAPPABLE(GENERATE_DECLARATION)

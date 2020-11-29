@@ -5,10 +5,12 @@
 #include <unistd.h>
 
 #include <wayland-server-core.h>
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/util/log.h>
 
 #include "viv_mappable_functions.h"
 
+#include "viv_output.h"
 #include "viv_types.h"
 #include "viv_workspace.h"
 
@@ -131,4 +133,22 @@ void viv_mappable_user_function(struct viv_workspace *workspace, union viv_mappa
 
     // Pass through the call to the user-provided function, but without the pointless payload argument
     (*payload.user_function.function)(workspace);
+}
+
+void viv_mappable_right_output(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    wlr_log(WLR_DEBUG, "Mappable right_output");
+    struct viv_output *cur_output = workspace->output;
+
+    struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_RIGHT);
+    viv_output_make_active(next_output);
+}
+
+void viv_mappable_left_output(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    wlr_log(WLR_DEBUG, "Mappable left_output");
+    struct viv_output *cur_output = workspace->output;
+
+    struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_LEFT);
+    viv_output_make_active(next_output);
 }

@@ -2,6 +2,7 @@
 
 #include "viv_types.h"
 
+#include <wayland-server-core.h>
 #include <wlr/types/wlr_output_layout.h>
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
@@ -25,4 +26,33 @@ void viv_output_make_active(struct viv_output *output) {
     }
 
     output->server->active_output = output;
+}
+
+struct viv_output *viv_output_of_wlr_output(struct viv_server *server, struct wlr_output *wlr_output) {
+    struct viv_output *output = NULL;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (output->wlr_output == wlr_output) {
+            return output;
+        }
+    }
+    return NULL;
+}
+
+
+struct viv_output *viv_output_next_in_direction(struct viv_output *output, enum wlr_direction direction) {
+    struct viv_server *server = output->server;
+    struct wlr_output *cur_wlr_output = output->wlr_output;
+    struct wlr_output_layout_output *cur_wlr_output_layout_output = wlr_output_layout_get(server->output_layout,
+                                                                                          cur_wlr_output);
+
+    struct wlr_output *new_wlr_output = wlr_output_layout_adjacent_output(
+        server->output_layout,
+        direction,
+        cur_wlr_output,
+        cur_wlr_output_layout_output->x,
+        cur_wlr_output_layout_output->y);
+
+    struct viv_output *new_output = viv_output_of_wlr_output(server, new_wlr_output);
+
+    return new_output;
 }

@@ -392,7 +392,7 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	}
 
     // Create a viv_view to track the xdg surface
-    struct viv_view *view = viv_xdg_view_init(server, xdg_surface);
+    struct viv_view *view = viv_xdg_view_create(server, xdg_surface);
 
     // Make sure the view gets added to a workspace
     struct viv_output *output = server->active_output;
@@ -415,7 +415,7 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
 
 /// Look up a key press in the configured keybindings, and run the bound function if found
 static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
-    struct viv_output *output = wl_container_of(server->outputs.next, output, link);
+    struct viv_output *output = server->active_output;
 
     struct viv_workspace *workspace = output->current_workspace;
 
@@ -509,8 +509,7 @@ static void server_new_pointer(struct viv_server *server,
 
 /// Handle a new-input event
 static void server_new_input(struct wl_listener *listener, void *data) {
-	struct viv_server *server =
-		wl_container_of(listener, server, new_input);
+	struct viv_server *server = wl_container_of(listener, server, new_input);
 	struct wlr_input_device *device = data;
 	switch (device->type) {
 	case WLR_INPUT_DEVICE_KEYBOARD:
@@ -520,6 +519,7 @@ static void server_new_input(struct wl_listener *listener, void *data) {
 		server_new_pointer(server, device);
 		break;
 	default:
+        wlr_log(WLR_ERROR, "Received an unrecognised/unhandled new input, type %d", device->type);
 		break;
 	}
 

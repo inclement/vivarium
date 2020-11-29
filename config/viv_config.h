@@ -43,7 +43,7 @@ void example_user_function(struct viv_workspace *workspace) {
 struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(q, terminate),
     KEYBIND_MAPPABLE(Return, do_exec, .executable = CONFIG_TERMINAL),
-    KEYBIND_MAPPABLE(w, do_exec, .executable = "weston-terminal"),
+    /* KEYBIND_MAPPABLE(w, do_exec, .executable = "weston-terminal"), */
     KEYBIND_MAPPABLE(l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(j, next_window),
@@ -52,6 +52,8 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(K, shift_active_window_up),
     KEYBIND_MAPPABLE(s, swap_out),
     KEYBIND_MAPPABLE(t, tile_window),
+    KEYBIND_MAPPABLE(e, right_output),
+    KEYBIND_MAPPABLE(w, left_output),
     KEYBIND_MAPPABLE(o, do_shell, .command = "okular"),
     KEYBIND_MAPPABLE(space, next_layout),
     KEYBIND_USER_FUNCTION(F, &example_user_function),
