@@ -84,5 +84,8 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
     workspace->needs_layout = true;
 
     cur_workspace->active_view = next_view;
+    if (workspace->active_view == NULL) {
+        workspace->active_view = view;
+    }
     view->workspace = workspace;
 }

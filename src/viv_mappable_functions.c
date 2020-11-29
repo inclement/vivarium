@@ -155,6 +155,26 @@ void viv_mappable_left_output(struct viv_workspace *workspace, union viv_mappabl
     viv_output_make_active(next_output);
 }
 
+void viv_mappable_shift_active_window_to_right_output(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    wlr_log(WLR_DEBUG, "Mappable shift_active_window_to_right_output");
+    struct viv_output *cur_output = workspace->output;
+
+    struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_RIGHT);
+
+    viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
+}
+
+void viv_mappable_shift_active_window_to_left_output(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    wlr_log(WLR_DEBUG, "Mappable shift_active_window_to_left_output");
+    struct viv_output *cur_output = workspace->output;
+
+    struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_LEFT);
+
+    viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
+}
+
 void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     char *name = payload.shift_active_window_to_workspace.workspace_name;

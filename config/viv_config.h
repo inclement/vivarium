@@ -59,6 +59,8 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_USER_FUNCTION(F, &example_user_function),
     KEYBIND_MAPPABLE(exclam, shift_active_window_to_workspace, .workspace_name = "1"),
     KEYBIND_MAPPABLE(quotedbl, shift_active_window_to_workspace, .workspace_name = "2"),
+    KEYBIND_MAPPABLE(E, shift_active_window_to_right_output),
+    KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
     TERMINATE_KEYBINDS_LIST()
 };
 
