@@ -188,3 +188,8 @@ void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspa
 
     viv_view_shift_to_workspace(cur_view, target_workspace);
 }
+
+void viv_mappable_switch_to_workspace(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(workspace);
+    UNUSED(payload);
+}

@@ -40,6 +40,31 @@ void example_user_function(struct viv_workspace *workspace) {
     wlr_log(WLR_INFO, "User-provided function called with workspace at address %p", workspace);
 }
 
+/** Workspaces defined as triples of:
+    - workspace name
+    - xkb key to switch to workspace
+    - xkb key to send window to that workspace
+*/
+#define FOR_EACH_WORKSPACE(MACRO)         \
+    MACRO("main", 1, exclam)                    \
+    MACRO("2", 2, quotedbl)                     \
+    MACRO("3", 3, bracketleft)                  \
+    MACRO("4", 4, bracketright)                 \
+    MACRO("5", 5, percent)                      \
+    MACRO("6", 6, caret)                        \
+    MACRO("7", 7, ampersand)                    \
+    MACRO("8", 8, multiply)                     \
+    MACRO("9", 9, parenleft)
+
+#define WORKSPACE_NAME(name, _1, _2) \
+    name,
+
+#define BIND_SWITCH_TO_WORKSPACE(name, key, _) \
+    KEYBIND_MAPPABLE(key, switch_to_workspace, .workspace_name = name),
+
+#define BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE(name, _, key) \
+    KEYBIND_MAPPABLE(key, shift_active_window_to_workspace, .workspace_name = name),
+
 struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(q, terminate),
     KEYBIND_MAPPABLE(Return, do_exec, .executable = CONFIG_TERMINAL),
@@ -57,10 +82,12 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(o, do_shell, .command = "okular"),
     KEYBIND_MAPPABLE(space, next_layout),
     KEYBIND_USER_FUNCTION(F, &example_user_function),
-    KEYBIND_MAPPABLE(exclam, shift_active_window_to_workspace, .workspace_name = "1"),
-    KEYBIND_MAPPABLE(quotedbl, shift_active_window_to_workspace, .workspace_name = "2"),
+    /* KEYBIND_MAPPABLE(exclam, shift_active_window_to_workspace, .workspace_name = "1"), */
+    /* KEYBIND_MAPPABLE(quotedbl, shift_active_window_to_workspace, .workspace_name = "2"), */
     KEYBIND_MAPPABLE(E, shift_active_window_to_right_output),
     KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
+    FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
+    FOR_EACH_WORKSPACE(BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE)
     TERMINATE_KEYBINDS_LIST()
 };
 
@@ -91,7 +118,7 @@ static struct viv_config the_config = {
 
     .layouts = the_layouts,
 
-    .workspaces = { "1", "2", "3" },
+    .workspaces = { FOR_EACH_WORKSPACE(WORKSPACE_NAME) },
 
     .border_width = CONFIG_BORDER_WIDTH_DEFAULT,
     .active_border_colour = CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT,
