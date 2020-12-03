@@ -41,6 +41,8 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
         struct viv_view *new_active_view = wl_container_of(workspace->views.next, new_active_view, workspace_link);
         workspace->active_view = new_active_view;
         viv_view_focus(workspace->active_view, view->xdg_surface->surface);
+    } else {
+         workspace->active_view = NULL;
     }
 
 	free(view);

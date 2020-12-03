@@ -37,6 +37,11 @@
         wlr_log(WLR_ERROR, "ERROR IN DEBUG ASSERT: " #EXPR1 " != " #EXPR2); \
     }
 
+#define DEBUG_ASSERT(EXPR)                                 \
+    if (!(EXPR)) {                                         \
+        wlr_log(WLR_ERROR, "DEBUG ASSERT FAILURE: failed ASSERT(" #EXPR ")"); \
+    }
+
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
     struct viv_workspace *workspace;
     wl_list_for_each(workspace, &server->workspaces, server_link) {
@@ -644,6 +649,12 @@ void viv_check_data_consistency(struct viv_server *server) {
 
     struct viv_workspace *workspace;
     wl_list_for_each(workspace, &server->workspaces, server_link) {
+        // A workspace containing views should always have an active view
+        if (wl_list_length(&workspace->views) == 0) {
+            DEBUG_ASSERT(workspace->active_view == NULL);
+            continue;
+        }
+
         // Check that each view in the workspace is back-linked correctly
         struct viv_view *view;
         bool active_view_in_views = false;
@@ -655,6 +666,7 @@ void viv_check_data_consistency(struct viv_server *server) {
         }
         bool active_view_is_null = (workspace->active_view == NULL);
         DEBUG_ASSERT_EQUAL(active_view_in_views || active_view_is_null, true);
+
     }
 }
 
