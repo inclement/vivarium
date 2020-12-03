@@ -67,8 +67,8 @@ void example_user_function(struct viv_workspace *workspace) {
 
 struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(q, terminate),
+    KEYBIND_MAPPABLE(C, terminate),
     KEYBIND_MAPPABLE(Return, do_exec, .executable = CONFIG_TERMINAL),
-    /* KEYBIND_MAPPABLE(w, do_exec, .executable = "weston-terminal"), */
     KEYBIND_MAPPABLE(l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(j, next_window),
@@ -82,8 +82,6 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(o, do_shell, .command = "okular"),
     KEYBIND_MAPPABLE(space, next_layout),
     KEYBIND_USER_FUNCTION(F, &example_user_function),
-    /* KEYBIND_MAPPABLE(exclam, shift_active_window_to_workspace, .workspace_name = "1"), */
-    /* KEYBIND_MAPPABLE(quotedbl, shift_active_window_to_workspace, .workspace_name = "2"), */
     KEYBIND_MAPPABLE(E, shift_active_window_to_right_output),
     KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
     FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
@@ -111,8 +109,8 @@ static struct viv_config the_config = {
     .focus_follows_mouse = true,
     .global_meta_key = WLR_MODIFIER_ALT,
 
-    .win_move_cursor_button = VIV_LEFT_BUTTON,
-    .win_resize_cursor_button = VIV_RIGHT_BUTTON,
+    .win_move_cursor_button = CONFIG_WIN_MOVE_BUTTON,
+    .win_resize_cursor_button = CONFIG_WIN_RESIZE_BUTTON,
 
     .keybinds = the_keybinds,
 
