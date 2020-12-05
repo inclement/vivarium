@@ -105,8 +105,7 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
         }
     }
 
-    view->is_floating = false;
-    workspace->needs_layout = true;
+    viv_view_ensure_tiled(view);
 
     wl_list_remove(&view->workspace_link);
     if (any_not_floating) {

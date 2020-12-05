@@ -426,6 +426,8 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     struct viv_output *output = server->active_output;
     wl_list_insert(&output->current_workspace->views, &view->workspace_link);
     view->workspace = output->current_workspace;
+
+    viv_view_ensure_tiled(view);
 }
 
 /// Handle a modifier key press event

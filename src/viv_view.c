@@ -1,5 +1,6 @@
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/util/edges.h>
 #include <wlr/util/log.h>
 
 #include "viv_view.h"
@@ -51,10 +52,24 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 
 void viv_view_ensure_floating(struct viv_view *view) {
     if (!view->is_floating) {
-        // If the view is already floating, no additional layout is necessary
+        // Trigger a relayout only if tiling state is changing
         view->workspace->needs_layout = true;
     }
     view->is_floating = true;
+
+    /* // Tell the view it doesn't need to worry about tiling */
+    /* wlr_xdg_toplevel_set_tiled(view->xdg_surface, 0u); */
+}
+
+void viv_view_ensure_tiled(struct viv_view *view) {
+    if (view->is_floating) {
+        // Trigger a relayout only if tiling state is changing
+        view->workspace->needs_layout = true;
+    }
+    view->is_floating = false;
+
+    /* uint32_t all_edges = WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT | WLR_EDGE_LEFT; */
+    /* wlr_xdg_toplevel_set_tiled(view->xdg_surface, all_edges); */
 }
 
 void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *workspace) {

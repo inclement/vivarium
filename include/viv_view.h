@@ -15,6 +15,9 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface);
 /// Mark the given view as floating, and trigger a workspace layout update if necessary
 void viv_view_ensure_floating(struct viv_view *view);
 
+/// Mark the given view as tiled, and trigger a workspace layout update if necessary
+void viv_view_ensure_tiled(struct viv_view *view);
+
 /// Move the given view to the target workspace. If the workspace is
 /// currently visible, preserve its focus, otherwise focus the next
 /// view in the current workspace.
