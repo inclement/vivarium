@@ -27,4 +27,8 @@ struct viv_view *viv_view_next_in_workspace(struct viv_view *view);
 /// Get the previous view in the current workspace (which may be the same
 /// view if it's the only one present)
 struct viv_view *viv_view_prev_in_workspace(struct viv_view *view);
+
+/// Send a close request to this view
+void viv_view_request_close(struct viv_view *view);
+
 #endif

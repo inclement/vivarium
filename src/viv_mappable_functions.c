@@ -193,3 +193,9 @@ void viv_mappable_switch_to_workspace(struct viv_workspace *workspace, union viv
     UNUSED(workspace);
     UNUSED(payload);
 }
+
+void viv_mappable_close_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    struct viv_view *view = workspace->active_view;
+    viv_view_request_close(view);
+}

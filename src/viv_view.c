@@ -110,3 +110,7 @@ struct viv_view *viv_view_prev_in_workspace(struct viv_view *view) {
 
     return prev_view;
 }
+
+void viv_view_request_close(struct viv_view *view) {
+    wlr_xdg_toplevel_send_close(view->xdg_surface);
+}
