@@ -198,3 +198,8 @@ void viv_mappable_close_window(struct viv_workspace *workspace, union viv_mappab
     struct viv_view *view = workspace->active_view;
     viv_view_request_close(view);
 }
+
+void viv_mappable_make_window_main(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    viv_workspace_swap_active_and_main(workspace);
+}

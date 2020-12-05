@@ -21,4 +21,11 @@ void viv_workspace_prev_layout(struct viv_workspace *workspace);
 /// one if necessary
 void viv_workspace_assign_to_output(struct viv_workspace *workspace, struct viv_output *output);
 
+
+/// Returns the first non-floating view in the workspace, or NULL if there is none
+struct viv_view *viv_workspace_main_view(struct viv_workspace *workspace);
+
+
+/// Switches the current active window with the main window from the workspace
+void viv_workspace_swap_active_and_main(struct viv_workspace *workspace);
 #endif

@@ -26,3 +26,37 @@ struct wl_list *viv_wl_list_prev_ignoring_root(struct wl_list *cur_element, stru
 
     return prev_element;
 }
+
+void viv_wl_list_swap(struct wl_list *elm1, struct wl_list *elm2) {
+    struct wl_list *elm1_prev = elm1->prev;
+    struct wl_list *elm1_next = elm1->next;
+
+    // TODO: This can be done more simply
+
+    elm1->prev = elm2->prev;
+    elm1->next = elm2->next;
+
+    elm2->prev = elm1_prev;
+    elm2->next = elm1_next;
+
+    // If the two list items were next to one another then they will have gained circular
+    // references, so fix these before correcting references of adjacent elements.
+    if (elm1->next == elm1) {
+        elm1->next = elm2;
+    }
+    if (elm1->prev == elm1) {
+        elm1->prev = elm2;
+    }
+    if (elm2->next == elm2) {
+        elm2->next = elm1;
+    }
+    if (elm2->next == elm2) {
+        elm2->next = elm1;
+    }
+
+    elm1->prev->next = elm1;
+    elm1->next->prev = elm1;
+
+    elm2->prev->next = elm2;
+    elm2->next->prev = elm2;
+}

@@ -3,39 +3,7 @@
 
 #include "viv_types.h"
 #include "viv_view.h"
-
-static void swap_list_entries(struct wl_list *elm1, struct wl_list *elm2) {
-    struct wl_list *elm1_prev = elm1->prev;
-    struct wl_list *elm1_next = elm1->next;
-
-    elm1->prev = elm2->prev;
-    elm1->next = elm2->next;
-
-    elm2->prev = elm1_prev;
-    elm2->next = elm1_next;
-
-    // If the two list items were next to one another then they will have gained circular
-    // references, so fix these before correcting references of adjacent elements.
-    if (elm1->next == elm1) {
-        elm1->next = elm2;
-    }
-    if (elm1->prev == elm1) {
-        elm1->prev = elm2;
-    }
-    if (elm2->next == elm2) {
-        elm2->next = elm1;
-    }
-    if (elm2->next == elm2) {
-        elm2->next = elm1;
-    }
-
-    elm1->prev->next = elm1;
-    elm1->next->prev = elm1;
-
-    elm2->prev->next = elm2;
-    elm2->next->prev = elm2;
-
-}
+#include "viv_wl_list_utils.h"
 
 void viv_workspace_next_window(struct viv_workspace *workspace) {
     struct viv_view *active_view = workspace->active_view;
@@ -78,7 +46,7 @@ void viv_workspace_shift_active_window_up(struct viv_workspace *workspace) {
         return;
     }
 
-    swap_list_entries(&active_view->workspace_link, prev_link);
+    viv_wl_list_swap(&active_view->workspace_link, prev_link);
 
     active_view->workspace->needs_layout = true;
 }
@@ -100,7 +68,7 @@ void viv_workspace_shift_active_window_down(struct viv_workspace *workspace) {
         return;
     }
 
-    swap_list_entries(&active_view->workspace_link, next_link);
+    viv_wl_list_swap(&active_view->workspace_link, next_link);
 
     active_view->workspace->needs_layout = true;
 }
@@ -173,4 +141,28 @@ void viv_workspace_assign_to_output(struct viv_workspace *workspace, struct viv_
 
     output->current_workspace = workspace;
     workspace->output = output;
+}
+
+struct viv_view *viv_workspace_main_view(struct viv_workspace *workspace) {
+    struct viv_view *view = NULL;
+    wl_list_for_each(view, &workspace->views, workspace_link) {
+        if (!view->is_floating) {
+            break;
+        }
+    }
+
+    return view;
+}
+
+void viv_workspace_swap_active_and_main(struct viv_workspace *workspace) {
+    struct viv_view *active_view = workspace->active_view;
+    struct viv_view *main_view = viv_workspace_main_view(workspace);
+
+    if (main_view == NULL || active_view == NULL) {
+        wlr_log(WLR_ERROR, "Cannot swap active and main views, one or both is NULL");
+        return;
+    }
+
+    viv_wl_list_swap(&active_view->workspace_link, &main_view->workspace_link);
+    workspace->needs_layout = true;
 }
