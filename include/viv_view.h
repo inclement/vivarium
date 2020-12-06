@@ -35,5 +35,5 @@ struct viv_view *viv_view_prev_in_workspace(struct viv_view *view);
 void viv_view_request_close(struct viv_view *view);
 
 /// Return a string identifying the view type, as reported by the running application
-char *viv_view_string_identifier(struct viv_view *view);
+void viv_view_string_identifier(struct viv_view *view, char *buffer, size_t len);
 #endif

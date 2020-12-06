@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>
@@ -7,6 +9,8 @@
 
 #include "viv_types.h"
 #include "viv_wl_list_utils.h"
+
+#define VIEW_NAME_LEN 100
 
 void viv_view_bring_to_front(struct viv_view *view) {
     struct wl_list *link = &view->workspace_link;
@@ -78,7 +82,9 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
         return;
     }
 
-    wlr_log(WLR_DEBUG, "Shifting view %s to workspace with name %s", viv_view_string_identifier(view), workspace->name);
+    char view_name[VIEW_NAME_LEN];
+    viv_view_string_identifier(view, view_name, VIEW_NAME_LEN);
+    wlr_log(WLR_DEBUG, "Shifting view %s to workspace with name %s", view_name, workspace->name);
 
     struct viv_workspace *cur_workspace = view->workspace;
 
@@ -132,7 +138,8 @@ void viv_view_request_close(struct viv_view *view) {
     wlr_xdg_toplevel_send_close(view->xdg_surface);
 }
 
-char *viv_view_string_identifier(struct viv_view *view) {
-    // TODO: Use both the app_id and name
-    return view->xdg_surface->toplevel->app_id;
+void viv_view_string_identifier(struct viv_view *view, char *buffer, size_t len) {
+    snprintf(buffer, len, "<%s:%s>",
+             view->xdg_surface->toplevel->app_id,
+             view->xdg_surface->toplevel->title);
 }
