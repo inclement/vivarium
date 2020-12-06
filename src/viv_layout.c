@@ -208,5 +208,8 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
     wl_list_for_each(view, views, workspace_link) {
         view->x += ox;
         view->y += oy;
+
+        view->target_x += ox;
+        view->target_y += oy;
     }
 }

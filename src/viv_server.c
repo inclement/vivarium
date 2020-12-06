@@ -266,9 +266,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
     viv_check_data_consistency(output->server);
 #endif
 
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-
 	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
 		return;
 	}
@@ -280,58 +277,44 @@ static void output_frame(struct wl_listener *listener, void *data) {
 
 	wlr_renderer_clear(renderer, output->server->config->clear_colour);
 
-    // First render tiled windows, then render floating windows on top (but preserving order)
 	struct viv_view *view;
+
+    // First render tiled windows
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (view->is_floating) {
+        if (view->is_floating || (view == output->current_workspace->active_view)) {
             continue;
         }
-		if (!view->mapped) {
-			// An unmapped view should not be rendered.
-			continue;
-		}
-        if (view == output->current_workspace->active_view) {
-            // The active view always gets rendered on top
-            continue;
-        }
-		struct viv_render_data rdata = {
-			.output = output->wlr_output,
-			.view = view,
-			.renderer = renderer,
-			.when = &now,
-		};
-        viv_render_view(view, &rdata);
+        viv_render_view(renderer, view, output);
 	}
 
-    // Always render the active view on top of other tiled views
+    // Then render the active view if necessary
     if ((output->current_workspace->active_view != NULL) &&
         (output->current_workspace->active_view->mapped) &&
         (!output->current_workspace->active_view->is_floating)) {
-        struct viv_render_data rdata = {
-            .output = output->wlr_output,
-            .view = output->current_workspace->active_view,
-            .renderer = renderer,
-            .when = &now,
-        };
-        viv_render_view(output->current_workspace->active_view, &rdata);
+        viv_render_view(renderer, output->current_workspace->active_view, output);
     }
 
-    // Finally render all floating views (which may include the active view)
+    // Render floating views that may be overhanging other workspaces
+    struct viv_output *other_output;
+    wl_list_for_each(other_output, &output->server->outputs, link) {
+        if (other_output == output) {
+            continue;
+        }
+        struct viv_workspace *other_workspace = other_output->current_workspace;
+        wl_list_for_each(view, &other_workspace->views, workspace_link) {
+            if (!view->is_floating) {
+                continue;
+            }
+            viv_render_view(renderer, view, output);
+        }
+    }
+
+    // Finally render all floating views on this output (which may include the active view)
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
         if (!view->is_floating) {
             continue;
         }
-		if (!view->mapped) {
-			/* An unmapped view should not be rendered. */
-			continue;
-		}
-		struct viv_render_data rdata = {
-			.output = output->wlr_output,
-			.view = view,
-			.renderer = renderer,
-			.when = &now,
-		};
-        viv_render_view(view, &rdata);
+        viv_render_view(renderer, view, output);
 	}
 
 #ifdef DEBUG

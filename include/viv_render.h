@@ -3,6 +3,6 @@
 
 #include "viv_types.h"
 
-void viv_render_view(struct viv_view *view, struct viv_render_data *rdata);
+void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output);
 
 #endif
