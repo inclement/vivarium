@@ -13,12 +13,22 @@ static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
     int old_x = server->grab_state.view->x;
     int old_y = server->grab_state.view->y;
 
-	/* Move the grabbed view to the new position. */
-	server->grab_state.view->x = server->cursor->x - server->grab_state.x;
-	server->grab_state.view->y = server->cursor->y - server->grab_state.y;
+    struct viv_view *view = server->grab_state.view;
 
-    server->grab_state.view->target_x += (server->grab_state.view->x - old_x);
-    server->grab_state.view->target_y += (server->grab_state.view->y - old_y);
+	/* Move the grabbed view to the new position. */
+	view->x = server->cursor->x - server->grab_state.x;
+	view->y = server->cursor->y - server->grab_state.y;
+
+    view->target_x += (view->x - old_x);
+    view->target_y += (view->y - old_y);
+
+    // Move the grabbed view to the new output, if necessary
+	double cursor_x = server->cursor->x;
+	double cursor_y = server->cursor->y;
+    struct viv_output *output_at_point = viv_output_at(server, cursor_x, cursor_y);
+    if (output_at_point != view->workspace->output) {
+        viv_view_shift_to_workspace(view, output_at_point->current_workspace);
+    }
 }
 
 static void process_cursor_resize_view(struct viv_server *server, uint32_t time) {

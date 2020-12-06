@@ -78,6 +78,8 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
         return;
     }
 
+    wlr_log(WLR_DEBUG, "Shifting view %s to workspace with name %s", viv_view_string_identifier(view), workspace->name);
+
     struct viv_workspace *cur_workspace = view->workspace;
 
     struct viv_view *next_view = NULL;
@@ -128,4 +130,9 @@ struct viv_view *viv_view_prev_in_workspace(struct viv_view *view) {
 
 void viv_view_request_close(struct viv_view *view) {
     wlr_xdg_toplevel_send_close(view->xdg_surface);
+}
+
+char *viv_view_string_identifier(struct viv_view *view) {
+    // TODO: Use both the app_id and name
+    return view->xdg_surface->toplevel->app_id;
 }

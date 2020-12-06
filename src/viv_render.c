@@ -125,8 +125,11 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
     // - render the toplevel (but only the region within the intended layout area)
     // - render the borders
     // - render any popups
-    bool is_active = ((output == output->server->active_output) &
-                      (view == view->workspace->active_view));
+
+    bool is_grabbed = (view == output->server->grab_state.view);
+    bool is_active_on_current_output = ((output == output->server->active_output) &
+                                        (view == view->workspace->active_view));
+    bool is_active = is_grabbed || is_active_on_current_output;
 
     render_borders(view, output, is_active);
 }
