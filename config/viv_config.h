@@ -68,7 +68,8 @@ void example_user_function(struct viv_workspace *workspace) {
 struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(q, terminate),
     KEYBIND_MAPPABLE(Q, terminate),
-    KEYBIND_MAPPABLE(t, do_exec, .executable = CONFIG_TERMINAL),
+    KEYBIND_MAPPABLE(at, do_exec, .executable = CONFIG_TERMINAL),
+    KEYBIND_MAPPABLE(T, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(j, next_window),
