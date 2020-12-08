@@ -4,9 +4,27 @@
 
 #include "viv_types.h"
 
+/* Used to move all of the data necessary to render a surface from the top-level
+ * frame handler to the per-surface render function. */
+// TODO: should this be internal to viv_render.c?
+struct viv_render_data {
+	struct wlr_output *output;
+	struct wlr_renderer *renderer;
+	struct viv_view *view;
+	struct timespec *when;
+    bool limit_render_count;
+    uint32_t render_count;
+};
+
 static void render_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
 	/* This function is called for every surface that needs to be rendered. */
 	struct viv_render_data *rdata = data;
+
+    // Render only the number of surfaces prescribed when rendering was initiated
+    /* if (rdata->limit_render_count && rdata->render_count == 0) { */
+    /*     return; */
+    /* } */
+
 	struct viv_view *view = rdata->view;
 	struct wlr_output *output = rdata->output;
 
@@ -44,6 +62,10 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
 	/* This lets the client know that we've displayed that frame and it can
 	 * prepare another one now if it likes. */
 	wlr_surface_send_frame_done(surface, rdata->when);
+
+    // Increment the render count to crudely apply clipping to only the first surface in a view
+    // TODO: there must be a better option than this
+    /* rdata->render_count -= 1; */
 }
 
 
@@ -116,20 +138,46 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
         .view = view,
         .renderer = renderer,
         .when = &now,
+        .render_count = 1,
     };
 
     // Note this renders both the toplevel and any popups
+    struct wlr_box actual_geometry = { 0 };
+    struct wlr_box target_geometry = {
+        .x = view->target_x,
+        .y = view->target_y,
+        .width = view->target_width,
+        .height = view->target_height
+    };
+    wlr_xdg_surface_get_geometry(view->xdg_surface, &actual_geometry);
+    bool surface_exceeds_bounds = ((actual_geometry.width > view->target_width) ||
+                                   (actual_geometry.height > view->target_height));
+
+    // Render only the main surface
+    // TODO: Here we hackily render only the first surface of each view, because there
+    // isn't a wlr method to iterate only through non-popup surfaces. This needs
+    // improving, I'm probably missing something about how the API should be used.
+    rdata.limit_render_count = true;
+    if (surface_exceeds_bounds) {
+        // Only scissor if the view's surface exceeds its bounds, to save a tiny bit of time
+        wlr_renderer_scissor(renderer, &target_geometry);
+    }
     wlr_xdg_surface_for_each_surface(view->xdg_surface, render_surface, &rdata);
+    if (surface_exceeds_bounds) {
+        wlr_renderer_scissor(renderer, NULL);
+    }
 
-    // TODO: We should actually do the following in order:
-    // - render the toplevel (but only the region within the intended layout area)
-    // - render the borders
-    // - render any popups
-
+    // Then render the main surface's borders
     bool is_grabbed = (view == output->server->grab_state.view);
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
-
     render_borders(view, output, is_active);
+
+    // Then render popups
+    rdata.limit_render_count = false;
+    if (surface_exceeds_bounds) {
+        // Render again with the same settings, but for every popup
+        wlr_xdg_surface_for_each_popup(view->xdg_surface, render_surface, &rdata);
+    }
 }
