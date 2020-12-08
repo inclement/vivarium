@@ -203,20 +203,19 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	struct viv_server *server =
 		wl_container_of(listener, server, cursor_button);
 	struct wlr_event_pointer_button *event = data;
-	/* Notify the client with pointer focus that a button press has occurred */
-	wlr_seat_pointer_notify_button(server->seat,
-			event->time_msec, event->button, event->state);
 	double sx, sy;
 	struct wlr_surface *surface;
 	struct viv_view *view = viv_server_view_at(server,
 			server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 
 	if (event->state == WLR_BUTTON_RELEASED) {
-		/* If you released any buttons, we exit interactive move/resize mode. */
+        // End any ongoing grab event
 		server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 	} else {
-		/* Focus that client if the button was pressed */
+        // Always focus the clicked-on window
 		viv_view_focus(view, surface);
+
+        // If making a window floating, always bring it to the front
         if (global_meta_held(server)) {
             viv_view_bring_to_front(view);
             if (event->state == WLR_BUTTON_PRESSED) {
@@ -228,6 +227,12 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
             }
         }
 	}
+
+    // Only notify the client about the button state if nothing is being dragged
+    if (server->cursor_mode == VIV_CURSOR_PASSTHROUGH) {
+        wlr_seat_pointer_notify_button(server->seat,
+                                       event->time_msec, event->button, event->state);
+    }
 }
 
 /// Handle cursor axis event, e.g. from scroll wheel
