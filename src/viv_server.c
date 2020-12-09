@@ -37,10 +37,14 @@
         wlr_log(WLR_ERROR, "ERROR IN DEBUG ASSERT: " #EXPR1 " != " #EXPR2); \
     }
 
+#ifdef DEBUG
 #define DEBUG_ASSERT(EXPR)                                 \
     if (!(EXPR)) {                                         \
         wlr_log(WLR_ERROR, "DEBUG ASSERT FAILURE: failed ASSERT(" #EXPR ")"); \
     }
+#else
+#define DEBUG_ASSERT(EXPR)
+#endif
 
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
     struct viv_workspace *workspace;
@@ -70,11 +74,26 @@ static bool is_view_at(struct viv_view *view,
 	double view_sy = ly - view->y;
 
 	double _sx, _sy;
+
+    // If the view is oversized, we don't let it draw outside its target region so can
+    // stop immediately if the cursor is outside that region
+    struct wlr_box target_box = {
+        .x = view->target_x,
+        .y = view->target_y,
+        .width = view->target_width,
+        .height = view->target_height,
+    };
+    if (viv_view_oversized(view) && !wlr_box_contains_point(&target_box, lx, ly)) {
+        return false;
+    }
+
 	struct wlr_surface *_surface = NULL;
 	_surface = wlr_xdg_surface_surface_at(
 			view->xdg_surface, view_sx, view_sy, &_sx, &_sy);
 
-	if (_surface != NULL) {
+    wlr_log(WLR_DEBUG, "Cursor surface coords are %f,%f", _sx, _sy);
+
+	if ((_surface != NULL)) {
 		*sx = _sx;
 		*sy = _sy;
 		*surface = _surface;
@@ -95,13 +114,11 @@ struct viv_view *viv_server_view_at(
     // Note: this all relies on the list of surfaces held by a workspace being ordered
     // from top to bottom
 
-    // TODO we should check floating views from other outputs as well
-
-    // TODO should this be in an output_layouts type helper file?
+    struct viv_output *active_output = server->active_output;
 
 	struct viv_view *view;
     // Try floating views first
-	wl_list_for_each(view, &server->active_output->current_workspace->views, workspace_link) {
+	wl_list_for_each(view, &active_output->current_workspace->views, workspace_link) {
         if (!view->is_floating) {
             continue;
         }
@@ -109,6 +126,24 @@ struct viv_view *viv_server_view_at(
 			return view;
 		}
 	}
+
+    // Try floating views from other workspaces (these are also rendered behind this workspace's views)
+    // TODO: maybe decide on a better structure here
+    struct viv_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (output == active_output) {
+            // We've already done the ctive output
+            continue;
+        }
+        if (!view->is_floating) {
+            // Non-floating views can't leave their output/workspace
+            continue;
+        }
+		if (is_view_at(view, lx, ly, surface, sx, sy)) {
+			return view;
+		}
+    }
+
     // No floating view found => try other views
 	wl_list_for_each(view, &server->active_output->current_workspace->views, workspace_link) {
 		if (is_view_at(view, lx, ly, surface, sx, sy)) {

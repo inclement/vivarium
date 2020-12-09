@@ -36,4 +36,8 @@ void viv_view_request_close(struct viv_view *view);
 
 /// Return a string identifying the view type, as reported by the running application
 void viv_view_string_identifier(struct viv_view *view, char *buffer, size_t len);
+
+/// True if the surface geometry size exceeds that of the target draw region, else false
+bool viv_view_oversized(struct viv_view *view);
+
 #endif
