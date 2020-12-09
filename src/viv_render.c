@@ -145,6 +145,12 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
     // Render only the main surface
     if (surface_exceeds_bounds) {
         // Only scissor if the view's surface exceeds its bounds, to save a tiny bit of time
+
+        double ox = 0, oy = 0;
+        wlr_output_layout_output_coords(view->server->output_layout, output->wlr_output, &ox, &oy);
+        target_geometry.x += ox;
+        target_geometry.y += oy;
+
         wlr_renderer_scissor(renderer, &target_geometry);
     }
     wlr_xdg_surface_for_each_surface(view->xdg_surface, render_surface, &rdata);
@@ -159,21 +165,4 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
     bool is_active = is_grabbed || is_active_on_current_output;
     render_borders(view, output, is_active);
 
-    if (surface_exceeds_bounds) {
-        double x = 0, y = 0;
-        wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &x, &y);
-        x += view->target_x;
-        y += view->target_y;
-
-        struct wlr_box bad_surface_box = {
-            .x = x,
-            .y = y,
-            .width = target_geometry.width,
-            .height = target_geometry.height,
-        };
-
-        float colour[4] = {0.3, 0.1, 0.1, 0.002};
-
-        wlr_render_rect(renderer, &bad_surface_box, colour, output->wlr_output->transform_matrix);
-    }
 }

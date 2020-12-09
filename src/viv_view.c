@@ -72,8 +72,8 @@ void viv_view_ensure_tiled(struct viv_view *view) {
     }
     view->is_floating = false;
 
-    /* uint32_t all_edges = WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT | WLR_EDGE_LEFT; */
-    /* wlr_xdg_toplevel_set_tiled(view->xdg_surface, all_edges); */
+    uint32_t all_edges = WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT | WLR_EDGE_LEFT;
+    wlr_xdg_toplevel_set_tiled(view->xdg_surface, all_edges);
 }
 
 void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *workspace) {
