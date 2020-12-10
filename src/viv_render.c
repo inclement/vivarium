@@ -13,11 +13,18 @@ struct viv_render_data {
 	struct wlr_renderer *renderer;
 	struct viv_view *view;
 	struct timespec *when;
+    bool limit_render_count;
+    uint32_t max_surfaces_to_render;
 };
 
 static void render_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
 	/* This function is called for every surface that needs to be rendered. */
 	struct viv_render_data *rdata = data;
+
+    if (rdata->limit_render_count && !rdata->max_surfaces_to_render) {
+        // We already rendered as many surfaces as allowed in this recursive pass
+        return;
+    }
 
 	struct viv_view *view = rdata->view;
 	struct wlr_output *output = rdata->output;
@@ -56,6 +63,10 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
 	/* This lets the client know that we've displayed that frame and it can
 	 * prepare another one now if it likes. */
 	wlr_surface_send_frame_done(surface, rdata->when);
+
+    if (rdata->limit_render_count) {
+        rdata->max_surfaces_to_render--;
+    }
 }
 
 
@@ -128,6 +139,8 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
         .view = view,
         .renderer = renderer,
         .when = &now,
+        .limit_render_count = true,
+        .max_surfaces_to_render = 1 + wl_list_length(&view->xdg_surface->surface->subsurfaces),
     };
 
     // Note this renders both the toplevel and any popups
@@ -164,5 +177,9 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
     render_borders(view, output, is_active);
+
+    // Then render any popups
+    rdata.limit_render_count = false;
+    wlr_xdg_surface_for_each_popup(view->xdg_surface, render_surface, &rdata);
 
 }

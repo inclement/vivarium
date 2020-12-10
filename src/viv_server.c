@@ -73,7 +73,7 @@ static bool is_view_at(struct viv_view *view,
 	double view_sx = lx - view->x;
 	double view_sy = ly - view->y;
 
-	double _sx, _sy;
+	double _sx, _sy, _non_popup_sx, _non_popup_sy;
 
     // If the view is oversized, we don't let it draw outside its target region so can
     // stop immediately if the cursor is outside that region
@@ -83,17 +83,24 @@ static bool is_view_at(struct viv_view *view,
         .width = view->target_width,
         .height = view->target_height,
     };
-    if (viv_view_oversized(view) && !wlr_box_contains_point(&target_box, lx, ly)) {
-        return false;
-    }
 
+    // Get surface at point from the full selection of popups and toplevel surfaces
 	struct wlr_surface *_surface = NULL;
 	_surface = wlr_xdg_surface_surface_at(
 			view->xdg_surface, view_sx, view_sy, &_sx, &_sy);
 
-    wlr_log(WLR_DEBUG, "Cursor surface coords are %f,%f", _sx, _sy);
+    // Get surface at point considering only the non-popup surfaces
+    struct wlr_surface *_non_popup_surface = NULL;
+    _non_popup_surface = wlr_surface_surface_at(
+        view->xdg_surface->surface, view_sx, view_sx, &_non_popup_sx, &_non_popup_sy);
 
-	if ((_surface != NULL)) {
+    // We can only click on a toplevel surface if it's within the target render box,
+    // otherwise that part isn't being drawn and shouldn't be accessible
+    bool cursor_in_target_box = wlr_box_contains_point(&target_box, lx, ly);
+    bool surface_is_popup = (_surface != _non_popup_surface);
+    bool surface_clickable = (surface_is_popup || cursor_in_target_box);
+
+	if ((_surface != NULL) && surface_clickable) {
 		*sx = _sx;
 		*sy = _sy;
 		*surface = _surface;
