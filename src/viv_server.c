@@ -96,8 +96,8 @@ static bool is_view_at(struct viv_view *view,
 
     // We can only click on a toplevel surface if it's within the target render box,
     // otherwise that part isn't being drawn and shouldn't be accessible
-    bool cursor_in_target_box = wlr_box_contains_point(&target_box, lx, ly);
     bool surface_is_popup = (_surface != _non_popup_surface);
+    bool cursor_in_target_box = wlr_box_contains_point(&target_box, lx, ly);
     bool surface_clickable = (surface_is_popup || cursor_in_target_box);
 
 	if ((_surface != NULL) && surface_clickable) {

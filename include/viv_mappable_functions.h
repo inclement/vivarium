@@ -8,13 +8,13 @@
 // from their functions.
 union viv_mappable_payload;
 
-#define GENERATE_PAYLOAD_STRUCT(FUNCTION_NAME, ARGS...) \
-    struct viv_mappable_payload_ ## FUNCTION_NAME { ARGS };
-#define GENERATE_DECLARATION(FUNCTION_NAME, ARGS...)                    \
+#define GENERATE_PAYLOAD_STRUCT(FUNCTION_NAME, ...) \
+    struct viv_mappable_payload_ ## FUNCTION_NAME { uint8_t _empty; __VA_ARGS__ };
+#define GENERATE_DECLARATION(FUNCTION_NAME, ...)                    \
     void viv_mappable_ ## FUNCTION_NAME(struct viv_workspace *workspace, union viv_mappable_payload payload); \
-    GENERATE_PAYLOAD_STRUCT(FUNCTION_NAME, ARGS)
+    GENERATE_PAYLOAD_STRUCT(FUNCTION_NAME, __VA_ARGS__)
 
-#define GENERATE_UNION_ENTRY(FUNCTION_NAME, ARGS...) struct viv_mappable_payload_ ## FUNCTION_NAME FUNCTION_NAME ;
+#define GENERATE_UNION_ENTRY(FUNCTION_NAME, ...) struct viv_mappable_payload_ ## FUNCTION_NAME FUNCTION_NAME ;
 
 // Mappable functions have a specific form to make them easy for a user to bind to keys, but this
 // also means we need to generate both a declaration and a union parameter to pass to their generic
@@ -22,7 +22,7 @@ union viv_mappable_payload;
 #define MACRO_FOR_EACH_MAPPABLE(MACRO)                                  \
     MACRO(do_exec, char executable[100]; char *args[100];)              \
     MACRO(do_shell, char command[100];)                                 \
-    MACRO(increment_divide, float increment ; )                         \
+    MACRO(increment_divide, float increment; )                         \
     MACRO(terminate)                                                    \
     MACRO(swap_out)                                                     \
     MACRO(next_window)                                                  \

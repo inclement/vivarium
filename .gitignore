@@ -2,5 +2,5 @@ vivarium
 .clangd
 .cache
 obj
-protocols
+build
 compile_commands.json

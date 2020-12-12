@@ -4,7 +4,7 @@
 #define NULL_KEY 0
 #define TERMINATE_KEYBINDS_LIST() {.key = NULL_KEY}
 
-#define TERMINATE_LAYOUTS_LIST() {}
+#define TERMINATE_LAYOUTS_LIST() { .name = "" }
 
 #define MAX_NUM_KEYBINDS 10000
 #define MAX_WORKSPACE_NAME_LENGTH 80
@@ -17,11 +17,11 @@
 
 #include <wlr/util/log.h>
 
-#define KEYBIND_MAPPABLE(KEY, BINDING, ARGS...) \
+#define KEYBIND_MAPPABLE(KEY, BINDING, ...) \
     {                                           \
         .key = XKB_KEY_ ## KEY,                 \
         .binding = &viv_mappable_ ## BINDING,   \
-        .payload = { .BINDING = { ARGS } }      \
+        .payload = { .BINDING = { ._empty = 0u, __VA_ARGS__ } }  \
     }
 
 #define KEYBIND_USER_FUNCTION(KEY, BINDING)                     \
