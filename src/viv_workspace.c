@@ -1,6 +1,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
+#include "viv_cursor.h"
 #include "viv_types.h"
 #include "viv_view.h"
 #include "viv_wl_list_utils.h"
@@ -165,4 +166,24 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace) {
 
     viv_wl_list_swap(&active_view->workspace_link, &main_view->workspace_link);
     workspace->needs_layout = true;
+}
+
+void viv_workspace_do_layout(struct viv_workspace *workspace) {
+    workspace->active_layout->layout_function(workspace);
+    workspace->needs_layout = false;
+    workspace->output->needs_layout = false;
+
+    // Reset cursor focus as the view under the cursor may have changed
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    viv_cursor_reset_focus(workspace->output->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+}
+
+void viv_workspace_do_layout_if_necessary(struct viv_workspace *workspace) {
+    struct viv_output *output = workspace->output;
+    if (!(output->needs_layout | workspace->needs_layout)) {
+        return;
+    }
+
+    viv_workspace_do_layout(workspace);
 }

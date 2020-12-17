@@ -386,12 +386,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
     // TODO this probably shouldn't be here?  For now do layout right after committing a
     // frame, to give time for clients to re-draw before the next one. There's probably a
     // better way to do this.
-    struct viv_workspace *workspace = output->current_workspace;
-    if (output->needs_layout | (output->current_workspace->needs_layout)) {
-        workspace->active_layout->layout_function(workspace);
-        output->needs_layout = false;
-        output->current_workspace->needs_layout = false;
-    }
+    viv_workspace_do_layout_if_necessary(output->current_workspace);
 }
 
 /// Respond to a new output becoming available

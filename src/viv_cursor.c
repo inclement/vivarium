@@ -1,3 +1,4 @@
+#include "viv_cursor.h"
 #include "viv_output.h"
 #include "viv_server.h"
 #include "viv_types.h"
@@ -88,8 +89,7 @@ static void process_cursor_pass_through_to_view(struct viv_server *server, uint3
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *surface = NULL;
     // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
-	struct viv_view *view = viv_server_view_at(server,
-			server->cursor->x, server->cursor->y, &surface, &sx, &sy);
+	struct viv_view *view = viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 	if (!view) {
         // No view under the cursor => use the default image
 		wlr_xcursor_manager_set_cursor_image(
@@ -101,6 +101,7 @@ static void process_cursor_pass_through_to_view(struct viv_server *server, uint3
         }
     }
 
+    viv_cursor_reset_focus(server, time);
 	if (surface) {
 		bool focus_changed = seat->pointer_state.focused_surface != surface;
         // Set pointer focus appropriately - note this is distinct from keyboard focus
@@ -140,4 +141,26 @@ void viv_cursor_process_cursor_motion(struct viv_server *server, uint32_t time) 
         break;
     }
 
+}
+
+void viv_cursor_reset_focus(struct viv_server *server, uint32_t time) {
+    struct wlr_seat *seat = server->seat;
+	struct wlr_surface *surface = NULL;
+	double sx, sy;
+	viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy);
+
+	if (surface) {
+		bool focus_changed = seat->pointer_state.focused_surface != surface;
+        // Set pointer focus appropriately - note this is distinct from keyboard focus
+		wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
+		if (!focus_changed) {
+			/* The enter event contains coordinates, so we only need to notify
+			 * on motion if the focus did not change. */
+			wlr_seat_pointer_notify_motion(seat, time, sx, sy);
+		}
+	} else {
+		/* Clear pointer focus so future button events and such are not sent to
+		 * the last client to have the cursor over it. */
+		wlr_seat_pointer_clear_focus(seat);
+	}
 }
