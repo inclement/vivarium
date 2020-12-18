@@ -64,13 +64,13 @@ void viv_mappable_swap_out(struct viv_workspace *workspace, union viv_mappable_p
 void viv_mappable_next_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable next_window");
-    viv_workspace_next_window(workspace);
+    viv_workspace_focus_next_window(workspace);
 }
 
 void viv_mappable_prev_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable prev_window");
-    viv_workspace_prev_window(workspace);
+    viv_workspace_focus_prev_window(workspace);
 }
 
 void viv_mappable_shift_active_window_down(struct viv_workspace *workspace, union viv_mappable_payload payload) {

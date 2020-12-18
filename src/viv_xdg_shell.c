@@ -41,10 +41,12 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
         workspace->output->server->seat->keyboard_state.focused_surface = NULL;
 
         // Pick a new active view
-        viv_workspace_next_window(workspace);
-        if (workspace->active_view == view) {
+        if (wl_list_length(&workspace->views) > 1) {
+            viv_workspace_focus_next_window(workspace);
+        } else {
             workspace->active_view = NULL;
         }
+
     }
 
 	wl_list_remove(&view->workspace_link);

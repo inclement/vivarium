@@ -6,7 +6,7 @@
 #include "viv_view.h"
 #include "viv_wl_list_utils.h"
 
-void viv_workspace_next_window(struct viv_workspace *workspace) {
+void viv_workspace_focus_next_window(struct viv_workspace *workspace) {
     struct viv_view *active_view = workspace->active_view;
     if (active_view == NULL) {
         wlr_log(WLR_DEBUG, "Could not get next window, no active view");
@@ -18,7 +18,7 @@ void viv_workspace_next_window(struct viv_workspace *workspace) {
     viv_view_focus(next_view, next_view->xdg_surface->surface);
 }
 
-void viv_workspace_prev_window(struct viv_workspace *workspace) {
+void viv_workspace_focus_prev_window(struct viv_workspace *workspace) {
     struct viv_view *active_view = workspace->active_view;
     if (active_view == NULL) {
         wlr_log(WLR_DEBUG, "Could not get prev window, no active view");
