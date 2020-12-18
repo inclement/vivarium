@@ -174,7 +174,8 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
     }
 
     // Then render the main surface's borders
-    bool is_grabbed = (view == output->server->grab_state.view);
+    bool is_grabbed = ((output->server->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
+                       (view == output->server->grab_state.view));
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
