@@ -383,6 +383,17 @@ static void output_frame(struct wl_listener *listener, void *data) {
 	wlr_renderer_end(renderer);
 	wlr_output_commit(output->wlr_output);
 
+    // If the workspace has been been relayout recently, reset the pointer focus just in
+    // case surfaces have changed size since the last frame
+    // TODO: There must be a better way to do this
+    struct viv_workspace *workspace = output->current_workspace;
+    if (workspace->was_laid_out) {
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        viv_cursor_reset_focus(workspace->output->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+        workspace->was_laid_out = false;
+    }
+
     // TODO this probably shouldn't be here?  For now do layout right after committing a
     // frame, to give time for clients to re-draw before the next one. There's probably a
     // better way to do this.

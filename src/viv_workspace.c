@@ -177,6 +177,8 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     viv_cursor_reset_focus(workspace->output->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+
+    workspace->was_laid_out = true;
 }
 
 void viv_workspace_do_layout_if_necessary(struct viv_workspace *workspace) {
