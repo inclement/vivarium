@@ -40,4 +40,7 @@ void viv_view_string_identifier(struct viv_view *view, char *buffer, size_t len)
 /// True if the surface geometry size exceeds that of the target draw region, else false
 bool viv_view_oversized(struct viv_view *view);
 
+/// Make the given view the active view within its workspace
+void viv_view_make_active(struct viv_view *view);
+
 #endif

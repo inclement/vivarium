@@ -6,6 +6,7 @@
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
+#include "viv_workspace.h"
 
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -35,15 +36,18 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
 
     struct viv_workspace *workspace = view->workspace;
 
-	wl_list_remove(&view->workspace_link);
+    if (view == workspace->active_view) {
+        // Mark that no surface is focused, so that we don't attempt to unfocus the now-invalid surface
+        workspace->output->server->seat->keyboard_state.focused_surface = NULL;
 
-    if (wl_list_length(&workspace->views) > 0) {
-        struct viv_view *new_active_view = wl_container_of(workspace->views.next, new_active_view, workspace_link);
-        workspace->active_view = new_active_view;
-        viv_view_focus(workspace->active_view, view->xdg_surface->surface);
-    } else {
-         workspace->active_view = NULL;
+        // Pick a new active view
+        viv_workspace_next_window(workspace);
+        if (workspace->active_view == view) {
+            workspace->active_view = NULL;
+        }
     }
+
+	wl_list_remove(&view->workspace_link);
 
 	free(view);
 }

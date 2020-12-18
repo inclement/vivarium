@@ -162,3 +162,8 @@ bool viv_view_oversized(struct viv_view *view) {
 
     return surface_exceeds_bounds;
 }
+
+void viv_view_make_active(struct viv_view *view) {
+    view->workspace->active_view = view;
+    viv_view_focus(view, view->xdg_surface->surface);
+}
