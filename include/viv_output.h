@@ -13,4 +13,8 @@ struct viv_output *viv_output_of_wlr_output(struct viv_server *server, struct wl
 
 struct viv_output *viv_output_next_in_direction(struct viv_output *output, enum wlr_direction direction);
 
+/// Display the given workspace on the given output. If the given workspace was previously
+/// displayed on another output, swap with that one.
+void viv_output_display_workspace(struct viv_output *output, struct viv_workspace *workspace);
+
 #endif

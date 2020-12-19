@@ -698,14 +698,16 @@ void viv_check_data_consistency(struct viv_server *server) {
         struct viv_view *view;
         bool active_view_in_views = false;
         wl_list_for_each(view, &workspace->views, workspace_link) {
-            DEBUG_ASSERT_EQUAL(view->workspace, workspace);
+            DEBUG_ASSERT(view->workspace == workspace);
             if (view == workspace->active_view) {
                 active_view_in_views = true;
             }
         }
         bool active_view_is_null = (workspace->active_view == NULL);
-        DEBUG_ASSERT_EQUAL(active_view_in_views || active_view_is_null, true);
+        DEBUG_ASSERT(active_view_in_views || active_view_is_null);
 
+        // Check that output and workspace are linked correctly
+        DEBUG_ASSERT(workspace == workspace->output->current_workspace);
     }
 }
 

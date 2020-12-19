@@ -56,3 +56,26 @@ struct viv_output *viv_output_next_in_direction(struct viv_output *output, enum 
 
     return new_output;
 }
+
+void viv_output_display_workspace(struct viv_output *output, struct viv_workspace *workspace) {
+
+    struct viv_output *other_output = workspace->output;
+
+    if (other_output == output) {
+        wlr_log(WLR_DEBUG, "Cannot switch to workspace %s, it is already being displayed on this output",
+                workspace->name);
+        return;
+    }
+
+    if (other_output) {
+        other_output->current_workspace = output->current_workspace;
+        other_output->current_workspace->output = other_output;
+        other_output->needs_layout = true;
+    } else {
+        output->current_workspace->output = NULL;
+    }
+
+    output->current_workspace = workspace;
+    output->current_workspace->output = output;
+    output->needs_layout = true;
+}

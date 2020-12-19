@@ -45,7 +45,7 @@ void example_user_function(struct viv_workspace *workspace) {
     - xkb key to switch to workspace
     - xkb key to send window to that workspace
 */
-#define FOR_EACH_WORKSPACE(MACRO)         \
+#define FOR_EACH_WORKSPACE(MACRO)               \
     MACRO("main", 1, exclam)                    \
     MACRO("2", 2, quotedbl)                     \
     MACRO("3", 3, bracketleft)                  \

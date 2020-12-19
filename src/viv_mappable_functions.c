@@ -209,7 +209,13 @@ void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspa
 
 void viv_mappable_switch_to_workspace(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(workspace);
-    UNUSED(payload);
+
+    struct viv_server *server = workspace->output->server;
+
+    char *workspace_name = payload.switch_to_workspace.workspace_name;
+    struct viv_workspace *target_workspace = viv_server_retrieve_workspace_by_name(server, workspace_name);
+
+    viv_output_display_workspace(workspace->output, target_workspace);
 }
 
 void viv_mappable_close_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
