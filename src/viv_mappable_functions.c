@@ -161,7 +161,11 @@ void viv_mappable_shift_active_window_to_right_output(struct viv_workspace *work
 
     struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_RIGHT);
 
-    viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
+    if (next_output) {
+        viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
+    } else {
+        wlr_log(WLR_DEBUG, "Asked to shift to left output but couldn't find one in that direction");
+    }
 }
 
 void viv_mappable_shift_active_window_to_left_output(struct viv_workspace *workspace, union viv_mappable_payload payload) {
@@ -171,7 +175,11 @@ void viv_mappable_shift_active_window_to_left_output(struct viv_workspace *works
 
     struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_LEFT);
 
-    viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
+    if (next_output) {
+        viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
+    } else {
+        wlr_log(WLR_DEBUG, "Asked to shift to left output but couldn't find one in that direction");
+    }
 }
 
 void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspace, union viv_mappable_payload payload) {
