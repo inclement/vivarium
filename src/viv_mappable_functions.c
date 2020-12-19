@@ -160,11 +160,14 @@ void viv_mappable_shift_active_window_to_right_output(struct viv_workspace *work
     struct viv_output *cur_output = workspace->output;
 
     struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_RIGHT);
+    struct viv_view *view = workspace->active_view;
 
-    if (next_output) {
-        viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
-    } else {
+    if (!next_output) {
         wlr_log(WLR_DEBUG, "Asked to shift to left output but couldn't find one in that direction");
+    } else if (!view) {
+        wlr_log(WLR_DEBUG, "No active view to shift");
+    } else {
+        viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
     }
 }
 
@@ -174,11 +177,14 @@ void viv_mappable_shift_active_window_to_left_output(struct viv_workspace *works
     struct viv_output *cur_output = workspace->output;
 
     struct viv_output *next_output = viv_output_next_in_direction(cur_output, WLR_DIRECTION_LEFT);
+    struct viv_view *view = workspace->active_view;
 
-    if (next_output) {
-        viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
-    } else {
+    if (!next_output) {
         wlr_log(WLR_DEBUG, "Asked to shift to left output but couldn't find one in that direction");
+    } else if (!view) {
+        wlr_log(WLR_DEBUG, "No active view to shift");
+    } else {
+        viv_view_shift_to_workspace(workspace->active_view, next_output->current_workspace);
     }
 }
 
@@ -189,6 +195,11 @@ void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspa
 
     struct viv_output *cur_output = workspace->output;
     struct viv_view *cur_view = workspace->active_view;
+
+    if (!cur_view) {
+        wlr_log(WLR_DEBUG, "No active view, cannot shift to workspace %s", name);
+        return;
+    }
 
     struct viv_workspace *target_workspace = viv_server_retrieve_workspace_by_name(cur_output->server, name);
     ASSERT(target_workspace != NULL);
