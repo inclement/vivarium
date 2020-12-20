@@ -18,6 +18,7 @@ viv_deps = [
     wayland_server_dep,
     xkbcommon_dep,
     xdg_shell_protocol_dep,
+    layer_shell_protocol_dep,
 ]
 
 executable(
