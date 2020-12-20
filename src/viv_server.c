@@ -32,23 +32,9 @@
 #include "viv_view.h"
 #include "viv_xdg_shell.h"
 
+#include "viv_debug_support.h"
 #include "viv_config.h"
 #include "viv_config_support.h"
-
-
-#ifdef DEBUG
-#define DEBUG_ASSERT_EQUAL(EXPR1, EXPR2)                                \
-    if ((EXPR1) != (EXPR2)) {                                           \
-        wlr_log(WLR_ERROR, "ERROR IN DEBUG ASSERT: (" #EXPR1 ") != (" #EXPR2 ")"); \
-    }
-#define DEBUG_ASSERT(EXPR)                                 \
-    if (!(EXPR)) {                                         \
-        wlr_log(WLR_ERROR, "DEBUG ASSERT FAILURE: failed ASSERT(" #EXPR ")"); \
-    }
-#else
-#define DEBUG_ASSERT_EQUAL(EXPR1, EXPR2)
-#define DEBUG_ASSERT(EXPR)
-#endif
 
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
     struct viv_workspace *workspace;
