@@ -103,6 +103,7 @@ void viv_xdg_view_init(struct viv_view *view, struct viv_server *server, struct 
     view->type = VIV_VIEW_TYPE_XDG_SHELL;
 	view->server = server;
 	view->xdg_surface = xdg_surface;
+	view->mapped = false;
 
 	/* Listen to the various events it can emit */
 	view->map.notify = xdg_surface_map;

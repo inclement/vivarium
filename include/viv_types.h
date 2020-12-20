@@ -74,13 +74,6 @@ struct viv_keybindings {
 
 struct viv_workspace;
 
-struct viv_layer_view {
-    struct wlr_layer_surface_v1 *layer_surface;
-    struct viv_server *server;
-
-    struct wl_list output_link;
-};
-
 struct viv_output {
 	struct wl_list link;
 	struct viv_server *server;
@@ -105,6 +98,20 @@ struct viv_layout {
 
 enum viv_view_type {
     VIV_VIEW_TYPE_XDG_SHELL,
+};
+
+struct viv_layer_view {
+    struct wlr_layer_surface_v1 *layer_surface;
+    struct viv_server *server;
+    struct viv_output *output;
+
+    struct wl_listener map;
+    struct wl_listener unmap;
+    struct wl_listener destroy;
+    struct wl_listener new_popup;
+    bool mapped;
+
+    struct wl_list output_link;
 };
 
 struct viv_view {
