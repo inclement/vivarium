@@ -15,6 +15,7 @@
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_seat.h>
+#include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
@@ -302,114 +303,6 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
 	wlr_seat_pointer_notify_frame(server->seat);
 }
 
-
-/// Handle a render frame event
-static void output_frame(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-
-    // This has been called because a specific output is ready to display a frame,
-    // retrieve this info
-	struct viv_output *output = wl_container_of(listener, output, frame);
-	struct wlr_renderer *renderer = output->server->renderer;
-
-#ifdef DEBUG
-    viv_check_data_consistency(output->server);
-#endif
-
-	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
-		return;
-	}
-	/* The "effective" resolution can change if you rotate your outputs. */
-	int width, height;
-	wlr_output_effective_resolution(output->wlr_output, &width, &height);
-	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
-	wlr_renderer_begin(renderer, width, height);
-
-	wlr_renderer_clear(renderer, output->server->config->clear_colour);
-
-	struct viv_view *view;
-
-    // First render tiled windows
-	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (view->is_floating || (view == output->current_workspace->active_view)) {
-            continue;
-        }
-        viv_render_view(renderer, view, output);
-	}
-
-    // Then render the active view if necessary
-    if ((output->current_workspace->active_view != NULL) &&
-        (output->current_workspace->active_view->mapped) &&
-        (!output->current_workspace->active_view->is_floating)) {
-        viv_render_view(renderer, output->current_workspace->active_view, output);
-    }
-
-    // Render floating views that may be overhanging other workspaces
-    struct viv_output *other_output;
-    wl_list_for_each(other_output, &output->server->outputs, link) {
-        if (other_output == output) {
-            continue;
-        }
-        struct viv_workspace *other_workspace = other_output->current_workspace;
-        wl_list_for_each(view, &other_workspace->views, workspace_link) {
-            if (!view->is_floating) {
-                continue;
-            }
-            viv_render_view(renderer, view, output);
-        }
-    }
-
-    // Finally render all floating views on this output (which may include the active view)
-	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (!view->is_floating) {
-            continue;
-        }
-        viv_render_view(renderer, view, output);
-	}
-
-    // Render any layer surfaces
-    // TODO these should actually be interspersed with views according to their layer
-    struct viv_layer_view *layer_view;
-    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
-        viv_render_layer_view(renderer, layer_view, output);
-    }
-
-#ifdef DEBUG
-    // Mark the currently-active output
-    struct wlr_box output_marker_box = {
-        .x = 0, .y = 0, .width = 10, .height = 10
-    };
-    float output_marker_colour[4] = {0.5, 0.5, 1, 0.5};
-    if (output == output->server->active_output) {
-        wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
-    }
-#endif
-
-    // Have wlroots render software cursors if necessary (does nothing
-    // if hardware cursors available)
-	wlr_output_render_software_cursors(output->wlr_output, NULL);
-
-	// Conclude rendering and swap the buffers
-	wlr_renderer_end(renderer);
-	wlr_output_commit(output->wlr_output);
-
-    // If the workspace has been been relayout recently, reset the pointer focus just in
-    // case surfaces have changed size since the last frame
-    // TODO: There must be a better way to do this
-    struct viv_workspace *workspace = output->current_workspace;
-    if (workspace->was_laid_out) {
-        struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        viv_cursor_reset_focus(workspace->output->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
-        workspace->was_laid_out = false;
-    }
-
-    // TODO this probably shouldn't be here?  For now do layout right after committing a
-    // frame, to give time for clients to re-draw before the next one. There's probably a
-    // better way to do this.
-    viv_workspace_do_layout_if_necessary(output->current_workspace);
-}
-
 /// Respond to a new output becoming available
 static void server_new_output(struct wl_listener *listener, void *data) {
 	struct viv_server *server =
@@ -430,30 +323,13 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	/* Allocates and configures our state for this output */
 	struct viv_output *output = calloc(1, sizeof(struct viv_output));
     CHECK_ALLOCATION(output);
-    // TODO write a viv_output init function
 
-    wl_list_init(&output->layer_views);
+    viv_output_init(output, server, wlr_output);
 
-	output->wlr_output = wlr_output;
-	output->server = server;
-	/* Sets up a listener for the frame notify event. */
-	output->frame.notify = output_frame;
-	wl_signal_add(&wlr_output->events.frame, &output->frame);
-	wl_list_insert(&server->outputs, &output->link);
-    wlr_log(WLR_ERROR, "New output at %p", output);
-
-    struct viv_workspace *current_workspace;
-    wl_list_for_each(current_workspace, &server->workspaces, server_link) {
-        if (current_workspace->output == NULL) {
-            wlr_log(WLR_INFO, "Assigning new output workspace %s", current_workspace->name);
-            viv_workspace_assign_to_output(current_workspace, output);
-            break;
-        }
+    // If there isn't already an active output, we may as well use this one
+    if (!server->active_output) {
+        server->active_output = output;
     }
-
-	wlr_output_layout_add_auto(server->output_layout, wlr_output);
-
-    server->active_output = output;
 }
 
 /// Create a new viv_view to track a new xdg surface
@@ -490,11 +366,15 @@ static void server_new_layer_surface(struct wl_listener *listener, void *data) {
         layer_surface->output = server->active_output->wlr_output;
     }
 
-    wlr_layer_surface_v1_configure(layer_surface, 100, 200);
+    struct wlr_layer_surface_v1_state *state = &layer_surface->current;
+
+    wlr_layer_surface_v1_configure(layer_surface, state->desired_width, state->desired_height);
 
     struct viv_layer_view *layer_view = calloc(1, sizeof(struct viv_layer_view));
     CHECK_ALLOCATION(layer_view);
     viv_layer_view_init(layer_view, server, layer_surface);
+
+    wlr_log(WLR_INFO, "New layer surface props: layer %d, anchor %d, exclusive %d, margin (%d, %d, %d, %d), desired size (%d, %d), actual size (%d, %d)", state->layer, state->anchor, state->exclusive_zone, state->margin.top, state->margin.right, state->margin.bottom, state->margin.left, state->desired_width, state->desired_height, state->actual_width, state->actual_height);
 }
 
 /// Handle a modifier key press event
@@ -824,4 +704,7 @@ void viv_server_init(struct viv_server *server) {
 
     wlr_log(WLR_INFO, "New viv_server initialised");
 
+
+    struct wlr_server_decoration_manager *decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
+    wlr_server_decoration_manager_set_default_mode(decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 }

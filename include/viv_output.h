@@ -17,4 +17,8 @@ struct viv_output *viv_output_next_in_direction(struct viv_output *output, enum 
 /// displayed on another output, swap with that one.
 void viv_output_display_workspace(struct viv_output *output, struct viv_workspace *workspace);
 
+/// Initialise a new viv_output
+void viv_output_init(struct viv_output *output, struct viv_server *server, struct wlr_output *wlr_output);
+
+
 #endif

@@ -209,3 +209,82 @@ void viv_render_layer_view(struct wlr_renderer *renderer, struct viv_layer_view 
     wlr_layer_surface_v1_for_each_surface(layer_view->layer_surface, render_surface, &rdata);
     wlr_layer_surface_v1_for_each_popup(layer_view->layer_surface, render_surface, &rdata);
 }
+
+void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output) {
+	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
+		return;
+	}
+	/* The "effective" resolution can change if you rotate your outputs. */
+	int width, height;
+	wlr_output_effective_resolution(output->wlr_output, &width, &height);
+	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
+	wlr_renderer_begin(renderer, width, height);
+
+	wlr_renderer_clear(renderer, output->server->config->clear_colour);
+
+	struct viv_view *view;
+
+    // First render tiled windows
+	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
+        if (view->is_floating || (view == output->current_workspace->active_view)) {
+            continue;
+        }
+        viv_render_view(renderer, view, output);
+	}
+
+    // Then render the active view if necessary
+    if ((output->current_workspace->active_view != NULL) &&
+        (output->current_workspace->active_view->mapped) &&
+        (!output->current_workspace->active_view->is_floating)) {
+        viv_render_view(renderer, output->current_workspace->active_view, output);
+    }
+
+    // Render floating views that may be overhanging other workspaces
+    struct viv_output *other_output;
+    wl_list_for_each(other_output, &output->server->outputs, link) {
+        if (other_output == output) {
+            continue;
+        }
+        struct viv_workspace *other_workspace = other_output->current_workspace;
+        wl_list_for_each(view, &other_workspace->views, workspace_link) {
+            if (!view->is_floating) {
+                continue;
+            }
+            viv_render_view(renderer, view, output);
+        }
+    }
+
+    // Finally render all floating views on this output (which may include the active view)
+	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
+        if (!view->is_floating) {
+            continue;
+        }
+        viv_render_view(renderer, view, output);
+	}
+
+    // Render any layer surfaces
+    // TODO these should actually be interspersed with views according to their layer
+    struct viv_layer_view *layer_view;
+    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+        viv_render_layer_view(renderer, layer_view, output);
+    }
+
+#ifdef DEBUG
+    // Mark the currently-active output
+    struct wlr_box output_marker_box = {
+        .x = 0, .y = 0, .width = 10, .height = 10
+    };
+    float output_marker_colour[4] = {0.5, 0.5, 1, 0.5};
+    if (output == output->server->active_output) {
+        wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
+    }
+#endif
+
+    // Have wlroots render software cursors if necessary (does nothing
+    // if hardware cursors available)
+	wlr_output_render_software_cursors(output->wlr_output, NULL);
+
+	// Conclude rendering and swap the buffers
+	wlr_renderer_end(renderer);
+	wlr_output_commit(output->wlr_output);
+}
