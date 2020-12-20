@@ -6,6 +6,7 @@ viv_sources = [
   'viv_output.c',
   'viv_render.c',
   'viv_server.c',
+  'viv_layer_view.c',
   'viv_view.c',
   'viv_wl_list_utils.c',
   'viv_workspace.c',

@@ -17,6 +17,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/util/log.h>
 
 #include "viv_types.h"
@@ -26,6 +27,7 @@
 #include "viv_layout.h"
 #include "viv_output.h"
 #include "viv_render.h"
+#include "viv_layer_view.h"
 #include "viv_view.h"
 #include "viv_xdg_shell.h"
 
@@ -421,6 +423,9 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	/* Allocates and configures our state for this output */
 	struct viv_output *output = calloc(1, sizeof(struct viv_output));
     CHECK_ALLOCATION(output);
+    // TODO write a viv_output init function
+
+    wl_list_init(&output->layer_views);
 
 	output->wlr_output = wlr_output;
 	output->server = server;
@@ -447,8 +452,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 	/* This event is raised when wlr_xdg_shell receives a new xdg surface from a
 	 * client, either a toplevel (application window) or popup. */
-	struct viv_server *server =
-		wl_container_of(listener, server, new_xdg_surface);
+	struct viv_server *server = wl_container_of(listener, server, new_xdg_surface);
 	struct wlr_xdg_surface *xdg_surface = data;
 	if (xdg_surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
 		return;
@@ -465,6 +469,22 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     view->workspace = output->current_workspace;
 
     viv_view_ensure_tiled(view);
+}
+
+/// Create a new viv_layer_view to track a new layer surface
+static void server_new_layer_surface(struct wl_listener *listener, void *data) {
+	struct viv_server *server = wl_container_of(listener, server, new_xdg_surface);
+    struct wlr_layer_surface_v1 *layer_surface = data;
+    wlr_log(WLR_ERROR, "New layer surface! Namespace %s", layer_surface->namespace);
+
+    // If the layer surface doesn't specify an output to display on, use the active output
+    if (!layer_surface->output) {
+        layer_surface->output = server->active_output->wlr_output;
+    }
+
+    struct viv_layer_view *view = calloc(1, sizeof(struct viv_layer_view));
+    CHECK_ALLOCATION(view);
+    viv_layer_view_init(view, server, layer_surface);
 }
 
 /// Handle a modifier key press event
@@ -752,8 +772,12 @@ void viv_server_init(struct viv_server *server) {
     // Set up the xdg-shell
 	server->xdg_shell = wlr_xdg_shell_create(server->wl_display);
 	server->new_xdg_surface.notify = server_new_xdg_surface;
-	wl_signal_add(&server->xdg_shell->events.new_surface,
-			&server->new_xdg_surface);
+	wl_signal_add(&server->xdg_shell->events.new_surface, &server->new_xdg_surface);
+
+    // Set up the layer-shell
+    server->layer_shell = wlr_layer_shell_v1_create(server->wl_display);
+    server->new_layer_surface.notify = server_new_layer_surface;
+    wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
 
     // Create a wlroots cursor for handling the cursor image shown on the screen
 	server->cursor = wlr_cursor_create();
