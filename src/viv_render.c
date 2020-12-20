@@ -186,3 +186,26 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
     wlr_xdg_surface_for_each_popup(view->xdg_surface, render_surface, &rdata);
 
 }
+
+void viv_render_layer_view(struct wlr_renderer *renderer, struct viv_layer_view *layer_view, struct viv_output *output) {
+    if (!layer_view->mapped) {
+        // Unmapped layer views don't need drawing
+        return;
+    }
+
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+
+    struct viv_view view = {.x = 0, .y = 0, .server = output->server};
+
+    struct viv_render_data rdata = {
+        .output = output->wlr_output,
+        .view = &view,
+        .renderer = renderer,
+        .when = &now,
+        .limit_render_count = false,
+    };
+
+    wlr_layer_surface_v1_for_each_surface(layer_view->layer_surface, render_surface, &rdata);
+    wlr_layer_surface_v1_for_each_popup(layer_view->layer_surface, render_surface, &rdata);
+}

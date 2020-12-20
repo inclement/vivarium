@@ -367,6 +367,13 @@ static void output_frame(struct wl_listener *listener, void *data) {
         viv_render_view(renderer, view, output);
 	}
 
+    // Render any layer surfaces
+    // TODO these should actually be interspersed with views according to their layer
+    struct viv_layer_view *layer_view;
+    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+        viv_render_layer_view(renderer, layer_view, output);
+    }
+
 #ifdef DEBUG
     // Mark the currently-active output
     struct wlr_box output_marker_box = {
@@ -433,6 +440,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	output->frame.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
+    wlr_log(WLR_ERROR, "New output at %p", output);
 
     struct viv_workspace *current_workspace;
     wl_list_for_each(current_workspace, &server->workspaces, server_link) {
@@ -473,18 +481,20 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 
 /// Create a new viv_layer_view to track a new layer surface
 static void server_new_layer_surface(struct wl_listener *listener, void *data) {
-	struct viv_server *server = wl_container_of(listener, server, new_xdg_surface);
+	struct viv_server *server = wl_container_of(listener, server, new_layer_surface);
     struct wlr_layer_surface_v1 *layer_surface = data;
-    wlr_log(WLR_ERROR, "New layer surface! Namespace %s", layer_surface->namespace);
+    wlr_log(WLR_INFO, "New layer surface with namespace %s", layer_surface->namespace);
 
     // If the layer surface doesn't specify an output to display on, use the active output
     if (!layer_surface->output) {
         layer_surface->output = server->active_output->wlr_output;
     }
 
-    struct viv_layer_view *view = calloc(1, sizeof(struct viv_layer_view));
-    CHECK_ALLOCATION(view);
-    viv_layer_view_init(view, server, layer_surface);
+    wlr_layer_surface_v1_configure(layer_surface, 100, 200);
+
+    struct viv_layer_view *layer_view = calloc(1, sizeof(struct viv_layer_view));
+    CHECK_ALLOCATION(layer_view);
+    viv_layer_view_init(layer_view, server, layer_surface);
 }
 
 /// Handle a modifier key press event
