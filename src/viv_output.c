@@ -4,6 +4,7 @@
 #include "viv_output.h"
 
 #include "viv_cursor.h"
+#include "viv_layer_view.h"
 #include "viv_render.h"
 #include "viv_server.h"
 #include "viv_types.h"
@@ -38,7 +39,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
     // TODO this probably shouldn't be here?  For now do layout right after committing a
     // frame, to give time for clients to re-draw before the next one. There's probably a
     // better way to do this.
-    viv_workspace_do_layout_if_necessary(output->current_workspace);
+    viv_output_do_layout_if_necessary(output);
 }
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
@@ -121,11 +122,17 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 
 	output->wlr_output = wlr_output;
 	output->server = server;
+
+    output->excluded_margin.top = 0;
+    output->excluded_margin.bottom = 0;
+    output->excluded_margin.left = 0;
+    output->excluded_margin.right = 0;
+
 	/* Sets up a listener for the frame notify event. */
 	output->frame.notify = output_frame;
 	wl_signal_add(&wlr_output->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
-    wlr_log(WLR_ERROR, "New output at %p", output);
+    wlr_log(WLR_INFO, "New output width width %d, height %d", wlr_output->width, wlr_output->height);
 
     struct viv_workspace *current_workspace;
     wl_list_for_each(current_workspace, &server->workspaces, server_link) {
@@ -137,4 +144,14 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
     }
 
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
+}
+
+void viv_output_do_layout_if_necessary(struct viv_output *output) {
+    struct viv_workspace *workspace = output->current_workspace;
+    if (!(output->needs_layout | workspace->needs_layout)) {
+        return;
+    }
+
+    viv_layers_arrange(output);
+    viv_workspace_do_layout(workspace);
 }

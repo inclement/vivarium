@@ -17,7 +17,7 @@ add_project_arguments([
 
 cc = meson.get_compiler('c')
 
-wlroots_dep = dependency('wlroots')
+wlroots_dep = dependency('wlroots', version : '>=0.12')
 wayland_server_dep = dependency('wayland-server')
 wayland_client_dep = dependency('wayland-client')
 wayland_protocols_dep = dependency('wayland-protocols')

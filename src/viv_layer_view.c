@@ -1,5 +1,7 @@
 #include <wayland-util.h>
 
+#include "wlr-layer-shell-unstable-v1-protocol.h"
+
 #include "viv_layer_view.h"
 #include "viv_output.h"
 #include "viv_types.h"
@@ -55,4 +57,166 @@ void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *s
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
     wl_list_insert(&output->layer_views, &layer_view->output_link);
     layer_view->output = output;
+}
+
+void viv_layers_arrange(struct viv_output *output) {
+    uint32_t *margin_left = &output->excluded_margin.left;
+    uint32_t *margin_right = &output->excluded_margin.right;
+    uint32_t *margin_top = &output->excluded_margin.top;
+    uint32_t *margin_bottom = &output->excluded_margin.bottom;
+
+    *margin_left = 0;
+    *margin_right = 0;
+    *margin_top = 0;
+    *margin_bottom = 0;
+
+    struct wlr_output_layout_output *output_layout_output = wlr_output_layout_get(output->server->output_layout, output->wlr_output);
+    int ox = output_layout_output->x + output->excluded_margin.left;
+    int oy = output_layout_output->y + output->excluded_margin.top;
+
+    uint32_t output_width = output->wlr_output->width;
+    uint32_t output_height = output->wlr_output->height;
+
+    // TODO: This layout function is inefficient and relies on some guesses about how the
+    // layer shell is supposed to work, it needs reassessment later
+    struct viv_layer_view *layer_view;
+    // TODO: Iterate in an order that respects exclusion hint strength
+    // TODO: Support margins
+    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+        struct wlr_layer_surface_v1_state state = layer_view->layer_surface->current;
+        bool anchor_left = state.anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+        bool anchor_right = state.anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+        bool anchor_top = state.anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+        bool anchor_bottom = state.anchor & ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+
+        bool anchor_horiz = anchor_left && anchor_right;
+        bool anchor_vert = anchor_bottom && anchor_top;
+
+        uint32_t desired_width = state.desired_width;
+        if (desired_width == 0) {
+            desired_width = output_width;
+        }
+        uint32_t desired_height = state.desired_height;
+        if (desired_height == 0) {
+            desired_height = output_height;
+        }
+
+        uint32_t anchor_sum = anchor_left + anchor_right + anchor_top + anchor_bottom;
+        switch (anchor_sum) {
+        case 0:
+            wlr_log(WLR_ERROR, "No anchor");
+            // Not anchored to any edge => display in centre with suggested size
+            wlr_layer_surface_v1_configure(layer_view->layer_surface, desired_width, desired_height);
+            layer_view->x = output_width / 2 - desired_width / 2;
+            layer_view->y = output_height / 2 - desired_height / 2;
+            break;
+        case 1:
+            wlr_log(WLR_ERROR, "One anchor");
+            // Anchored to one edge => use suggested size
+            wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                           desired_width, desired_height);
+            if (anchor_left || anchor_right) {
+                layer_view->y = output_height / 2 - desired_height / 2;
+                if (anchor_left) {
+                    layer_view->x = 0;
+                } else {
+                    layer_view->x = output_width - desired_width;
+                }
+            } else {
+                layer_view->x = output_height / 2 - desired_height / 2;
+                if (anchor_top) {
+                    layer_view->y = 0;
+                } else {
+                    layer_view->y = output_height - desired_height;
+                }
+            }
+            wlr_log(WLR_ERROR, "Set layer surface x %d, y %d, width %d, height %d",
+                    layer_view->x, layer_view->y, desired_width, desired_height);
+            break;
+        case 2:
+            wlr_log(WLR_ERROR, "Two anchors");
+            // Anchored to two edges => use suggested size
+
+            if (anchor_horiz) {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               desired_width, desired_height);
+                layer_view->x = 0;
+                layer_view->y = output_height / 2 - desired_height / 2;
+            } else if (anchor_vert) {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               desired_width, desired_height);
+                layer_view->x = output_width / 2 - desired_width / 2;
+                layer_view->y = 0;
+            } else if (anchor_top && anchor_left) {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               desired_width, desired_height);
+                layer_view->x = 0;
+                layer_view->y = 0;
+            } else if (anchor_top && anchor_right) {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               desired_width, desired_height);
+                layer_view->x = output_width - desired_width;
+                layer_view->y = 0;
+            } else if (anchor_bottom && anchor_right) {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               desired_width, desired_height);
+                layer_view->x = output_width - desired_width;
+                layer_view->y = output_height - desired_height;
+            } else if (anchor_bottom && anchor_left) {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               desired_width, desired_height);
+                layer_view->x = 0;
+                layer_view->y = output_height - desired_height;
+            }
+            break;
+        case 3:
+            wlr_log(WLR_ERROR, "Three anchors");
+            // Anchored to three edges => use suggested size on free axis only
+            if (anchor_horiz) {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               output_width, desired_height);
+                layer_view->x = 0;
+                if (anchor_top) {
+                    layer_view->y = 0;
+                    if (state.exclusive_zone) {
+                        *margin_top += desired_height;
+                    }
+                } else {
+                    layer_view->y = output_height - desired_height;
+                    if (state.exclusive_zone) {
+                        *margin_bottom += desired_height;
+                    }
+                }
+            } else {
+                wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                               output_width, desired_height);
+                layer_view->y = 0;
+                if (anchor_left) {
+                    layer_view->x = 0;
+                    if (state.exclusive_zone) {
+                        *margin_left += desired_height;
+                    }
+                } else {
+                    layer_view->x = output_width - desired_width;
+                    if (state.exclusive_zone) {
+                        *margin_right += desired_height;
+                    }
+                }
+            }
+            break;
+        case 4:
+            wlr_log(WLR_ERROR, "Four anchors");
+            // Fill the output
+            wlr_layer_surface_v1_configure(layer_view->layer_surface,
+                                            output_width, output_height);
+            layer_view->x = 0;
+            layer_view->y = 0;
+            break;
+        default:
+            UNREACHABLE()
+        }
+
+        layer_view->x += ox;
+        layer_view->y += oy;
+    }
 }

@@ -196,7 +196,7 @@ void viv_render_layer_view(struct wlr_renderer *renderer, struct viv_layer_view 
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
-    struct viv_view view = {.x = 0, .y = 0, .server = output->server};
+    struct viv_view view = {.x = layer_view->x, .y = layer_view->y, .server = output->server};
 
     struct viv_render_data rdata = {
         .output = output->wlr_output,

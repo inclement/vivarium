@@ -128,11 +128,11 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
     struct viv_output *output = workspace->output;
 
     struct wlr_output_layout_output *output_layout_output = wlr_output_layout_get(output->server->output_layout, output->wlr_output);
-    int ox = output_layout_output->x;
-    int oy = output_layout_output->y;
 
-    int32_t width = output->wlr_output->width;
-    int32_t height = output->wlr_output->height;
+    int ox = output_layout_output->x + output->excluded_margin.left;
+    int oy = output_layout_output->y + output->excluded_margin.top;
+    int32_t width = output->wlr_output->width - ox - output->excluded_margin.right;
+    int32_t height = output->wlr_output->height - oy - output->excluded_margin.bottom;
 
     struct viv_view *view;
 

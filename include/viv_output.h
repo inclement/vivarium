@@ -20,5 +20,7 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
 /// Initialise a new viv_output
 void viv_output_init(struct viv_output *output, struct viv_server *server, struct wlr_output *wlr_output);
 
-
+/// Apply the layout function of the current workspace, but only if the output or current
+/// workspace need layouting
+void viv_output_do_layout_if_necessary(struct viv_output *output);
 #endif

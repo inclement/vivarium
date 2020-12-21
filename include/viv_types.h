@@ -84,6 +84,12 @@ struct viv_output {
     struct viv_workspace *current_workspace;
 
     struct wl_list layer_views;
+    struct {
+        uint32_t left;
+        uint32_t right;
+        uint32_t top;
+        uint32_t bottom;
+    } excluded_margin;
 };
 
 struct viv_layout {
@@ -112,6 +118,8 @@ struct viv_layer_view {
     bool mapped;
 
     struct wl_list output_link;
+
+    uint32_t x, y;
 };
 
 struct viv_view {

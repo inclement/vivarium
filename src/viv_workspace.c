@@ -180,12 +180,3 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
 
     workspace->was_laid_out = true;
 }
-
-void viv_workspace_do_layout_if_necessary(struct viv_workspace *workspace) {
-    struct viv_output *output = workspace->output;
-    if (!(output->needs_layout | workspace->needs_layout)) {
-        return;
-    }
-
-    viv_workspace_do_layout(workspace);
-}

@@ -31,7 +31,4 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace);
 
 /// Apply the layout function of the workspace, and handle tidying up e.g. pointer focus
 void viv_workspace_do_layout(struct viv_workspace *workspace);
-
-/// Apply the layout function of the workspace, but only if the workspace or its output needs layouting.
-void viv_workspace_do_layout_if_necessary(struct viv_workspace *workspace);
 #endif
