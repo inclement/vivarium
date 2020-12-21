@@ -3,6 +3,7 @@
 
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_box.h>
+#include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <xkbcommon/xkbcommon.h>
@@ -58,6 +59,8 @@ struct viv_server {
         struct wlr_box geobox;
         uint32_t resize_edges;  /// union of ::wlr_edges along which the view is being resized
     } grab_state;
+
+    struct wlr_xdg_output_manager_v1 *xdg_output_manager;
 
 	struct wlr_output_layout *output_layout;
     struct viv_output *active_output;

@@ -16,7 +16,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 	viv_view_focus(view, view->xdg_surface->surface);
 
     struct viv_workspace *workspace = view->workspace;
-    workspace->output->needs_layout += 1;
+    workspace->output->needs_layout = true;
 }
 
 static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
@@ -26,7 +26,7 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 	view->mapped = false;
 
     struct viv_workspace *workspace = view->workspace;
-    workspace->output->needs_layout += 1;
+    workspace->output->needs_layout = true;
 }
 
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {

@@ -12,6 +12,8 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, map);
 	layer_view->mapped = true;
+
+    layer_view->output->needs_layout = true;
 }
 
 static void layer_surface_unmap(struct wl_listener *listener, void *data) {
@@ -19,6 +21,8 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, unmap);
 	layer_view->mapped = false;
+
+    layer_view->output->needs_layout = true;
 }
 
 static void layer_surface_destroy(struct wl_listener *listener, void *data) {

@@ -12,6 +12,7 @@
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_seat.h>
@@ -657,6 +658,9 @@ void viv_server_init(struct viv_server *server) {
     server->layer_shell = wlr_layer_shell_v1_create(server->wl_display);
     server->new_layer_surface.notify = server_new_layer_surface;
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
+
+    // Set up the output manager protocol
+    server->xdg_output_manager = wlr_xdg_output_manager_v1_create(server->wl_display, server->output_layout);
 
     // Create a wlroots cursor for handling the cursor image shown on the screen
 	server->cursor = wlr_cursor_create();
