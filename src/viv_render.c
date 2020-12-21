@@ -210,6 +210,13 @@ void viv_render_layer_view(struct wlr_renderer *renderer, struct viv_layer_view 
     wlr_layer_surface_v1_for_each_popup(layer_view->layer_surface, render_surface, &rdata);
 }
 
+static bool viv_layer_is(struct viv_layer_view *layer_view, enum zwlr_layer_shell_v1_layer layer) {
+    if (layer_view->layer_surface->current.layer == layer) {
+        return true;
+    }
+    return false;
+}
+
 void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output) {
 	if (!wlr_output_attach_render(output->wlr_output, NULL)) {
 		return;
@@ -224,7 +231,21 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
 
 	struct viv_view *view;
 
-    // First render tiled windows
+    struct viv_layer_view *layer_view;
+
+    // First render layer-protocol surfaces in the background or bottom layers
+    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND)) {
+            viv_render_layer_view(renderer, layer_view, output);
+        }
+    }
+    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM)) {
+            viv_render_layer_view(renderer, layer_view, output);
+        }
+    }
+
+    // Begin rendering actual views: first render tiled windows
 	wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
         if (view->is_floating || (view == output->current_workspace->active_view)) {
             continue;
@@ -262,11 +283,16 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
         viv_render_view(renderer, view, output);
 	}
 
-    // Render any layer surfaces
-    // TODO these should actually be interspersed with views according to their layer
-    struct viv_layer_view *layer_view;
+    // Render any layer surfaces that should go on top of views
     wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
-        viv_render_layer_view(renderer, layer_view, output);
+        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_TOP)) {
+            viv_render_layer_view(renderer, layer_view, output);
+        }
+    }
+    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY)) {
+            viv_render_layer_view(renderer, layer_view, output);
+        }
     }
 
 #ifdef DEBUG

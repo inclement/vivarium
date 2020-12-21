@@ -355,8 +355,6 @@ static void server_new_layer_surface(struct wl_listener *listener, void *data) {
 
     struct wlr_layer_surface_v1_state *state = &layer_surface->current;
 
-    wlr_layer_surface_v1_configure(layer_surface, state->desired_width, state->desired_height);
-
     struct viv_layer_view *layer_view = calloc(1, sizeof(struct viv_layer_view));
     CHECK_ALLOCATION(layer_view);
     viv_layer_view_init(layer_view, server, layer_surface);

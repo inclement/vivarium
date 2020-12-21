@@ -56,8 +56,8 @@ void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *s
 	wl_signal_add(&layer_surface->events.unmap, &layer_view->unmap);
 	layer_view->destroy.notify = layer_surface_destroy;
 	wl_signal_add(&layer_surface->events.destroy, &layer_view->destroy);
-	/* layer_view->new_popup.notify = layer_surface_new_popup; */
-	/* wl_signal_add(&layer_surface->events.new_popup, &layer_view->new_popup); */
+	layer_view->new_popup.notify = layer_surface_new_popup;
+	wl_signal_add(&layer_surface->events.new_popup, &layer_view->new_popup);
     UNUSED(layer_surface_new_popup);
 
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
