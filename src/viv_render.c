@@ -168,7 +168,7 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
 
         wlr_renderer_scissor(renderer, &target_geometry);
     }
-    wlr_xdg_surface_for_each_surface(view->xdg_surface, render_surface, &rdata);
+    wlr_surface_for_each_surface(view->xdg_surface->surface, render_surface, &rdata);
     if (surface_exceeds_bounds) {
         wlr_renderer_scissor(renderer, NULL);
     }

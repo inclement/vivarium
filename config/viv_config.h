@@ -27,7 +27,7 @@
 #define CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT {1, 0, 0.7, 1}
 #define CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT {0.6, 0.6, 0.9, 1}
 
-#define CONFIG_CLEAR_COLOUR_DEFAULT {0.3, 0.3, 0.3, 1.0}
+#define CONFIG_CLEAR_COLOUR_DEFAULT {0.73, 0.73, 0.73, 1.0}
 
 struct viv_keybind {
     xkb_keysym_t key;

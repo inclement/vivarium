@@ -84,13 +84,21 @@ static void process_cursor_resize_view(struct viv_server *server, uint32_t time)
 }
 
 /// Find the view under the pointer (if any) and pass the event data along
-static void process_cursor_pass_through_to_view(struct viv_server *server, uint32_t time) {
+static void process_cursor_pass_through_to_surface(struct viv_server *server, uint32_t time) {
 	double sx, sy;
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *surface = NULL;
+
+
     // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
 	struct viv_view *view = viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 	if (!view) {
+        if (wl_list_length(&server->active_output->layer_views)) {
+            struct viv_layer_view *layer_view = wl_container_of(
+                server->active_output->layer_views.next, layer_view, output_link);
+            surface = layer_view->layer_surface->surface;
+        }
+
         // No view under the cursor => use the default image
 		wlr_xcursor_manager_set_cursor_image(
 				server->cursor_mgr, "left_ptr", server->cursor);
@@ -137,7 +145,7 @@ void viv_cursor_process_cursor_motion(struct viv_server *server, uint32_t time) 
         process_cursor_resize_view(server, time);
         break;
     case VIV_CURSOR_PASSTHROUGH:
-        process_cursor_pass_through_to_view(server, time);
+        process_cursor_pass_through_to_surface(server, time);
         break;
     }
 
