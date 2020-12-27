@@ -698,4 +698,7 @@ void viv_server_init(struct viv_server *server) {
 
     struct wlr_server_decoration_manager *decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
     wlr_server_decoration_manager_set_default_mode(decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+
+    server->log_state.last_active_output = NULL;
+    server->log_state.last_active_workspace = NULL;
 }

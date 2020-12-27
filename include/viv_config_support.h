@@ -11,6 +11,8 @@
 #define MAX_NUM_WORKSPACES 50
 #define MAX_NUM_LAYOUTS 50
 
+#define MAX_IPC_FILENAME_LENGTH 100
+
 #define EXIT_FAILURE 1
 
 #include <stdlib.h>

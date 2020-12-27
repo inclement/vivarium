@@ -132,6 +132,8 @@ static struct viv_config the_config = {
         .variant = "widecolemak",
         .options = "ctrl:nocaps",
     },
+
+    .ipc_workspaces_filename = "/home/sandy/.viv_workspace_state.txt",
 };
 
 

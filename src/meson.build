@@ -1,6 +1,7 @@
 viv_sources = [
   'vivarium.c',
   'viv_cursor.c',
+  'viv_ipc.c',
   'viv_layout.c',
   'viv_mappable_functions.c',
   'viv_output.c',

@@ -68,6 +68,12 @@ struct viv_server {
 	struct wl_listener new_output;
 
     struct wl_list workspaces;
+
+    /// State relating to changes that should be logged
+    struct {
+        struct viv_output *last_active_output;
+        struct viv_workspace *last_active_workspace;
+    } log_state;
 };
 
 struct viv_keybindings {
@@ -199,6 +205,11 @@ struct viv_config {
     char workspaces[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH];
 
     struct xkb_rule_names xkb_rules;
+
+    char ipc_workspaces_filename[MAX_IPC_FILENAME_LENGTH];
+
+    bool debug_mark_xwayland_views;
+    bool debug_mark_active_output;
 };
 
 

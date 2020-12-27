@@ -4,6 +4,7 @@
 #include "viv_output.h"
 
 #include "viv_cursor.h"
+#include "viv_ipc.h"
 #include "viv_layer_view.h"
 #include "viv_render.h"
 #include "viv_server.h"
@@ -40,6 +41,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
     // frame, to give time for clients to re-draw before the next one. There's probably a
     // better way to do this.
     viv_output_do_layout_if_necessary(output);
+
+    viv_routine_log_state(output->server);
 }
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
