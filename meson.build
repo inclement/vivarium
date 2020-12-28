@@ -11,6 +11,7 @@ project(
 
 add_project_arguments([
     '-DDEBUG',  # TODO: make this a build option
+    '-DXWAYLAND',  # TODO: make this a build option
     '-DWLR_USE_UNSTABLE',
     '-D_POSIX_C_SOURCE=200809',
 ], language : 'c')

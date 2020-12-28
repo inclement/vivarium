@@ -98,9 +98,26 @@ static void xdg_toplevel_set_title(struct wl_listener *listener, void *data) {
     wlr_log(WLR_DEBUG, "\"%s\" set title \"%s\"", app_id, title);
 }
 
+static void implementation_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
+    ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
+    wlr_xdg_toplevel_set_size(view->xdg_surface, width, height);
+}
+
+static void implementation_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
+    ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
+    wlr_xdg_surface_get_geometry(view->xdg_surface, geo_box);
+}
+
+static struct viv_view_implementation xdg_view_implementation = {
+    .set_size = &implementation_set_size,
+    .get_geometry = &implementation_get_geometry,
+};
+
 void viv_xdg_view_init(struct viv_view *view, struct viv_server *server, struct wlr_xdg_surface *xdg_surface) {
 
     view->type = VIV_VIEW_TYPE_XDG_SHELL;
+    view->implementation = &xdg_view_implementation;
+
 	view->server = server;
 	view->xdg_surface = xdg_surface;
 	view->mapped = false;

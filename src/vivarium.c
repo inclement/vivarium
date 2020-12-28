@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
 
     // Set the WAYLAND_DISPLAY environment variable, so that clients know how to connect
     // to our server
-    unsetenv("DISPLAY");
 	setenv("WAYLAND_DISPLAY", socket, true);
 
     // Set up env vars to encourage applications to use wayland if possible

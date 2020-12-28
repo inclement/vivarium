@@ -21,6 +21,7 @@
 #include <wlr/util/log.h>
 
 #include "viv_types.h"
+#include "viv_view.h"
 
 /**
  *  |--------------|----|----|
@@ -172,9 +173,7 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
             if (view_index == 0) {
                 view->x = 0 - geo_box.x + border_width;
                 view->y = 0 - geo_box.y + border_width;
-                wlr_xdg_toplevel_set_size(view->xdg_surface,
-                                          split_pixel - 2 * border_width,
-                                          height - 2 * border_width);
+                viv_view_set_size(view, split_pixel - 2 * border_width, height - 2 * border_width);
 
                 view->target_x = 0;
                 view->target_y = 0;
@@ -190,9 +189,7 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
                     target_height++;
                     (view->y) = view->y - spare_pixels_used;
                 }
-                wlr_xdg_toplevel_set_size(view->xdg_surface,
-                                          width - split_pixel - 2 * border_width,
-                                          target_height - 2 * border_width);
+                viv_view_set_size(view, width - split_pixel - 2 * border_width, target_height - 2 * border_width);
 
                 view->target_x = split_pixel;
                 view->target_y = (view_index - 1) * side_bar_view_height - spare_pixels_used;

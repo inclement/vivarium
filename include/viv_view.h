@@ -43,4 +43,10 @@ bool viv_view_oversized(struct viv_view *view);
 /// Make the given view the active view within its workspace
 void viv_view_make_active(struct viv_view *view);
 
+/// Set the size of a view
+void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
+
+/// Get the geometry box of a view
+void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box);
+
 #endif

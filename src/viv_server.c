@@ -21,6 +21,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/util/log.h>
+#include <wlr/xwayland.h>
 
 #include "viv_types.h"
 #include "viv_cursor.h"
@@ -342,6 +343,21 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     viv_view_ensure_tiled(view);
 }
 
+#ifdef XWAYLAND
+/// Create a new viv_view to track a new xwayland surface
+static void server_new_xwayland_surface(struct wl_listener *listener, void *data) {
+	struct viv_server *server = wl_container_of(listener, server, new_xwayland_surface);
+    struct wlr_xwayland_surface *xwayland_surface = data;
+    wlr_log(WLR_INFO, "New xwayland surface, title %s, class %s, instance %s, role %s",
+            xwayland_surface->title,
+            xwayland_surface->class,
+            xwayland_surface->instance,
+            xwayland_surface->role);
+    ASSERT(false);  // xwayland not yet implemented
+}
+#endif
+
+
 /// Create a new viv_layer_view to track a new layer surface
 static void server_new_layer_surface(struct wl_listener *listener, void *data) {
 	struct viv_server *server = wl_container_of(listener, server, new_layer_surface);
@@ -635,7 +651,7 @@ void viv_server_init(struct viv_server *server) {
 
     // Create some default wlroots interfaces:
     // Compositor to handle surface allocation
-	wlr_compositor_create(server->wl_display, server->renderer);
+	server->compositor = wlr_compositor_create(server->wl_display, server->renderer);
     // Data device manager to handle the clipboard
 	wlr_data_device_manager_create(server->wl_display);
 
@@ -651,6 +667,19 @@ void viv_server_init(struct viv_server *server) {
 	server->xdg_shell = wlr_xdg_shell_create(server->wl_display);
 	server->new_xdg_surface.notify = server_new_xdg_surface;
 	wl_signal_add(&server->xdg_shell->events.new_surface, &server->new_xdg_surface);
+
+#ifdef XWAYLAND
+    // Set up the xwayland shell
+	server->xwayland_shell = wlr_xwayland_create(server->wl_display, server->compositor, false);
+	server->new_xwayland_surface.notify = server_new_xwayland_surface;
+	wl_signal_add(&server->xwayland_shell->events.new_surface, &server->new_xwayland_surface);
+    setenv("DISPLAY", server->xwayland_shell->server->display_name, true);
+#else
+    // Discourage X apps from starting in some other X server
+    unsetenv("DISPLAY");
+#endif
+
+    server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 
     // Set up the layer-shell
     server->layer_shell = wlr_layer_shell_v1_create(server->wl_display);

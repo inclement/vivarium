@@ -3,6 +3,7 @@
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/xwayland.h>
 
 #include "viv_types.h"
 #include "viv_view.h"
@@ -197,7 +198,6 @@ void viv_render_layer_view(struct wlr_renderer *renderer, struct viv_layer_view 
 	clock_gettime(CLOCK_MONOTONIC, &now);
 
     struct viv_view view = {.x = layer_view->x, .y = layer_view->y, .server = output->server};
-
     struct viv_render_data rdata = {
         .output = output->wlr_output,
         .view = &view,

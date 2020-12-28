@@ -6,6 +6,7 @@
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
+#include <wlr/xwayland.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "viv_config_support.h"
@@ -30,9 +31,15 @@ struct viv_server {
 	struct wl_display *wl_display;
 	struct wlr_backend *backend;
 	struct wlr_renderer *renderer;
+    struct wlr_compositor *compositor;
 
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;
+
+#ifdef XWAYLAND
+    struct wlr_xwayland *xwayland_shell;
+    struct wl_listener new_xwayland_surface;
+#endif
 
     struct wlr_layer_shell_v1 *layer_shell;
     struct wl_listener new_layer_surface;
@@ -111,10 +118,6 @@ struct viv_layout {
     struct wl_list workspace_link;
 };
 
-enum viv_view_type {
-    VIV_VIEW_TYPE_XDG_SHELL,
-};
-
 struct viv_layer_view {
     struct wlr_layer_surface_v1 *layer_surface;
     struct viv_server *server;
@@ -131,8 +134,22 @@ struct viv_layer_view {
     uint32_t x, y;
 };
 
+enum viv_view_type {
+    VIV_VIEW_TYPE_XDG_SHELL,
+#ifdef XWAYLAND
+    VIV_VIEW_TYPE_XWAYLAND,
+#endif
+};
+
+struct viv_view_implementation {
+    void (*set_size)(struct viv_view *view, uint32_t width, uint32_t height);
+    void (*get_geometry)(struct viv_view *view, struct wlr_box *geo_box);
+};
+
 struct viv_view {
     enum viv_view_type type;
+
+    struct viv_view_implementation *implementation;
 
 	struct wl_list workspace_link;
 

@@ -167,3 +167,13 @@ void viv_view_make_active(struct viv_view *view) {
     view->workspace->active_view = view;
     viv_view_focus(view, view->xdg_surface->surface);
 }
+
+void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
+    ASSERT(view->implementation->set_size != NULL);
+    view->implementation->set_size(view, width, height);
+}
+
+void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
+    ASSERT(view->implementation->get_geometry != NULL);
+    view->implementation->get_geometry(view, geo_box);
+}
