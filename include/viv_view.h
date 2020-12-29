@@ -57,4 +57,7 @@ void viv_view_init(struct viv_view *view, struct viv_server *server);
 void viv_view_destroy(struct viv_view *view);
 
 void viv_view_set_activated(struct viv_view *view, bool activated);
+
+/// Get the wlr_surface that is the main/toplevel surface for this view
+struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view);
 #endif

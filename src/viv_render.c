@@ -128,7 +128,7 @@ static void render_borders(struct viv_view *view, struct viv_output *output, boo
 
 }
 
-void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
+static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
     if (!view->mapped) {
         // Unmapped views don't need any further rendering
         return;
@@ -187,6 +187,49 @@ void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struc
     wlr_xdg_surface_for_each_popup(view->xdg_surface, render_surface, &rdata);
 
 }
+
+static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
+    if (!view->mapped) {
+        // Unmapped views don't need any further rendering
+        return;
+    }
+
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+
+    struct viv_render_data rdata = {
+        .output = output->wlr_output,
+        .view = view,
+        .renderer = renderer,
+        .when = &now,
+        .limit_render_count = false,
+    };
+
+    wlr_surface_for_each_surface(viv_view_get_toplevel_surface(view), render_surface, &rdata);
+
+    // Then render the main surface's borders
+    bool is_grabbed = ((output->server->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
+                       (view == output->server->grab_state.view));
+    bool is_active_on_current_output = ((output == output->server->active_output) &
+                                        (view == view->workspace->active_view));
+    bool is_active = is_grabbed || is_active_on_current_output;
+    UNUSED(is_active);
+    /* render_borders(view, output, is_active); */
+}
+
+void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
+    switch (view->type) {
+    case VIV_VIEW_TYPE_XDG_SHELL:
+        viv_render_xdg_view(renderer, view, output);
+        break;
+    case VIV_VIEW_TYPE_XWAYLAND:
+        viv_render_xwayland_view(renderer, view, output);
+        break;
+    default:
+        UNREACHABLE();
+    }
+}
+
 
 void viv_render_layer_view(struct wlr_renderer *renderer, struct viv_layer_view *layer_view, struct viv_output *output) {
     if (!layer_view->mapped) {

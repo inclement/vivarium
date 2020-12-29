@@ -13,7 +13,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
-	viv_view_focus(view, view->xdg_surface->surface);
+	viv_view_focus(view, viv_view_get_toplevel_surface(view));
 
     struct viv_workspace *workspace = view->workspace;
     workspace->output->needs_layout = true;
@@ -105,12 +105,17 @@ static void implementation_set_activated(struct viv_view *view, bool activated) 
 	wlr_xdg_toplevel_set_activated(view->xdg_surface, activated);
 }
 
+static struct wlr_surface *implementation_get_toplevel_surface(struct viv_view *view) {
+    return view->xdg_surface->surface;
+}
+
 static struct viv_view_implementation xdg_view_implementation = {
     .set_size = &implementation_set_size,
     .get_geometry = &implementation_get_geometry,
     .set_tiled = &implementation_set_tiled,
     .get_string_identifier = &implementation_get_string_identifier,
     .set_activated = &implementation_set_activated,
+    .get_toplevel_surface = &implementation_get_toplevel_surface,
 };
 
 void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surface) {

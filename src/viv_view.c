@@ -43,6 +43,8 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
         } else if (wlr_surface_is_xwayland_surface(surface)) {
             struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(surface);
             wlr_xwayland_surface_activate(previous, false);
+        } else {
+            UNREACHABLE();
         }
 	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
@@ -54,10 +56,14 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 	 * track of this and automatically send key events to the appropriate
 	 * clients without additional work on your part.
 	 */
-	wlr_seat_keyboard_notify_enter(seat, view->xdg_surface->surface,
-		keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+    struct wlr_surface *toplevel_surface = viv_view_get_toplevel_surface(view);
+	wlr_seat_keyboard_notify_enter(seat, toplevel_surface, keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
 
     view->workspace->active_view = view;
+}
+
+struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view) {
+    return view->implementation->get_toplevel_surface(view);
 }
 
 void viv_view_ensure_floating(struct viv_view *view) {

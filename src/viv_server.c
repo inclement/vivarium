@@ -63,6 +63,9 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
 static bool is_view_at(struct viv_view *view,
 		double lx, double ly, struct wlr_surface **surface,
 		double *sx, double *sy) {
+    if (view->type != VIV_VIEW_TYPE_XDG_SHELL) {
+        return false;
+    }
 	double view_sx = lx - view->x;
 	double view_sy = ly - view->y;
 

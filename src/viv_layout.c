@@ -167,7 +167,14 @@ void viv_layout_do_split(struct viv_workspace *workspace) {
             continue;
         }
         struct wlr_box geo_box;
-        wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+        if (view->type == VIV_VIEW_TYPE_XDG_SHELL) {
+            wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+        } else {
+            geo_box.x = 0;
+            geo_box.y = 0;
+            geo_box.width = 100;
+            geo_box.height = 100;
+        }
 
         if (!view->is_floating) {
             if (view_index == 0) {
