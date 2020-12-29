@@ -90,9 +90,27 @@ static void implementation_get_geometry(struct viv_view *view, struct wlr_box *g
     wlr_xdg_surface_get_geometry(view->xdg_surface, geo_box);
 }
 
+static void implementation_set_tiled(struct viv_view *view, uint32_t edges) {
+    ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
+    wlr_xdg_toplevel_set_tiled(view->xdg_surface, edges);
+}
+
+static void implementation_get_string_identifier(struct viv_view *view, char *output, size_t max_len) {
+    snprintf(output, max_len, "<XDG:%s:%s>",
+             view->xdg_surface->toplevel->app_id,
+             view->xdg_surface->toplevel->title);
+}
+
+static void implementation_set_activated(struct viv_view *view, bool activated) {
+	wlr_xdg_toplevel_set_activated(view->xdg_surface, activated);
+}
+
 static struct viv_view_implementation xdg_view_implementation = {
     .set_size = &implementation_set_size,
     .get_geometry = &implementation_get_geometry,
+    .set_tiled = &implementation_set_tiled,
+    .get_string_identifier = &implementation_get_string_identifier,
+    .set_activated = &implementation_set_activated,
 };
 
 void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surface) {

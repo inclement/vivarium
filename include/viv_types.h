@@ -145,6 +145,9 @@ enum viv_view_type {
 struct viv_view_implementation {
     void (*set_size)(struct viv_view *view, uint32_t width, uint32_t height);
     void (*get_geometry)(struct viv_view *view, struct wlr_box *geo_box);
+    void (*set_tiled)(struct viv_view *view, uint32_t edges);
+    void (*get_string_identifier)(struct viv_view *view, char *output, size_t max_len);
+    void (*set_activated)(struct viv_view *view, bool activated);
 };
 
 struct viv_view {

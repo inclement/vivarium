@@ -6,6 +6,7 @@
 
 static void event_xwayland_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
+    wlr_log(WLR_DEBUG, "xwayland surface mapped");
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
 	viv_view_focus(view, view->xdg_surface->surface);
@@ -43,9 +44,28 @@ static void implementation_get_geometry(struct viv_view *view, struct wlr_box *g
     UNUSED(geo_box);
 }
 
+static void implementation_set_tiled(struct viv_view *view, uint32_t edges) {
+    ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
+    UNUSED(edges);
+    wlr_log(WLR_DEBUG, "Tried to set tiled attribute of xwayland window to %d, ignoring", edges);
+}
+
+static void implementation_get_string_identifier(struct viv_view *view, char *output, size_t max_len) {
+    snprintf(output, max_len, "<XWAY:%s:%s>",
+             view->xwayland_surface->title,
+             view->xwayland_surface->class);
+}
+
+static void implementation_set_activated(struct viv_view *view, bool activated) {
+	wlr_xwayland_surface_activate(view->xwayland_surface, activated);
+}
+
 static struct viv_view_implementation xwayland_view_implementation = {
     .set_size = &implementation_set_size,
     .get_geometry = &implementation_get_geometry,
+    .set_tiled = &implementation_set_tiled,
+    .get_string_identifier = &implementation_get_string_identifier,
+    .set_activated = &implementation_set_activated,
 };
 
 void viv_xwayland_view_init(struct viv_view *view, struct wlr_xwayland_surface *xwayland_surface) {

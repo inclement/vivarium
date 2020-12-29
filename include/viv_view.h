@@ -35,7 +35,7 @@ struct viv_view *viv_view_prev_in_workspace(struct viv_view *view);
 void viv_view_request_close(struct viv_view *view);
 
 /// Return a string identifying the view type, as reported by the running application
-void viv_view_string_identifier(struct viv_view *view, char *buffer, size_t len);
+void viv_view_get_string_identifier(struct viv_view *view, char *buffer, size_t len);
 
 /// True if the surface geometry size exceeds that of the target draw region, else false
 bool viv_view_oversized(struct viv_view *view);
@@ -56,4 +56,5 @@ void viv_view_init(struct viv_view *view, struct viv_server *server);
 /// Clear up view state, remove it from its workspace, and free its memory
 void viv_view_destroy(struct viv_view *view);
 
+void viv_view_set_activated(struct viv_view *view, bool activated);
 #endif

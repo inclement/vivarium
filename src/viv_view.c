@@ -36,14 +36,19 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 		 * it no longer has focus and the client will repaint accordingly, e.g.
 		 * stop displaying a caret.
 		 */
-		struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(
-					seat->keyboard_state.focused_surface);
-		wlr_xdg_toplevel_set_activated(previous, false);
+        struct wlr_surface *surface = seat->keyboard_state.focused_surface;
+        if (wlr_surface_is_xdg_surface(surface)) {
+            struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(surface);
+            wlr_xdg_toplevel_set_activated(previous, false);
+        } else if (wlr_surface_is_xwayland_surface(surface)) {
+            struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(surface);
+            wlr_xwayland_surface_activate(previous, false);
+        }
 	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
 
 	/* Activate the new surface */
-	wlr_xdg_toplevel_set_activated(view->xdg_surface, true);
+    viv_view_set_activated(view, true);
 	/*
 	 * Tell the seat to have the keyboard enter this surface. wlroots will keep
 	 * track of this and automatically send key events to the appropriate
@@ -74,7 +79,7 @@ void viv_view_ensure_tiled(struct viv_view *view) {
     view->is_floating = false;
 
     uint32_t all_edges = WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT | WLR_EDGE_LEFT;
-    wlr_xdg_toplevel_set_tiled(view->xdg_surface, all_edges);
+    view->implementation->set_tiled(view, all_edges);
 }
 
 void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *workspace) {
@@ -84,7 +89,7 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
     }
 
     char view_name[VIEW_NAME_LEN];
-    viv_view_string_identifier(view, view_name, VIEW_NAME_LEN);
+    viv_view_get_string_identifier(view, view_name, VIEW_NAME_LEN);
     wlr_log(WLR_DEBUG, "Shifting view %s to workspace with name %s", view_name, workspace->name);
 
     struct viv_workspace *cur_workspace = view->workspace;
@@ -139,10 +144,8 @@ void viv_view_request_close(struct viv_view *view) {
     wlr_xdg_toplevel_send_close(view->xdg_surface);
 }
 
-void viv_view_string_identifier(struct viv_view *view, char *buffer, size_t len) {
-    snprintf(buffer, len, "<%s:%s>",
-             view->xdg_surface->toplevel->app_id,
-             view->xdg_surface->toplevel->title);
+void viv_view_get_string_identifier(struct viv_view *view, char *buffer, size_t len) {
+    return view->implementation->get_string_identifier(view, buffer, len);
 }
 
 
@@ -211,4 +214,8 @@ void viv_view_destroy(struct viv_view *view) {
 	wl_list_remove(&view->workspace_link);
 
 	free(view);
+}
+
+void viv_view_set_activated(struct viv_view *view, bool activated) {
+    view->implementation->set_activated(view, activated);
 }
