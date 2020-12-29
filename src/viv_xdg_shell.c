@@ -33,25 +33,7 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct viv_view *view = wl_container_of(listener, view, destroy);
-
-    struct viv_workspace *workspace = view->workspace;
-
-    if (view == workspace->active_view) {
-        // Mark that no surface is focused, so that we don't attempt to unfocus the now-invalid surface
-        workspace->output->server->seat->keyboard_state.focused_surface = NULL;
-
-        // Pick a new active view
-        if (wl_list_length(&workspace->views) > 1) {
-            viv_workspace_focus_next_window(workspace);
-        } else {
-            workspace->active_view = NULL;
-        }
-
-    }
-
-	wl_list_remove(&view->workspace_link);
-
-	free(view);
+    viv_view_destroy(view);
 }
 
 static void xdg_toplevel_request_move(struct wl_listener *listener, void *data) {
@@ -113,14 +95,11 @@ static struct viv_view_implementation xdg_view_implementation = {
     .get_geometry = &implementation_get_geometry,
 };
 
-void viv_xdg_view_init(struct viv_view *view, struct viv_server *server, struct wlr_xdg_surface *xdg_surface) {
+void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surface) {
 
     view->type = VIV_VIEW_TYPE_XDG_SHELL;
     view->implementation = &xdg_view_implementation;
-
-	view->server = server;
 	view->xdg_surface = xdg_surface;
-	view->mapped = false;
 
 	/* Listen to the various events it can emit */
 	view->map.notify = xdg_surface_map;

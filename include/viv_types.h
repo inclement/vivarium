@@ -135,6 +135,7 @@ struct viv_layer_view {
 };
 
 enum viv_view_type {
+    VIV_VIEW_TYPE_UNKNOWN,
     VIV_VIEW_TYPE_XDG_SHELL,
 #ifdef XWAYLAND
     VIV_VIEW_TYPE_XWAYLAND,
@@ -155,7 +156,9 @@ struct viv_view {
 
 	struct viv_server *server;
     struct viv_workspace *workspace;
+
 	struct wlr_xdg_surface *xdg_surface;
+    struct wlr_xwayland_surface *xwayland_surface;
 
 	struct wl_listener map;
 	struct wl_listener unmap;

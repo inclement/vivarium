@@ -9,6 +9,7 @@
 
 #include "viv_types.h"
 #include "viv_wl_list_utils.h"
+#include "viv_workspace.h"
 
 #define VIEW_NAME_LEN 100
 
@@ -176,4 +177,38 @@ void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
 void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
     ASSERT(view->implementation->get_geometry != NULL);
     view->implementation->get_geometry(view, geo_box);
+}
+
+void viv_view_init(struct viv_view *view, struct viv_server *server) {
+    ASSERT(view->type != VIV_VIEW_TYPE_UNKNOWN);
+
+	view->server = server;
+	view->mapped = false;
+
+    // Make sure the view gets added to a workspace
+    struct viv_output *output = server->active_output;
+    wl_list_insert(&output->current_workspace->views, &view->workspace_link);
+    view->workspace = output->current_workspace;
+
+    viv_view_ensure_tiled(view);
+}
+
+void viv_view_destroy(struct viv_view *view) {
+    struct viv_workspace *workspace = view->workspace;
+
+    if (view == workspace->active_view) {
+        // Mark that no surface is focused, so that we don't attempt to unfocus the now-invalid surface
+        workspace->output->server->seat->keyboard_state.focused_surface = NULL;
+
+        // Pick a new active view
+        if (wl_list_length(&workspace->views) > 1) {
+            viv_workspace_focus_next_window(workspace);
+        } else {
+            workspace->active_view = NULL;
+        }
+    }
+
+	wl_list_remove(&view->workspace_link);
+
+	free(view);
 }

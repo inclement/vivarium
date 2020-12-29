@@ -33,6 +33,7 @@
 #include "viv_layer_view.h"
 #include "viv_view.h"
 #include "viv_xdg_shell.h"
+#include "viv_xwayland_shell.h"
 
 #include "viv_debug_support.h"
 #include "viv_config.h"
@@ -333,14 +334,8 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     // Create a viv_view to track the xdg surface
 	struct viv_view *view = calloc(1, sizeof(struct viv_view));
     CHECK_ALLOCATION(view);
-    viv_xdg_view_init(view, server, xdg_surface);
-
-    // Make sure the view gets added to a workspace
-    struct viv_output *output = server->active_output;
-    wl_list_insert(&output->current_workspace->views, &view->workspace_link);
-    view->workspace = output->current_workspace;
-
-    viv_view_ensure_tiled(view);
+    viv_xdg_view_init(view, xdg_surface);
+    viv_view_init(view, server);
 }
 
 #ifdef XWAYLAND
@@ -348,12 +343,12 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
 static void server_new_xwayland_surface(struct wl_listener *listener, void *data) {
 	struct viv_server *server = wl_container_of(listener, server, new_xwayland_surface);
     struct wlr_xwayland_surface *xwayland_surface = data;
-    wlr_log(WLR_INFO, "New xwayland surface, title %s, class %s, instance %s, role %s",
-            xwayland_surface->title,
-            xwayland_surface->class,
-            xwayland_surface->instance,
-            xwayland_surface->role);
-    ASSERT(false);  // xwayland not yet implemented
+
+    // Create a viv_view to track the xdg surface
+	struct viv_view *view = calloc(1, sizeof(struct viv_view));
+    CHECK_ALLOCATION(view);
+    viv_xwayland_view_init(view, xwayland_surface);
+    viv_view_init(view, server);
 }
 #endif
 

@@ -49,4 +49,11 @@ void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
 /// Get the geometry box of a view
 void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box);
 
+/// Perform generic initialisation of a viv_view. Requires that shell-specific
+/// configuration has already taken place.
+void viv_view_init(struct viv_view *view, struct viv_server *server);
+
+/// Clear up view state, remove it from its workspace, and free its memory
+void viv_view_destroy(struct viv_view *view);
+
 #endif

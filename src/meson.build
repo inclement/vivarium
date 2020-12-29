@@ -12,6 +12,7 @@ viv_sources = [
   'viv_wl_list_utils.c',
   'viv_workspace.c',
   'viv_xdg_shell.c',
+  'viv_xwayland_shell.c',
 ]
 
 viv_deps = [
