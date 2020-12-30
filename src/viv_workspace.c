@@ -1,4 +1,3 @@
-#include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 
 #include "viv_cursor.h"
@@ -15,7 +14,7 @@ void viv_workspace_focus_next_window(struct viv_workspace *workspace) {
 
     struct viv_view *next_view = viv_view_next_in_workspace(workspace->active_view);
 
-    viv_view_focus(next_view, next_view->xdg_surface->surface);
+    viv_view_focus(next_view, viv_view_get_toplevel_surface(next_view));
 }
 
 void viv_workspace_focus_prev_window(struct viv_workspace *workspace) {
@@ -27,7 +26,7 @@ void viv_workspace_focus_prev_window(struct viv_workspace *workspace) {
 
     struct viv_view *prev_view = viv_view_prev_in_workspace(workspace->active_view);
 
-    viv_view_focus(prev_view, prev_view->xdg_surface->surface);
+    viv_view_focus(prev_view, viv_view_get_toplevel_surface(prev_view));
 }
 
 void viv_workspace_shift_active_window_up(struct viv_workspace *workspace) {
@@ -106,7 +105,7 @@ void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspace
     output->needs_layout = true;
 
     if (new_workspace->active_view != NULL) {
-        viv_view_focus(new_workspace->active_view, new_workspace->active_view->xdg_surface->surface);
+        viv_view_focus(new_workspace->active_view, viv_view_get_toplevel_surface(new_workspace->active_view));
     }
 
     wlr_log(WLR_INFO, "Workspace changed from %s to %s", old_workspace->name, new_workspace->name);

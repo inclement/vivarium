@@ -189,6 +189,7 @@ void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
 }
 
 void viv_view_init(struct viv_view *view, struct viv_server *server) {
+    // Check that the non-generic parts of the view have been initialised already
     ASSERT(view->type != VIV_VIEW_TYPE_UNKNOWN);
 
 	view->server = server;

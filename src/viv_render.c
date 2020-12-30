@@ -80,8 +80,6 @@ static void render_borders(struct viv_view *view, struct viv_output *output, boo
 
     struct viv_server *server = output->server;
 
-    struct wlr_box geo_box;
-    wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
     double x = 0, y = 0;
 	wlr_output_layout_output_coords(server->output_layout, output->wlr_output, &x, &y);
 	x += view->target_x;
@@ -213,8 +211,7 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
-    UNUSED(is_active);
-    /* render_borders(view, output, is_active); */
+    render_borders(view, output, is_active);
 }
 
 void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
