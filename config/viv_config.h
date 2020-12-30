@@ -134,6 +134,8 @@ static struct viv_config the_config = {
     },
 
     .ipc_workspaces_filename = "/home/sandy/.viv_workspace_state.txt",
+
+    .debug_mark_views_by_shell = false,
 };
 
 

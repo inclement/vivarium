@@ -232,7 +232,7 @@ struct viv_config {
 
     char ipc_workspaces_filename[MAX_IPC_FILENAME_LENGTH];
 
-    bool debug_mark_xwayland_views;
+    bool debug_mark_views_by_shell;
     bool debug_mark_active_output;
 };
 

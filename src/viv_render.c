@@ -184,6 +184,18 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     rdata.limit_render_count = false;
     wlr_xdg_surface_for_each_popup(view->xdg_surface, render_surface, &rdata);
 
+#ifdef DEBUG
+    if (output->server->config->debug_mark_views_by_shell) {
+        // Mark this as an xdg view
+        struct wlr_box output_marker_box = {
+            .x = view->x, .y = view->y, .width = 10, .height = 10
+        };
+        float output_marker_colour[4] = {0, 1, 0, 0.5};
+        if (output == output->server->active_output) {
+            wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
+        }
+    }
+#endif
 }
 
 static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
@@ -212,6 +224,19 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
     render_borders(view, output, is_active);
+
+#ifdef DEBUG
+    if (output->server->config->debug_mark_views_by_shell) {
+        // Mark this as an xwayland view
+        struct wlr_box output_marker_box = {
+            .x = view->x, .y = view->y, .width = 10, .height = 10
+        };
+        float output_marker_colour[4] = {1, 0, 0, 0.5};
+        if (output == output->server->active_output) {
+            wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
+        }
+    }
+#endif
 }
 
 void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
