@@ -149,6 +149,7 @@ struct viv_view_implementation {
     void (*get_string_identifier)(struct viv_view *view, char *output, size_t max_len);
     void (*set_activated)(struct viv_view *view, bool activated);
     struct wlr_surface *(*get_toplevel_surface)(struct viv_view *view);
+    void (*close)(struct viv_view *view);
 };
 
 struct viv_view {

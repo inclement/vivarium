@@ -61,6 +61,10 @@ static struct wlr_surface *implementation_get_toplevel_surface(struct viv_view *
     return view->xwayland_surface->surface;
 }
 
+static void implementation_close(struct viv_view *view) {
+    wlr_xwayland_surface_close(view->xwayland_surface);
+}
+
 static struct viv_view_implementation xwayland_view_implementation = {
     .set_size = &implementation_set_size,
     .get_geometry = &implementation_get_geometry,
@@ -68,6 +72,7 @@ static struct viv_view_implementation xwayland_view_implementation = {
     .get_string_identifier = &implementation_get_string_identifier,
     .set_activated = &implementation_set_activated,
     .get_toplevel_surface = &implementation_get_toplevel_surface,
+    .close = &implementation_close
 };
 
 void viv_xwayland_view_init(struct viv_view *view, struct wlr_xwayland_surface *xwayland_surface) {
