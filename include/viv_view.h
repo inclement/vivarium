@@ -60,4 +60,16 @@ void viv_view_set_activated(struct viv_view *view, bool activated);
 
 /// Get the wlr_surface that is the main/toplevel surface for this view
 struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view);
+
+/** Test if any surfaces of the given view are at the given layout coordinates, including
+    nested surfaces (e.g. popup windows, tooltips).  If so, return the surface data.
+    @param view Pointer to the view to test
+    @param lx Position to test in layout coordinates
+    @param ly Position to test in layout coordinates
+    @param surface wlr_surface via which to return if found
+    @param sx Surface coordinate to return (relative to surface top left corner)
+    @param sy Surface coordinate to return (relative to surface top left corner)
+    @returns true if a surface was found, else false
+*/
+bool viv_view_is_at(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
 #endif

@@ -113,6 +113,47 @@ static void implementation_close(struct viv_view *view) {
     wlr_xdg_toplevel_send_close(view->xdg_surface);
 }
 
+static bool implementation_is_at(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy) {
+	double view_sx = lx - view->x;
+	double view_sy = ly - view->y;
+
+	double _sx, _sy, _non_popup_sx, _non_popup_sy;
+
+    // If the view is oversized, we don't let it draw outside its target region so can
+    // stop immediately if the cursor is outside that region
+    struct wlr_box target_box = {
+        .x = view->target_x,
+        .y = view->target_y,
+        .width = view->target_width,
+        .height = view->target_height,
+    };
+
+    // Get surface at point from the full selection of popups and toplevel surfaces
+	struct wlr_surface *_surface = NULL;
+	_surface = wlr_xdg_surface_surface_at(
+			view->xdg_surface, view_sx, view_sy, &_sx, &_sy);
+
+    // Get surface at point considering only the non-popup surfaces
+    struct wlr_surface *_non_popup_surface = NULL;
+    _non_popup_surface = wlr_surface_surface_at(
+        view->xdg_surface->surface, view_sx, view_sx, &_non_popup_sx, &_non_popup_sy);
+
+    // We can only click on a toplevel surface if it's within the target render box,
+    // otherwise that part isn't being drawn and shouldn't be accessible
+    bool surface_is_popup = (_surface != _non_popup_surface);
+    bool cursor_in_target_box = wlr_box_contains_point(&target_box, lx, ly);
+    bool surface_clickable = (surface_is_popup || cursor_in_target_box);
+
+	if ((_surface != NULL) && surface_clickable) {
+		*sx = _sx;
+		*sy = _sy;
+		*surface = _surface;
+		return true;
+	}
+
+	return false;
+}
+
 static struct viv_view_implementation xdg_view_implementation = {
     .set_size = &implementation_set_size,
     .get_geometry = &implementation_get_geometry,
@@ -120,7 +161,8 @@ static struct viv_view_implementation xdg_view_implementation = {
     .get_string_identifier = &implementation_get_string_identifier,
     .set_activated = &implementation_set_activated,
     .get_toplevel_surface = &implementation_get_toplevel_surface,
-    .close = &implementation_close
+    .close = &implementation_close,
+    .is_at = &implementation_is_at,
 };
 
 void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surface) {

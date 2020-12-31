@@ -226,3 +226,7 @@ void viv_view_destroy(struct viv_view *view) {
 void viv_view_set_activated(struct viv_view *view, bool activated) {
     view->implementation->set_activated(view, activated);
 }
+
+bool viv_view_is_at(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy) {
+    return view->implementation->is_at(view, lx, ly, surface, sx, sy);
+}

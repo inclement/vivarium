@@ -151,6 +151,7 @@ struct viv_view_implementation {
     void (*set_activated)(struct viv_view *view, bool activated);
     struct wlr_surface *(*get_toplevel_surface)(struct viv_view *view);
     void (*close)(struct viv_view *view);
+    bool (*is_at)(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
 };
 
 struct viv_view {

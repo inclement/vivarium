@@ -50,62 +50,6 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
     return NULL;
 }
 
-/** Test if any surfaces of the given view are at the given layout coordinates, including
-    nested surfaces (e.g. popup windows, tooltips).  If so, return the surface data.
-    @param view Pointer to the view to test
-    @param lx Position to test in layout coordinates
-    @param ly Position to test in layout coordinates
-    @param surface wlr_surface via which to return if found
-    @param sx Surface coordinate to return (relative to surface top left corner)
-    @param sy Surface coordinate to return (relative to surface top left corner)
-    @returns true if a surface was found, else false
-*/
-static bool is_view_at(struct viv_view *view,
-		double lx, double ly, struct wlr_surface **surface,
-		double *sx, double *sy) {
-    if (view->type != VIV_VIEW_TYPE_XDG_SHELL) {
-        return false;
-    }
-	double view_sx = lx - view->x;
-	double view_sy = ly - view->y;
-
-	double _sx, _sy, _non_popup_sx, _non_popup_sy;
-
-    // If the view is oversized, we don't let it draw outside its target region so can
-    // stop immediately if the cursor is outside that region
-    struct wlr_box target_box = {
-        .x = view->target_x,
-        .y = view->target_y,
-        .width = view->target_width,
-        .height = view->target_height,
-    };
-
-    // Get surface at point from the full selection of popups and toplevel surfaces
-	struct wlr_surface *_surface = NULL;
-	_surface = wlr_xdg_surface_surface_at(
-			view->xdg_surface, view_sx, view_sy, &_sx, &_sy);
-
-    // Get surface at point considering only the non-popup surfaces
-    struct wlr_surface *_non_popup_surface = NULL;
-    _non_popup_surface = wlr_surface_surface_at(
-        view->xdg_surface->surface, view_sx, view_sx, &_non_popup_sx, &_non_popup_sy);
-
-    // We can only click on a toplevel surface if it's within the target render box,
-    // otherwise that part isn't being drawn and shouldn't be accessible
-    bool surface_is_popup = (_surface != _non_popup_surface);
-    bool cursor_in_target_box = wlr_box_contains_point(&target_box, lx, ly);
-    bool surface_clickable = (surface_is_popup || cursor_in_target_box);
-
-	if ((_surface != NULL) && surface_clickable) {
-		*sx = _sx;
-		*sy = _sy;
-		*surface = _surface;
-		return true;
-	}
-
-	return false;
-}
-
 /** Test if any views being handled by the compositor are present at
     the given layout coordinates lx,ly. This is at server level
     because it checks for against all views in the server.
@@ -125,7 +69,7 @@ struct viv_view *viv_server_view_at(
         if (!view->is_floating) {
             continue;
         }
-		if (is_view_at(view, lx, ly, surface, sx, sy)) {
+		if (viv_view_is_at(view, lx, ly, surface, sx, sy)) {
 			return view;
 		}
 	}
@@ -142,14 +86,14 @@ struct viv_view *viv_server_view_at(
             // Non-floating views can't leave their output/workspace
             continue;
         }
-		if (is_view_at(view, lx, ly, surface, sx, sy)) {
+		if (viv_view_is_at(view, lx, ly, surface, sx, sy)) {
 			return view;
 		}
     }
 
     // No floating view found => try other views
 	wl_list_for_each(view, &server->active_output->current_workspace->views, workspace_link) {
-		if (is_view_at(view, lx, ly, surface, sx, sy)) {
+		if (viv_view_is_at(view, lx, ly, surface, sx, sy)) {
 			return view;
 		}
 	}
