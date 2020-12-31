@@ -90,6 +90,10 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
     wlr_log(WLR_DEBUG, "Mappable tile_window");
 
     struct viv_view *view = workspace->active_view;
+    if (view == NULL) {
+        wlr_log(WLR_DEBUG, "Cannot tile active view, no view is active");
+        return;
+    }
 
     if (!view->is_floating) {
         wlr_log(WLR_DEBUG, "Cannot tile active view, it is not floating");
