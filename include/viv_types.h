@@ -39,6 +39,7 @@ struct viv_server {
 #ifdef XWAYLAND
     struct wlr_xwayland *xwayland_shell;
     struct wl_listener new_xwayland_surface;
+    struct wl_listener xwayland_ready;
 #endif
 
     struct wlr_layer_shell_v1 *layer_shell;

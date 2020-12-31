@@ -353,6 +353,13 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
     viv_xwayland_view_init(view, xwayland_surface);
     viv_view_init(view, server);
 }
+
+static void server_xwayland_ready(struct  wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_server *server = wl_container_of(listener, server, xwayland_ready);
+    wlr_xwayland_set_seat(server->xwayland_shell, server->seat);
+    wlr_log(WLR_INFO, "XWayland is ready");
+}
 #endif
 
 
@@ -671,6 +678,10 @@ void viv_server_init(struct viv_server *server) {
 	server->xwayland_shell = wlr_xwayland_create(server->wl_display, server->compositor, false);
 	server->new_xwayland_surface.notify = server_new_xwayland_surface;
 	wl_signal_add(&server->xwayland_shell->events.new_surface, &server->new_xwayland_surface);
+
+	server->xwayland_ready.notify = server_xwayland_ready;
+	wl_signal_add(&server->xwayland_shell->events.new_surface, &server->xwayland_ready);
+
     setenv("DISPLAY", server->xwayland_shell->server->display_name, true);
 #else
     // Discourage X apps from starting in some other X server
