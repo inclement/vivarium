@@ -50,8 +50,8 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
     return NULL;
 }
 
-/** Test if any views being handled by the compositor are present at
-    the given layout coordinates lx,ly. This is at server level
+/** Test if any views being handled by the compositor are present the
+    at given layout coordinates lx,ly. This is at server level
     because it checks for against all views in the server.
  */
 struct viv_view *viv_server_view_at(

@@ -129,9 +129,13 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
 struct viv_view *viv_view_next_in_workspace(struct viv_view *view) {
     struct viv_workspace *workspace = view->workspace;
 
-    struct wl_list *next_link = viv_wl_list_next_ignoring_root(&view->workspace_link, &workspace->views);
-
-    struct viv_view *next_view = wl_container_of(next_link, next_view, workspace_link);
+    struct viv_view *next_view;
+    if (wl_list_length(&workspace->views) > 1) {
+        struct wl_list *next_link = viv_wl_list_next_ignoring_root(&view->workspace_link, &workspace->views);
+        next_view = wl_container_of(next_link, next_view, workspace_link);
+    } else {
+        next_view = view;
+    }
 
     return next_view;
 }
@@ -139,9 +143,13 @@ struct viv_view *viv_view_next_in_workspace(struct viv_view *view) {
 struct viv_view *viv_view_prev_in_workspace(struct viv_view *view) {
     struct viv_workspace *workspace = view->workspace;
 
-    struct wl_list *prev_link = viv_wl_list_prev_ignoring_root(&view->workspace_link, &workspace->views);
-
-    struct viv_view *prev_view = wl_container_of(prev_link, prev_view, workspace_link);
+    struct viv_view *prev_view;
+    if (wl_list_length(&workspace->views) > 1) {
+        struct wl_list *prev_link = viv_wl_list_prev_ignoring_root(&view->workspace_link, &workspace->views);
+        prev_view = wl_container_of(prev_link, prev_view, workspace_link);
+    } else {
+        prev_view = view;
+    }
 
     return prev_view;
 }
