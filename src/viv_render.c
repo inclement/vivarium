@@ -215,7 +215,30 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
         .limit_render_count = false,
     };
 
+    struct wlr_box target_geometry = {
+        .x = view->target_x,
+        .y = view->target_y,
+        .width = view->target_width,
+        .height = view->target_height
+    };
+
+    bool surface_exceeds_bounds = viv_view_oversized(view);
+
+    // Render only the main surface
+    if (surface_exceeds_bounds) {
+        // Only scissor if the view's surface exceeds its bounds, to save a tiny bit of time
+
+        double ox = 0, oy = 0;
+        wlr_output_layout_output_coords(view->server->output_layout, output->wlr_output, &ox, &oy);
+        target_geometry.x += ox;
+        target_geometry.y += oy;
+
+        wlr_renderer_scissor(renderer, &target_geometry);
+    }
     wlr_surface_for_each_surface(viv_view_get_toplevel_surface(view), render_surface, &rdata);
+    if (surface_exceeds_bounds) {
+        wlr_renderer_scissor(renderer, NULL);
+    }
 
     // Then render the main surface's borders
     bool is_grabbed = ((output->server->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&

@@ -99,6 +99,24 @@ static bool implementation_is_at(struct viv_view *view, double lx, double ly, st
 	return false;
 }
 
+static bool implementation_oversized(struct viv_view *view) {
+    struct wlr_box actual_geometry = {
+        .width = view->xwayland_surface->surface->current.width,
+        .height = view->xwayland_surface->surface->current.height,
+    };
+    struct wlr_box target_geometry = {
+        .x = view->target_x,
+        .y = view->target_y,
+        .width = view->target_width,
+        .height = view->target_height
+    };
+
+    bool surface_exceeds_bounds = ((actual_geometry.width > (target_geometry.width)) ||
+                                   (actual_geometry.height > (target_geometry.height)));
+
+    return surface_exceeds_bounds;
+}
+
 static struct viv_view_implementation xwayland_view_implementation = {
     .set_size = &implementation_set_size,
     .get_geometry = &implementation_get_geometry,
@@ -108,6 +126,7 @@ static struct viv_view_implementation xwayland_view_implementation = {
     .get_toplevel_surface = &implementation_get_toplevel_surface,
     .close = &implementation_close,
     .is_at = &implementation_is_at,
+    .oversized = &implementation_oversized,
 };
 
 void viv_xwayland_view_init(struct viv_view *view, struct wlr_xwayland_surface *xwayland_surface) {

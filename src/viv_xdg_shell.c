@@ -154,6 +154,24 @@ static bool implementation_is_at(struct viv_view *view, double lx, double ly, st
 	return false;
 }
 
+static bool implementation_oversized(struct viv_view *view) {
+    struct wlr_box actual_geometry = { 0 };
+    struct wlr_box target_geometry = {
+        .x = view->target_x,
+        .y = view->target_y,
+        .width = view->target_width,
+        .height = view->target_height
+    };
+    wlr_xdg_surface_get_geometry(view->xdg_surface, &actual_geometry);
+
+    int leeway_px = 00;
+
+    bool surface_exceeds_bounds = ((actual_geometry.width > (target_geometry.width + leeway_px)) ||
+                                   (actual_geometry.height > (target_geometry.height + leeway_px)));
+
+    return surface_exceeds_bounds;
+}
+
 static struct viv_view_implementation xdg_view_implementation = {
     .set_size = &implementation_set_size,
     .get_geometry = &implementation_get_geometry,
@@ -163,6 +181,7 @@ static struct viv_view_implementation xdg_view_implementation = {
     .get_toplevel_surface = &implementation_get_toplevel_surface,
     .close = &implementation_close,
     .is_at = &implementation_is_at,
+    .oversized = &implementation_oversized,
 };
 
 void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surface) {

@@ -164,21 +164,7 @@ void viv_view_get_string_identifier(struct viv_view *view, char *buffer, size_t 
 
 
 bool viv_view_oversized(struct viv_view *view) {
-    struct wlr_box actual_geometry = { 0 };
-    struct wlr_box target_geometry = {
-        .x = view->target_x,
-        .y = view->target_y,
-        .width = view->target_width,
-        .height = view->target_height
-    };
-    wlr_xdg_surface_get_geometry(view->xdg_surface, &actual_geometry);
-
-    int leeway_px = 00;
-
-    bool surface_exceeds_bounds = ((actual_geometry.width > (target_geometry.width + leeway_px)) ||
-                                   (actual_geometry.height > (target_geometry.height + leeway_px)));
-
-    return surface_exceeds_bounds;
+    return view->implementation->oversized(view);
 }
 
 void viv_view_make_active(struct viv_view *view) {
