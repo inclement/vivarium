@@ -568,8 +568,10 @@ void viv_check_data_consistency(struct viv_server *server) {
         bool active_view_is_null = (workspace->active_view == NULL);
         DEBUG_ASSERT(active_view_in_views || active_view_is_null);
 
-        // Check that output and workspace are linked correctly
-        DEBUG_ASSERT(workspace == workspace->output->current_workspace);
+        if (workspace->output != NULL) {
+            // Check that output and workspace are linked correctly
+            DEBUG_ASSERT(workspace == workspace->output->current_workspace);
+        }
     }
 }
 

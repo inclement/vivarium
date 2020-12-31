@@ -107,7 +107,7 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
         return;
     }
 
-    if (other_output) {
+    if (other_output != NULL) {
         other_output->current_workspace = output->current_workspace;
         other_output->current_workspace->output = other_output;
         other_output->needs_layout = true;
