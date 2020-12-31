@@ -136,7 +136,7 @@ void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mo
 	struct viv_server *server = view->server;
 	struct wlr_surface *focused_surface =
 		server->seat->pointer_state.focused_surface;
-	if (view->xdg_surface->surface != focused_surface) {
+	if (viv_view_get_toplevel_surface(view) != focused_surface) {
 		/* Deny move/resize requests from unfocused clients. */
 		return;
 	}
@@ -150,19 +150,18 @@ void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mo
 		server->grab_state.x = server->cursor->x - view->x;
 		server->grab_state.y = server->cursor->y - view->y;
 	} else {
-		struct wlr_box geo_box;
-		wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+        struct wlr_box geo_box;
+        viv_view_get_geometry(view, &geo_box);
+        double border_x = (view->x + geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
+        double border_y = (view->y + geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
+        server->grab_state.x = server->cursor->x - border_x;
+        server->grab_state.y = server->cursor->y - border_y;
 
-		double border_x = (view->x + geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
-		double border_y = (view->y + geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
-		server->grab_state.x = server->cursor->x - border_x;
-		server->grab_state.y = server->cursor->y - border_y;
+        server->grab_state.geobox = geo_box;
+        server->grab_state.geobox.x += view->x;
+        server->grab_state.geobox.y += view->y;
 
-		server->grab_state.geobox = geo_box;
-		server->grab_state.geobox.x += view->x;
-		server->grab_state.geobox.y += view->y;
-
-		server->grab_state.resize_edges = edges;
+        server->grab_state.resize_edges = edges;
 	}
 }
 

@@ -36,9 +36,10 @@ static void implementation_set_size(struct viv_view *view, uint32_t width, uint3
 }
 
 static void implementation_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
-    ASSERT(false);
-    UNUSED(view);
-    UNUSED(geo_box);
+    geo_box->x = 0;
+    geo_box->y = 0;
+    geo_box->width = view->xwayland_surface->width;
+    geo_box->height = view->xwayland_surface->height;
 }
 
 static void implementation_set_tiled(struct viv_view *view, uint32_t edges) {
