@@ -244,6 +244,12 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 		wl_container_of(listener, server, new_output);
 	struct wlr_output *wlr_output = data;
 
+    wlr_log(WLR_INFO, "New output appeared with name %s, make %s, model %s, serial %s",
+            wlr_output->name,
+            wlr_output->make,
+            wlr_output->model,
+            wlr_output->serial);
+
     // Use the monitor's preferred mode for now
     // TODO: Make this configuarble
 	if (!wl_list_empty(&wlr_output->modes)) {

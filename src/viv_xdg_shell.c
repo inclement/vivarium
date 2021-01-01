@@ -85,6 +85,13 @@ static void implementation_set_size(struct viv_view *view, uint32_t width, uint3
     wlr_xdg_toplevel_set_size(view->xdg_surface, width, height);
 }
 
+static void implementation_set_pos(struct viv_view *view, uint32_t x, uint32_t y) {
+    ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
+    view->x = x;
+    view->y = y;
+    // Nothing else to do, xdg surfaces don't know/care about their global pos
+}
+
 static void implementation_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
     ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
     wlr_xdg_surface_get_geometry(view->xdg_surface, geo_box);
@@ -174,6 +181,7 @@ static bool implementation_oversized(struct viv_view *view) {
 
 static struct viv_view_implementation xdg_view_implementation = {
     .set_size = &implementation_set_size,
+    .set_pos = &implementation_set_pos,
     .get_geometry = &implementation_get_geometry,
     .set_tiled = &implementation_set_tiled,
     .get_string_identifier = &implementation_get_string_identifier,

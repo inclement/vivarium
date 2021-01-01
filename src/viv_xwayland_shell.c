@@ -32,7 +32,13 @@ static void event_xwayland_surface_destroy(struct wl_listener *listener, void *d
 }
 
 static void implementation_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
-    wlr_xwayland_surface_configure(view->xwayland_surface, 0, 0, width, height);
+    wlr_xwayland_surface_configure(view->xwayland_surface, view->x, view->y, width, height);
+}
+
+static void implementation_set_pos(struct viv_view *view, uint32_t x, uint32_t y) {
+    view->x = x;
+    view->y = y;
+    wlr_xwayland_surface_configure(view->xwayland_surface, x, y, view->target_width, view->target_height);
 }
 
 static void implementation_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
@@ -119,6 +125,7 @@ static bool implementation_oversized(struct viv_view *view) {
 
 static struct viv_view_implementation xwayland_view_implementation = {
     .set_size = &implementation_set_size,
+    .set_pos = &implementation_set_pos,
     .get_geometry = &implementation_get_geometry,
     .set_tiled = &implementation_set_tiled,
     .get_string_identifier = &implementation_get_string_identifier,
