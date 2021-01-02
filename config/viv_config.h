@@ -86,6 +86,9 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
     KEYBIND_MAPPABLE(C, close_window),
     KEYBIND_MAPPABLE(Return, make_window_main),
+    KEYBIND_MAPPABLE(XF86AudioMute, do_shell, .command = "/home/sandy/bin/toggle_mute"),
+    KEYBIND_MAPPABLE(XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),
+    KEYBIND_MAPPABLE(XF86AudioRaiseVolume, do_shell, .command = "amixer -q sset Master 3%+"),
     FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
     FOR_EACH_WORKSPACE(BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE)
     TERMINATE_KEYBINDS_LIST()
