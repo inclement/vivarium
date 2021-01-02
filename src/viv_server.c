@@ -18,6 +18,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/util/log.h>
@@ -491,6 +492,13 @@ static void seat_request_set_selection(struct wl_listener *listener, void *data)
 	wlr_seat_set_selection(server->seat, event->source, event->serial);
 }
 
+/// Handle new xdg toplevel decorations
+static void handle_xdg_new_toplevel_decoration(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    struct wlr_xdg_toplevel_decoration_v1 *decoration = data;
+    wlr_xdg_toplevel_decoration_v1_set_mode(decoration, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+}
+
 /// Copy each of the layouts in the input list into a wl_list, and return this new list
 static void init_layouts(struct wl_list *layouts_list, struct viv_layout *layouts) {
     wl_list_init(layouts_list);
@@ -684,14 +692,18 @@ void viv_server_init(struct viv_server *server) {
 	wl_signal_add(&server->seat->events.request_set_selection,
 			&server->request_set_selection);
 
-    wlr_log(WLR_INFO, "New viv_server initialised");
-
-
     struct wlr_server_decoration_manager *decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
+    server->decoration_manager = decoration_manager;
     wlr_server_decoration_manager_set_default_mode(decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+
+    server->xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
+    server->xdg_decoration_new_toplevel_decoration.notify = handle_xdg_new_toplevel_decoration;
+    wl_signal_add(&server->xdg_decoration_manager->events.new_toplevel_decoration, &server->xdg_decoration_new_toplevel_decoration);
 
     server->log_state.last_active_output = NULL;
     server->log_state.last_active_workspace = NULL;
+
+    wlr_log(WLR_INFO, "New viv_server initialised");
 
     viv_parse_and_run_background_config(
         server->config->background.colour,

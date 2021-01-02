@@ -70,6 +70,11 @@ struct viv_server {
 
     struct wlr_xdg_output_manager_v1 *xdg_output_manager;
 
+    struct wlr_server_decoration_manager *decoration_manager;
+
+    struct wlr_xdg_decoration_manager_v1 *xdg_decoration_manager;
+    struct wl_listener xdg_decoration_new_toplevel_decoration;
+
 	struct wlr_output_layout *output_layout;
     struct viv_output *active_output;
 	struct wl_list outputs;
