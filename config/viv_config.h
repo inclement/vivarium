@@ -13,32 +13,17 @@
 #include "viv_config_types.h"
 #include "viv_config_support.h"
 
-/// Global config options that may be reused below
 
-// The default terminal
-#define CONFIG_TERMINAL "alacritty"
-
-// The distance by which the layout split parameter is incremented/decremented
-#define CONFIG_SPACER_INCREMENT 0.05
-
-// Default layout parameters
-#define CONFIG_LAYOUT_PARAMETER_DEFAULT 0.666
-#define CONFIG_LAYOUT_COUNTER_DEFAULT 1
-
-#define CONFIG_BORDER_WIDTH_DEFAULT 2
-#define CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT {1, 0, 0.7, 1}
-#define CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT {0.6, 0.6, 0.9, 1}
-
-/// Example to demonstrate how a user-defined function can be passed as a keybinding
+/// Your configuration can include your own functions. This example is bound to a key
+/// later in the config.
 static void example_user_function(struct viv_workspace *workspace) {
     wlr_log(WLR_INFO, "User-provided function called with workspace at address %p", workspace);
 }
 
-/** Workspaces defined as triples of:
-    - workspace name
-    - xkb key to switch to workspace
-    - xkb key to send window to that workspace
-*/
+
+/// Define any number of workspaces via this table. Each definition is a triple of
+/// (name string, key to switch to workspace, key to send the active window to workspace).
+/// Key names are looked up in xkbcommon-keysyms.h, e.g. `quotedbl` -> `XKB_KEY_quotedbl`.
 #define FOR_EACH_WORKSPACE(MACRO)               \
     MACRO("main", 1, exclam)                    \
     MACRO("2", 2, quotedbl)                     \
@@ -50,18 +35,23 @@ static void example_user_function(struct viv_workspace *workspace) {
     MACRO("8", 8, multiply)                     \
     MACRO("9", 9, parenleft)
 
+/// Macros used later to set up your workspaces
 #define WORKSPACE_NAME(name, _1, _2) \
     name,
-
 #define BIND_SWITCH_TO_WORKSPACE(name, key, _) \
     KEYBIND_MAPPABLE(key, switch_to_workspace, .workspace_name = name),
-
 #define BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE(name, _, key) \
     KEYBIND_MAPPABLE(key, shift_active_window_to_workspace, .workspace_name = name),
 
+
+/// Declare any number of keybindings.
+/// The list of available commands and arguments can be found in `viv_mappable_functions.h`.
+/// Key names are looked up in xkbcommon-keysyms.h, e.g. `E` -> `XKB_KEY_E`.
+/// Keybindings are always accessed via the global meta key, see later configuration.
+#define CONFIG_TERMINAL "alacritty"
+#define CONFIG_SPACER_INCREMENT 0.05
 struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(q, terminate),
-    KEYBIND_MAPPABLE(Q, terminate),
     KEYBIND_MAPPABLE(T, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
@@ -72,26 +62,41 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(t, tile_window),
     KEYBIND_MAPPABLE(e, right_output),
     KEYBIND_MAPPABLE(w, left_output),
-    KEYBIND_MAPPABLE(o, do_shell, .command = "okular"),
     KEYBIND_MAPPABLE(space, next_layout),
     KEYBIND_USER_FUNCTION(F, &example_user_function),
     KEYBIND_MAPPABLE(E, shift_active_window_to_right_output),
     KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
     KEYBIND_MAPPABLE(C, close_window),
     KEYBIND_MAPPABLE(Return, make_window_main),
+    /// These volume adjust examples demonstrate how to run any shell command:
     KEYBIND_MAPPABLE(XF86AudioMute, do_shell, .command = "/home/sandy/bin/toggle_mute"),
     KEYBIND_MAPPABLE(XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),
     KEYBIND_MAPPABLE(XF86AudioRaiseVolume, do_shell, .command = "amixer -q sset Master 3%+"),
+    /// Autogenerate keybindings to switch to and/or send windows to each workspace:
     FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
     FOR_EACH_WORKSPACE(BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE)
-    TERMINATE_KEYBINDS_LIST()
+    TERMINATE_KEYBINDS_LIST()  // Do not delete!
 };
 
+
+/// Declare the layouts you want to use. All workspaces have the same layouts.
+#define CONFIG_LAYOUT_PARAMETER_DEFAULT 0.666
+#define CONFIG_LAYOUT_COUNTER_DEFAULT 1
 struct viv_layout the_layouts[] = {
+    /// Each layout must define the following parameters:
     {
+        // The layout name is used only for logging or status bar reporting, choose anything
         .name = "Tall",
+        // The `layout_function` takes a list of windows to be tiled, and a bounding rectangle.
+        // Provide your own or use any from `viv_layout.h`.
         .layout_function = &viv_layout_do_split,
+        // A floating point parameter from 0-1. Can be used in any way by a layout but
+        // usually controls the fraction of the screen occupied by the main layout region.
+        // Can be adjusted at runtime by appropriate keybindings.
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
+        // An integer parameter equal to or larger than 0. Can be used in any way by a
+        // layout but usually controls the number of windows sharing the space
+        // allocated to the main layout region.
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
     },
     {
@@ -100,52 +105,79 @@ struct viv_layout the_layouts[] = {
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
     },
-    TERMINATE_LAYOUTS_LIST()
+    TERMINATE_LAYOUTS_LIST()  // Do not delete!
 };
 
+
+/// The primary application config.
+/// Every possible option is set here. To make your own config you only need to update these defaults.
+/// See `viv_types.h` for the raw struct declaration.
 static struct viv_config the_config = {
 
+    // Modifier key used for all keybindings.
+    // More sophisticated keybindings with multiple or different modifiers are not yet supported.
+    // Available modifiers can be found in `wlr_keyboard.h`.
     .global_meta_key = WLR_MODIFIER_ALT,
 
+    // Focus follows mouse: many window managers default to false, but true works well for tiling WMs.
     .focus_follows_mouse = true,
 
+    // Buttons to use for interaction with floating windows.
+    // Available choices can be found in `viv_types.h`.
     .win_move_cursor_button = VIV_LEFT_BUTTON,
     .win_resize_cursor_button = VIV_RIGHT_BUTTON,
 
-    .keybinds = the_keybinds,
+    // Configure window borders.
+    .border_width = 2,  // defined in pixels
+    .active_border_colour = { 1, 0, 0.7, 1 },  // Active window border colour: RGBA in 0-1 range
+    .inactive_border_colour = { 0.6, 0.6, 0.9, 1 },  // Inactive window colour: RGBA in 0-1 range
 
-    .layouts = the_layouts,
-
-    .workspaces = { FOR_EACH_WORKSPACE(WORKSPACE_NAME) },
-
-    .border_width = CONFIG_BORDER_WIDTH_DEFAULT,
-    .active_border_colour = CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT,
-    .inactive_border_colour = CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT,
-
-    // The Vivarium background colour, RGBA in the 0-1 range
+    // The overall Vivarium background colour, RGBA in the 0-1 range.
+    // This may be overridden by the more sophisticated background settings below.
     .clear_colour = { 0.73, 0.73, 0.73, 1.0 },
 
+    // Background configuration. Applies to all outputs. Requires `swaybg` to be installed.
+    .background = {
+        .colour = "#ff0000",  // note: this is overridden by .image if present
+        .image = "/home/sandy/sway_bg.jpg",
+        .mode = "fill",  // options from swaybg: stretch, fit, fill, center, tile, solid_color
+    },
+
+    // Use the keybinds list configured above.
+    .keybinds = the_keybinds,
+
+    // Use the layouts list configured above.
+    .layouts = the_layouts,
+
+    // The list of workspace names, displayed in logs and the status bar.
+    // It is possible to directly pass a list of strings, but then keybindings must be set up manually.
+    .workspaces = { FOR_EACH_WORKSPACE(WORKSPACE_NAME) },
+
+    // Keyboard options.
+    // It is possible to set multiple toggling layouts via the normal xkb syntax (comma-separated)
 	.xkb_rules = {
+        .rules = NULL,  // included for completion
         .model = "pc104",
         .layout = "widecolemak",
         .variant = "widecolemak",
         .options = "ctrl:nocaps",
     },
 
+    // Filename at which to write a workspace status string each time the workspace state changes.
+    // This exists for basic inter-process communication e.g. with waybar, see below
     .ipc_workspaces_filename = "/home/sandy/.viv_workspace_state.txt",
 
-    .background = {
-        .colour = "#ff0000",  // note: this is overridden by .image
-        .image = "/home/sandy/sway_bg.jpg",
-        .mode = "fill",
-    },
-
+    // Status bar configuration.
     .bar = {
-        .command = "waybar",
-        .update_signal_number = 1,
+        .command = "waybar",  // will be run when Vivarium starts
+        .update_signal_number = 1,  // if non-zero, Vivarium sends (SIGRTMIN + update_signal_number)
+                                    // to the bar process each time the workspace config changes,
+                                    // can be used by the bar process as an update trigger
     },
 
-    .debug_mark_views_by_shell = false,
+    // Debug options, not useful outside development:
+    .debug_mark_views_by_shell = false,  // mark xdg windows with a green rect, xwayland by a red rect
+    .debug_mark_active_output = true,  // draw a blue rectangle in the top left of the active output
 };
 
 

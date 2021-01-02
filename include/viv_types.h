@@ -242,13 +242,13 @@ struct viv_config {
 
     struct xkb_rule_names xkb_rules;
 
-    char *ipc_workspaces_filename;
-
     struct {
         char *colour;
         char *image;
         char *mode;
     } background;
+
+    char *ipc_workspaces_filename;
 
     struct {
         char *command;
