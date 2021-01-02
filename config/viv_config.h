@@ -9,17 +9,19 @@
 #include "viv_types.h"
 #include "viv_layout.h"
 #include "viv_workspace.h"
-#include "viv_mappable_functions.h"
 
+#include "viv_config_types.h"
 #include "viv_config_support.h"
 
-#define CONFIG_WIN_MOVE_BUTTON VIV_LEFT_BUTTON
-#define CONFIG_WIN_RESIZE_BUTTON VIV_RIGHT_BUTTON
+/// Global config options that may be reused below
 
-#define CONFIG_SPACER_INCREMENT 0.05
-
+// The default terminal
 #define CONFIG_TERMINAL "alacritty"
 
+// The distance by which the layout split parameter is incremented/decremented
+#define CONFIG_SPACER_INCREMENT 0.05
+
+// Default layout parameters
 #define CONFIG_LAYOUT_PARAMETER_DEFAULT 0.666
 #define CONFIG_LAYOUT_COUNTER_DEFAULT 1
 
@@ -27,16 +29,8 @@
 #define CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT {1, 0, 0.7, 1}
 #define CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT {0.6, 0.6, 0.9, 1}
 
-#define CONFIG_CLEAR_COLOUR_DEFAULT {0.73, 0.73, 0.73, 1.0}
-
-struct viv_keybind {
-    xkb_keysym_t key;
-    void (*binding)(struct viv_workspace *workspace, union viv_mappable_payload payload);
-    union viv_mappable_payload payload;
-};
-
 /// Example to demonstrate how a user-defined function can be passed as a keybinding
-void example_user_function(struct viv_workspace *workspace) {
+static void example_user_function(struct viv_workspace *workspace) {
     wlr_log(WLR_INFO, "User-provided function called with workspace at address %p", workspace);
 }
 
@@ -68,7 +62,6 @@ void example_user_function(struct viv_workspace *workspace) {
 struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(q, terminate),
     KEYBIND_MAPPABLE(Q, terminate),
-    KEYBIND_MAPPABLE(at, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(T, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
@@ -111,11 +104,13 @@ struct viv_layout the_layouts[] = {
 };
 
 static struct viv_config the_config = {
-    .focus_follows_mouse = true,
+
     .global_meta_key = WLR_MODIFIER_ALT,
 
-    .win_move_cursor_button = CONFIG_WIN_MOVE_BUTTON,
-    .win_resize_cursor_button = CONFIG_WIN_RESIZE_BUTTON,
+    .focus_follows_mouse = true,
+
+    .win_move_cursor_button = VIV_LEFT_BUTTON,
+    .win_resize_cursor_button = VIV_RIGHT_BUTTON,
 
     .keybinds = the_keybinds,
 
@@ -126,7 +121,9 @@ static struct viv_config the_config = {
     .border_width = CONFIG_BORDER_WIDTH_DEFAULT,
     .active_border_colour = CONFIG_BORDER_COLOUR_ACTIVE_DEFAULT,
     .inactive_border_colour = CONFIG_BORDER_COLOUR_INACTIVE_DEFAULT,
-    .clear_colour = CONFIG_CLEAR_COLOUR_DEFAULT,
+
+    // The Vivarium background colour, RGBA in the 0-1 range
+    .clear_colour = { 0.73, 0.73, 0.73, 1.0 },
 
 	.xkb_rules = {
         .model = "pc104",

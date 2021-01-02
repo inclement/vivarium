@@ -27,6 +27,7 @@
 
 #include "viv_background.h"
 #include "viv_bar.h"
+#include "viv_config_types.h"
 #include "viv_types.h"
 #include "viv_cursor.h"
 #include "viv_server.h"
