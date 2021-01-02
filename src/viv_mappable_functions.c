@@ -55,12 +55,6 @@ void viv_mappable_terminate(struct viv_workspace *workspace, union viv_mappable_
     wl_display_terminate(workspace->output->server->wl_display);
 }
 
-void viv_mappable_swap_out(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    UNUSED(payload);
-    wlr_log(WLR_DEBUG, "Mappable swap_out");
-    viv_workspace_swap_out(workspace->output, &workspace->output->server->workspaces);
-}
-
 void viv_mappable_next_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable next_window");
