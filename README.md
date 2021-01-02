@@ -18,6 +18,13 @@ Vivarium is unstable and unfinished...but usable!
 
 ## Build instructions
 
+Get install dependencies. You need:
+
+* meson
+* wlroots
+* wayland
+* wayland-protocols
+
 Get Vivarium:
 
     git clone git@github.com:inclement/vivarium.git
