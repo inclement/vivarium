@@ -16,6 +16,8 @@
 #define MAX_SWAYBG_FILENAME_LENGTH 200
 #define MAX_SWAYBG_MODE_LENGTH 11
 
+#define MAX_BAR_COMMAND_LENGTH 100
+
 
 #include <stdlib.h>
 

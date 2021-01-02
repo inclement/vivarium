@@ -141,6 +141,10 @@ static struct viv_config the_config = {
         .mode = "fill",
     },
 
+    .bar = {
+        .command = "waybar",
+    },
+
     .debug_mark_views_by_shell = false,
 };
 

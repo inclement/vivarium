@@ -243,6 +243,10 @@ struct viv_config {
         char mode[MAX_SWAYBG_MODE_LENGTH];
     } background;
 
+    struct {
+        char command[MAX_BAR_COMMAND_LENGTH];
+    } bar;
+
     bool debug_mark_views_by_shell;
     bool debug_mark_active_output;
 };

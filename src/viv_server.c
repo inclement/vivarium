@@ -24,6 +24,7 @@
 #include <wlr/xwayland.h>
 
 #include "viv_background.h"
+#include "viv_bar.h"
 #include "viv_types.h"
 #include "viv_cursor.h"
 #include "viv_server.h"
@@ -697,5 +698,7 @@ void viv_server_init(struct viv_server *server) {
         server->config->background.image,
         server->config->background.mode
     );
+
+    viv_parse_and_run_bar_config(server->config->bar.command);
 
 }

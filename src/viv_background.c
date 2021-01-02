@@ -25,7 +25,8 @@ static void run_swaybg(char *colour, char *image, char *mode) {
             "-c", colour,
             "-i", image,
             "-m", mode,
-            NULL};
+            NULL
+        };
         execvp(cmd[0], cmd);
         _exit(EXIT_FAILURE);
     }
@@ -34,7 +35,7 @@ static void run_swaybg(char *colour, char *image, char *mode) {
 void viv_parse_and_run_background_config(char *colour, char *image, char *mode) {
     if (!strlen(colour) && !strlen(image) && !strlen(mode)) {
         // Nothing is configured so just don't run swaybg
-        wlr_log(WLR_ERROR, "No background config");
+        wlr_log(WLR_ERROR, "No background config, skipping");
         return;
     }
 
