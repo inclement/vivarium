@@ -3,6 +3,10 @@ Vivarium
 
 A dynamic tiling [Wayland](https://wayland.freedesktop.org/) compositor using [wlroots](https://github.com/swaywm/wlroots), with desktop semantics inspired by [xmonad](https://xmonad.org/).
 
+<p align="center">
+  <img src="media/readme_screenshot.png" width="80%" alt="Vivarium screenshot showing several tiled windows">
+</p>
+
 Core features include:
 
 * Automatic/dynamic tiling with your choice of layouts.
