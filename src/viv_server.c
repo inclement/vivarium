@@ -23,6 +23,7 @@
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
 
+#include "viv_background.h"
 #include "viv_types.h"
 #include "viv_cursor.h"
 #include "viv_server.h"
@@ -690,4 +691,11 @@ void viv_server_init(struct viv_server *server) {
 
     server->log_state.last_active_output = NULL;
     server->log_state.last_active_workspace = NULL;
+
+    viv_run_background_process(
+        server->config->background.colour,
+        server->config->background.image,
+        server->config->background.mode
+    );
+
 }

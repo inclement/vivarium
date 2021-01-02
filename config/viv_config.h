@@ -135,6 +135,11 @@ static struct viv_config the_config = {
 
     .ipc_workspaces_filename = "/home/sandy/.viv_workspace_state.txt",
 
+    .background = {
+        .image = "/home/sandy/sway_bg.jpg",
+        .mode = "fill",
+    },
+
     .debug_mark_views_by_shell = false,
 };
 
