@@ -235,16 +235,16 @@ struct viv_config {
 
     struct xkb_rule_names xkb_rules;
 
-    char ipc_workspaces_filename[MAX_IPC_FILENAME_LENGTH];
+    char *ipc_workspaces_filename;
 
     struct {
-        char colour[7];
-        char image[MAX_SWAYBG_FILENAME_LENGTH];
-        char mode[MAX_SWAYBG_MODE_LENGTH];
+        char *colour;
+        char *image;
+        char *mode;
     } background;
 
     struct {
-        char command[MAX_BAR_COMMAND_LENGTH];
+        char *command;
     } bar;
 
     bool debug_mark_views_by_shell;
