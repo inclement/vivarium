@@ -12,7 +12,7 @@ Core features include:
 * Per-output workspaces: display the workspace you want, where you want.
 * Floating windows on demand.
 * (optional) XWayland support.
-* Wayland layer shell support, compatible with tools like [Waybar](https://github.com/Alexays/Waybar) and [swaybg](https://github.com/swaywm/swaybg).
+* Layer shell support, compatible with tools like [Waybar](https://github.com/Alexays/Waybar) and [swaybg](https://github.com/swaywm/swaybg).
 
 Vivarium is unstable and unfinished...but usable!
 
@@ -31,6 +31,10 @@ Build Vivarium:
 Run Vivarium:
 
     ./build/src/vivarium
+
+(optional) Install Vivarium:
+
+    sudo ninja -C build install
 
 Vivarium expects to be run from a TTY, but also supports embedding in an X session or existing Wayland session out of the box. Running the binary will Do The Right Thing.
 
@@ -89,6 +93,13 @@ The core tiling experience provides something similar to xmonad's defaults: new 
 
 Vivarium makes no attempt to rigorously mimic xmonad or to replicate its internal design philosophy. Not least, Vivarium is written in C and is not (for now) so directly and transparently extensible.
 
+> Why do some windows display title bars with maximize/minimize/close buttons that don't do anything?
+> Can I turn that off?
+
+Vivarium attempts to tell windows not to draw their own decorations, but the protocols for doing so are not yet standard or universally supported so some windows still do so. For now there's probably nothing you can do about it, but this is likely to improve in the future.
+
+(It's also possible that there are bugs in Vivarium's window decoration configuration, bug reports welcome if so.)
+
 > Does Vivarium support $PROTOCOL? Will it in the future?
 
 I'm aiming to support all the core wayland protocols plus all the extra ones being developed under wlroots. However, there is no ETA for specific protocols right now.
@@ -96,7 +107,8 @@ I'm aiming to support all the core wayland protocols plus all the extra ones bei
 Currently supported protocols (though all may be incomplete or buggy in places, none are battle tested):
 
 * XDG shell
-* XDG output manager
+* XDG output
+* XDG decoration
 * XWayland
 * Layer shell
 
