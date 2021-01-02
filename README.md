@@ -1,5 +1,4 @@
-Vivarium
-========
+# Vivarium
 
 A dynamic tiling [Wayland](https://wayland.freedesktop.org/) compositor using [wlroots](https://github.com/swaywm/wlroots), with desktop semantics inspired by [xmonad](https://xmonad.org/).
 
@@ -17,8 +16,7 @@ Core features include:
 
 Vivarium is unstable and unfinished...but usable!
 
-Build instructions
-------------------
+## Build instructions
 
 Get Vivarium:
 
@@ -36,8 +34,8 @@ Run Vivarium:
 
 Vivarium expects to be run from a TTY, but also supports embedding in an X session or existing Wayland session out of the box. Running the binary will Do The Right Thing.
 
-Configuration
--------------
+## Configuration
+
 
 Vivarium is currently configured via a configuration struct defined in `config/viv_config.h`: edit that file before building to update its behaviour.
 
@@ -46,13 +44,44 @@ This configuration method is unstable and expected to change significantly, but 
 Configuration options include but are not limited to:
 
 * Custom hotkeys for all types of window manipulations.
-* Selection of layouts and their properties.
-* Customise window borders.
+* Choose the list of layouts to use.
+* Window borders.
+* Keyboard layout(s).
+* Status bar configuration.
+* Background image/colour.
 * Mouse interaction options.
-* Keyboard layout selection.
 
-FAQ (or not-so-FAQ)
--------------------
+### Bar support
+
+Vivarium can automatically start a bar program such as [Waybar](https://github.com/Alexays/Waybar). Only Waybar is currently tested, and only very basic IPC is currently possible, but this is enough to display the current workspace status.
+
+See `viv_config.h` for instructions, but in summary you'll need the following configuration:
+
+    // Choose a filename at which Vivarium will write a workspace status string
+    .ipc_workspaces_filename = "/path/to/status/file",
+
+    // Configure bar autostart
+    .bar = {
+        .command = "waybar",
+        .update_signal_number = 1,  // If non-zero, Vivarium sends the bar process
+                                    // SIGRTMIN + update_signal_number on changes
+    },
+
+Then in your Waybar config:
+
+    "modules-left": ["custom/workspaces"],
+
+    "custom/workspaces": {
+        "exec": "cat /path/to/status/file",
+        "interval": "once",
+        "signal": 1,
+        "format": " {} ",
+        "escape": true,
+    },
+
+Note that the `"signal"` option matches the `update_signal_number` from Vivarium's config, telling Waybar to refresh (re-read the status file) when the signal is received.
+
+## FAQ (or not-so-FAQ)
 
 > What does "desktop semantics inspired by xmonad" mean?
 
