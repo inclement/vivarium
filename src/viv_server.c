@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -711,6 +712,6 @@ void viv_server_init(struct viv_server *server) {
         server->config->background.mode
     );
 
-    viv_parse_and_run_bar_config(server->config->bar.command);
+    server->bar_pid = viv_parse_and_run_bar_config(server->config->bar.command, server->config->bar.update_signal_number);
 
 }

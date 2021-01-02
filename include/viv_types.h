@@ -82,6 +82,8 @@ struct viv_server {
 
     struct wl_list workspaces;
 
+    pid_t bar_pid;
+
     /// State relating to changes that should be logged
     struct {
         struct viv_output *last_active_output;
@@ -250,6 +252,7 @@ struct viv_config {
 
     struct {
         char *command;
+        uint32_t update_signal_number;
     } bar;
 
     bool debug_mark_views_by_shell;

@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdio.h>
 
 #include <wayland-util.h>
@@ -48,4 +49,9 @@ void viv_routine_log_state(struct viv_server *server) {
     server->log_state.last_active_workspace = server->active_output->current_workspace;
 
     write_workspaces_file(output_filen, &server->workspaces, server->active_output);
+
+    // If configured, send a signal to the bar program to let it know it should update
+    if (server->bar_pid && server->config->bar.update_signal_number) {
+        kill(server->bar_pid, SIGRTMIN + (int)server->config->bar.update_signal_number);
+    }
 }

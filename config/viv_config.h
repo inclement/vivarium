@@ -142,6 +142,7 @@ static struct viv_config the_config = {
 
     .bar = {
         .command = "waybar",
+        .update_signal_number = 1,
     },
 
     .debug_mark_views_by_shell = false,
