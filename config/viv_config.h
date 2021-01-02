@@ -136,6 +136,7 @@ static struct viv_config the_config = {
     .ipc_workspaces_filename = "/home/sandy/.viv_workspace_state.txt",
 
     .background = {
+        .colour = "#ff0000",  // note: this is overridden by .image
         .image = "/home/sandy/sway_bg.jpg",
         .mode = "fill",
     },

@@ -692,7 +692,7 @@ void viv_server_init(struct viv_server *server) {
     server->log_state.last_active_output = NULL;
     server->log_state.last_active_workspace = NULL;
 
-    viv_run_background_process(
+    viv_parse_and_run_background_config(
         server->config->background.colour,
         server->config->background.image,
         server->config->background.mode
