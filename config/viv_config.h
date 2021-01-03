@@ -51,7 +51,7 @@ static void example_user_function(struct viv_workspace *workspace) {
 #define CONFIG_TERMINAL "alacritty"
 #define CONFIG_SPACER_INCREMENT 0.05
 struct viv_keybind the_keybinds[] = {
-    KEYBIND_MAPPABLE(q, terminate),
+    KEYBIND_MAPPABLE(Q, terminate),
     KEYBIND_MAPPABLE(T, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
