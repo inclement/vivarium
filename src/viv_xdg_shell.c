@@ -15,6 +15,9 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 	view->mapped = true;
 	viv_view_focus(view, viv_view_get_toplevel_surface(view));
 
+    wl_list_remove(&view->workspace_link);
+    wl_list_insert(&view->workspace->views, &view->workspace_link);
+
     struct viv_workspace *workspace = view->workspace;
     workspace->output->needs_layout = true;
 }
@@ -24,6 +27,9 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	struct viv_view *view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
+
+    wl_list_remove(&view->workspace_link);
+    wl_list_insert(&view->server->unmapped_views, &view->workspace_link);
 
     struct viv_workspace *workspace = view->workspace;
     workspace->output->needs_layout = true;

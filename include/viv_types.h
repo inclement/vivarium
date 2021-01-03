@@ -89,6 +89,10 @@ struct viv_server {
         struct viv_output *last_active_output;
         struct viv_workspace *last_active_workspace;
     } log_state;
+
+    /// Unmapped views are not kept within the workspace view lists,
+    /// in order to keep things simple when iterating through them
+    struct wl_list unmapped_views;
 };
 
 struct viv_keybindings {

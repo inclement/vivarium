@@ -191,10 +191,13 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
 
     // Make sure the view gets added to a workspace
     struct viv_output *output = server->active_output;
-    wl_list_insert(&output->current_workspace->views, &view->workspace_link);
     view->workspace = output->current_workspace;
 
     viv_view_ensure_tiled(view);
+
+    wl_list_init(&view->workspace_link);
+    wl_list_insert(&server->unmapped_views, &view->workspace_link);
+    /* wl_list_insert(&output->current_workspace->views, &view->workspace_link); */
 }
 
 void viv_view_destroy(struct viv_view *view) {

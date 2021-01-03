@@ -702,6 +702,8 @@ void viv_server_init(struct viv_server *server) {
     server->xdg_decoration_new_toplevel_decoration.notify = handle_xdg_new_toplevel_decoration;
     wl_signal_add(&server->xdg_decoration_manager->events.new_toplevel_decoration, &server->xdg_decoration_new_toplevel_decoration);
 
+    wl_list_init(&server->unmapped_views);
+
     server->log_state.last_active_output = NULL;
     server->log_state.last_active_workspace = NULL;
 
