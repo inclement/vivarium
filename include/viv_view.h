@@ -46,6 +46,9 @@ void viv_view_make_active(struct viv_view *view);
 /// Set the size of a view
 void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
 
+/// Set the pos of a view, in global coordinates
+void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
+
 /// Get the geometry box of a view
 void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box);
 
@@ -72,4 +75,9 @@ struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view);
     @returns true if a surface was found, else false
 */
 bool viv_view_is_at(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
+
+/// Set the target bounding box for the view, in workspace-local coordinates. The view's
+/// actual position and size will be set consistent with this demand in global
+/// coordinates, with size reduced to make space for view borders and gaps.
+void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 #endif

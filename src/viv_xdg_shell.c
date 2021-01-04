@@ -93,8 +93,12 @@ static void implementation_set_size(struct viv_view *view, uint32_t width, uint3
 
 static void implementation_set_pos(struct viv_view *view, uint32_t x, uint32_t y) {
     ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
-    view->x = x;
-    view->y = y;
+
+    struct wlr_box geo_box;
+    wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+
+    view->x = x - geo_box.x;
+    view->y = y - geo_box.y;
     // Nothing else to do, xdg surfaces don't know/care about their global pos
 }
 

@@ -170,22 +170,11 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace) {
 
 void viv_workspace_do_layout(struct viv_workspace *workspace) {
     struct viv_output *output = workspace->output;
-    struct wlr_output_layout_output *output_layout_output = wlr_output_layout_get(output->server->output_layout, output->wlr_output);
 
-    int ox = output_layout_output->x + output->excluded_margin.left;
-    int oy = output_layout_output->y + output->excluded_margin.top;
     int32_t width = output->wlr_output->width - output->excluded_margin.left - output->excluded_margin.right;
     int32_t height = output->wlr_output->height - output->excluded_margin.top - output->excluded_margin.bottom;
 
     workspace->active_layout->layout_function(workspace, width, height);
-    struct viv_view *view;
-    wl_list_for_each(view, &workspace->views, workspace_link) {
-        view->x += ox;
-        view->y += oy;
-
-        view->target_x += ox;
-        view->target_y += oy;
-    }
 
     workspace->needs_layout = false;
     workspace->output->needs_layout = false;
@@ -196,4 +185,16 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
     viv_cursor_reset_focus(workspace->output->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
 
     workspace->was_laid_out = true;
+}
+
+uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace) {
+    uint32_t num_views = 0;
+    struct viv_view *view;
+    wl_list_for_each(view, &workspace->views, workspace_link) {
+        if (view->is_floating) {
+            continue;
+        }
+        num_views++;
+    }
+    return num_views;
 }

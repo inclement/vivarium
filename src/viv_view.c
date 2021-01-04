@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>
@@ -177,6 +178,11 @@ void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
     view->implementation->set_size(view, width, height);
 }
 
+void viv_view_set_pos(struct viv_view *view, uint32_t width, uint32_t height) {
+    ASSERT(view->implementation->set_pos != NULL);
+    view->implementation->set_pos(view, width, height);
+}
+
 void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
     ASSERT(view->implementation->get_geometry != NULL);
     view->implementation->get_geometry(view, geo_box);
@@ -226,4 +232,29 @@ void viv_view_set_activated(struct viv_view *view, bool activated) {
 
 bool viv_view_is_at(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy) {
     return view->implementation->is_at(view, lx, ly, surface, sx, sy);
+}
+
+void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    struct viv_workspace *workspace = view->workspace;
+    struct viv_output *output = workspace->output;
+    struct wlr_output_layout_output *output_layout_output = wlr_output_layout_get(output->server->output_layout, output->wlr_output);
+
+    int ox = output_layout_output->x + output->excluded_margin.left;
+    int oy = output_layout_output->y + output->excluded_margin.top;
+
+    x += ox;
+    y += oy;
+
+    view->target_x = x;
+    view->target_y = y;
+    view->target_width = width;
+    view->target_height = height;
+
+    int border_width = output->server->config->border_width;
+
+    width -= 2 * border_width;
+    height -= 2 * border_width;
+
+    viv_view_set_pos(view, x + border_width, y + border_width);
+    viv_view_set_size(view, width, height);
 }

@@ -22,6 +22,7 @@
 
 #include "viv_types.h"
 #include "viv_view.h"
+#include "viv_workspace.h"
 
 /**
  *  |--------------|----|----|
@@ -122,18 +123,10 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace, int32_t width, in
  */
 void viv_layout_do_split(struct viv_workspace *workspace, int32_t width, int32_t height) {
     struct wl_list *views = &workspace->views;
-    struct viv_output *output = workspace->output;
 
     struct viv_view *view;
 
-    uint32_t num_views = 0;
-    wl_list_for_each(view, views, workspace_link) {
-        if (view->mapped) {
-            if (!view->is_floating) {
-                num_views++;
-            }
-        }
-    }
+    uint32_t num_views = viv_workspace_num_tiled_views(workspace);
 
     float split_dist = workspace->active_layout->parameter;
     if (num_views == 1) {
@@ -148,53 +141,27 @@ void viv_layout_do_split(struct viv_workspace *workspace, int32_t width, int32_t
     uint32_t spare_pixels_used = 0;
     wlr_log(WLR_DEBUG, "Laying out %d views, have to use %d space pixels", num_views, spare_pixels);
 
-    int border_width = output->server->config->border_width;
-
     uint32_t view_index = 0;
     wl_list_for_each(view, views, workspace_link) {
-        if (!view->mapped) {
+        if (view->is_floating) {
             continue;
         }
-        struct wlr_box geo_box;
-        if (view->type == VIV_VIEW_TYPE_XDG_SHELL) {
-            wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
+
+        if (view_index == 0) {
+            viv_view_set_target_box(view, 0, 0, split_pixel, height);
         } else {
-            geo_box.x = 0;
-            geo_box.y = 0;
-            geo_box.width = 100;
-            geo_box.height = 100;
-        }
-
-        if (!view->is_floating) {
-            if (view_index == 0) {
-                view->x = 0 - geo_box.x + border_width;
-                view->y = 0 - geo_box.y + border_width;
-                viv_view_set_size(view, split_pixel - 2 * border_width, height - 2 * border_width);
-
-                view->target_x = 0;
-                view->target_y = 0;
-                view->target_width = (int)split_pixel;
-                view->target_height = (int)height;
-            } else {
-                view->x = split_pixel - geo_box.x + border_width;
-                view->y = ((view_index - 1) * side_bar_view_height) - geo_box.y + border_width;
-                uint32_t target_height = side_bar_view_height;
-                if (spare_pixels) {
-                    spare_pixels--;
-                    spare_pixels_used++;
-                    target_height++;
-                    (view->y) = view->y - spare_pixels_used;
-                }
-                viv_view_set_size(view, width - split_pixel - 2 * border_width, target_height - 2 * border_width);
-
-                view->target_x = split_pixel;
-                view->target_y = (view_index - 1) * side_bar_view_height - spare_pixels_used;
-                view->target_width = (int)(width - split_pixel);
-                view->target_height = (int)target_height;
+            uint32_t target_height = side_bar_view_height;
+            if (spare_pixels) {
+                spare_pixels--;
+                spare_pixels_used++;
+                target_height++;
+                (view->y) = view->y - spare_pixels_used;
             }
 
-            view_index++;
+            viv_view_set_target_box(view, split_pixel, (view_index - 1) * side_bar_view_height + spare_pixels_used, width - split_pixel, target_height);
         }
+
+        view_index++;
     }
 
 }

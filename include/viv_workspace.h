@@ -31,4 +31,7 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace);
 
 /// Apply the layout function of the workspace, and handle tidying up e.g. pointer focus
 void viv_workspace_do_layout(struct viv_workspace *workspace);
+
+/// Get the number of tiled (i.e. non-floating) views in the workspace
+uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace);
 #endif
