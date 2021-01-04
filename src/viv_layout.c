@@ -86,27 +86,10 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace, int32_t width, in
 
     struct viv_view *view;
     wl_list_for_each(view, views, workspace_link) {
-        if (!view->mapped) {
-            continue;
-        }
         if (view->is_floating) {
             continue;
         }
-
-        struct wlr_box geo_box;
-        wlr_xdg_surface_get_geometry(view->xdg_surface, &geo_box);
-
-        view->x = 0 - geo_box.x;
-        view->y = 0 - geo_box.y;
-        wlr_xdg_toplevel_set_size(view->xdg_surface, width, height);
-
-        view->target_x = 0;
-        view->target_y = 0;
-        view->target_width = (int)width;
-        view->target_height = (int)height;
-
-        printf("This view's geometry became: x %d, y %d, width %d, height %d\n",
-                geo_box.x, geo_box.y, geo_box.width, geo_box.height);
+        viv_view_set_target_box(view, 0, 0, width, height);
     }
 }
 
