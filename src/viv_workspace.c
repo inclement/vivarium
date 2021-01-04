@@ -1,3 +1,4 @@
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/util/log.h>
 
 #include "viv_cursor.h"
@@ -168,7 +169,24 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace) {
 }
 
 void viv_workspace_do_layout(struct viv_workspace *workspace) {
-    workspace->active_layout->layout_function(workspace);
+    struct viv_output *output = workspace->output;
+    struct wlr_output_layout_output *output_layout_output = wlr_output_layout_get(output->server->output_layout, output->wlr_output);
+
+    int ox = output_layout_output->x + output->excluded_margin.left;
+    int oy = output_layout_output->y + output->excluded_margin.top;
+    int32_t width = output->wlr_output->width - output->excluded_margin.left - output->excluded_margin.right;
+    int32_t height = output->wlr_output->height - output->excluded_margin.top - output->excluded_margin.bottom;
+
+    workspace->active_layout->layout_function(workspace, width, height);
+    struct viv_view *view;
+    wl_list_for_each(view, &workspace->views, workspace_link) {
+        view->x += ox;
+        view->y += oy;
+
+        view->target_x += ox;
+        view->target_y += oy;
+    }
+
     workspace->needs_layout = false;
     workspace->output->needs_layout = false;
 
