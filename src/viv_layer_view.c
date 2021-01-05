@@ -201,12 +201,12 @@ void viv_layers_arrange(struct viv_output *output) {
                                                output_width, desired_height);
                 layer_view->x = 0;
                 if (anchor_top) {
-                    layer_view->y = 0;
+                    layer_view->y = *margin_top;
                     if (state.exclusive_zone) {
                         *margin_top += desired_height;
                     }
                 } else {
-                    layer_view->y = output_height - desired_height;
+                    layer_view->y = output_height - desired_height - *margin_bottom;
                     if (state.exclusive_zone) {
                         *margin_bottom += desired_height;
                     }
@@ -216,12 +216,12 @@ void viv_layers_arrange(struct viv_output *output) {
                                                desired_width, output_height);
                 layer_view->y = 0;
                 if (anchor_left) {
-                    layer_view->x = 0;
+                    layer_view->x = *margin_left;
                     if (state.exclusive_zone) {
                         *margin_left += desired_width;
                     }
                 } else {
-                    layer_view->x = output_width - desired_width;
+                    layer_view->x = output_width - desired_width - *margin_right;
                     if (state.exclusive_zone) {
                         *margin_right += desired_width;
                     }
