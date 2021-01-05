@@ -12,7 +12,7 @@ Core features include:
 * Per-output workspaces: display the workspace you want, where you want.
 * Floating windows on demand.
 * (optional) XWayland support.
-* Layer shell support, compatible with tools like [Waybar](https://github.com/Alexays/Waybar) and [swaybg](https://github.com/swaywm/swaybg).
+* Layer shell support, compatible with tools like [Waybar](https://github.com/Alexays/Waybar), [bemenu](https://github.com/Cloudef/bemenu) and [swaybg](https://github.com/swaywm/swaybg).
 
 Vivarium is unstable and unfinished...but usable!
 
@@ -38,10 +38,6 @@ Build Vivarium:
 Run Vivarium:
 
     ./build/src/vivarium
-
-(optional) Install Vivarium:
-
-    sudo ninja -C build install
 
 Vivarium expects to be run from a TTY, but also supports embedding in an X session or existing Wayland session out of the box. Running the binary will Do The Right Thing.
 
