@@ -180,22 +180,7 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
 }
 
 void viv_view_destroy(struct viv_view *view) {
-    struct viv_workspace *workspace = view->workspace;
-
-    if (view == workspace->active_view) {
-        // Mark that no surface is focused, so that we don't attempt to unfocus the now-invalid surface
-        workspace->output->server->seat->keyboard_state.focused_surface = NULL;
-
-        // Pick a new active view
-        if (wl_list_length(&workspace->views) > 1) {
-            viv_workspace_focus_next_window(workspace);
-        } else {
-            workspace->active_view = NULL;
-        }
-    }
-
 	wl_list_remove(&view->workspace_link);
-
 	free(view);
 }
 
@@ -230,4 +215,15 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     viv_view_set_pos(view, x + border_width, y + border_width);
     viv_view_set_size(view, width, height);
+}
+
+void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
+    struct viv_workspace *workspace = view->workspace;
+    if  (view == workspace->active_view) {
+        if (wl_list_length(&workspace->views) > 1) {
+            viv_workspace_focus_next_window(workspace);
+        } else {
+            workspace->active_view = NULL;
+        }
+    }
 }

@@ -24,6 +24,8 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
 	struct viv_view *view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 
+    viv_view_ensure_not_active_in_workspace(view);
+
     wl_list_remove(&view->workspace_link);
     wl_list_insert(&view->server->unmapped_views, &view->workspace_link);
 

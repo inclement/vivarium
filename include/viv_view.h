@@ -80,4 +80,11 @@ bool viv_view_is_at(struct viv_view *view, double lx, double ly, struct wlr_surf
 /// actual position and size will be set consistent with this demand in global
 /// coordinates, with size reduced to make space for view borders and gaps.
 void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+
+/// Ensure that the given view is not active: if it is active, the active view in its
+/// workspace will be set to the next view (if present) or otherwise to NULL. This is
+/// useful for making sure focus goes somewhere when a view is unmapped.
+void viv_view_ensure_not_active_in_workspace(struct viv_view *view);
+
+
 #endif
