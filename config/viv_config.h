@@ -86,6 +86,7 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
     KEYBIND_MAPPABLE(C, close_window),
     KEYBIND_MAPPABLE(Return, make_window_main),
+    KEYBIND_MAPPABLE(o, do_exec, .executable = "bemenu-run"),
     /// These volume adjust examples demonstrate how to run any shell command:
     KEYBIND_MAPPABLE(XF86AudioMute, do_shell, .command = "/home/sandy/bin/toggle_mute"),
     KEYBIND_MAPPABLE(XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),

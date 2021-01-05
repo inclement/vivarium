@@ -4,6 +4,7 @@
 
 #include "viv_layer_view.h"
 #include "viv_output.h"
+#include "viv_server.h"
 #include "viv_types.h"
 
 static void layer_surface_map(struct wl_listener *listener, void *data) {
@@ -13,7 +14,13 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
 	struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, map);
 	layer_view->mapped = true;
 
+    wlr_log(WLR_ERROR, "New layer view, keyboard interactive? %d", layer_view->layer_surface->current.keyboard_interactive);
+
     layer_view->output->needs_layout = true;
+
+    if (layer_view->layer_surface->current.keyboard_interactive) {
+        viv_surface_focus(layer_view->server, layer_view->layer_surface->surface);
+    }
 }
 
 static void layer_surface_unmap(struct wl_listener *listener, void *data) {
@@ -63,6 +70,7 @@ void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *s
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
     wl_list_insert(&output->layer_views, &layer_view->output_link);
     layer_view->output = output;
+
 }
 
 void viv_layers_arrange(struct viv_output *output) {

@@ -121,6 +121,42 @@ static void server_cursor_motion(struct wl_listener *listener, void *data) {
 	viv_cursor_process_cursor_motion(server, event->time_msec);
 }
 
+void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface) {
+    ASSERT(surface != NULL);
+	struct wlr_seat *seat = server->seat;
+	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+	if (prev_surface == surface) {
+		/* Don't re-focus an already focused surface. */
+		return;
+	}
+	if (prev_surface) {
+		/*
+		 * Deactivate the previously focused surface. This lets the client know
+		 * it no longer has focus and the client will repaint accordingly, e.g.
+		 * stop displaying a caret.
+		 */
+        struct wlr_surface *focused_surface = seat->keyboard_state.focused_surface;
+        if (wlr_surface_is_xdg_surface(surface)) {
+            struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(focused_surface);
+            wlr_xdg_toplevel_set_activated(previous, false);
+        } else if (wlr_surface_is_xwayland_surface(focused_surface)) {
+            struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(surface);
+            wlr_xwayland_surface_activate(previous, false);
+        } else {
+            // Not an error as this could be a layer surface
+            wlr_log(WLR_INFO, "Could not deactivate previous keyboard-focused surface");
+        }
+	}
+	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
+
+	/*
+	 * Tell the seat to have the keyboard enter this surface. wlroots will keep
+	 * track of this and automatically send key events to the appropriate
+	 * clients without additional work on your part.
+	 */
+	wlr_seat_keyboard_notify_enter(seat, surface, keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+}
+
 /// Handle an absolute cursor motion event. This happens when runing under a Wayland
 /// window rather than KMS+DRM.
 static void server_cursor_motion_absolute(

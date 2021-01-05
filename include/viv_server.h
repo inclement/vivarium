@@ -19,4 +19,6 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
 /// for debugging only, failures just result in logged errors.
 void viv_check_data_consistency(struct viv_server *server);
 
+/// Give keyboard focus to the given surface
+void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface);
 #endif

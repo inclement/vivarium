@@ -8,6 +8,7 @@
 
 #include "viv_view.h"
 
+#include "viv_server.h"
 #include "viv_types.h"
 #include "viv_wl_list_utils.h"
 #include "viv_workspace.h"
@@ -21,46 +22,18 @@ void viv_view_bring_to_front(struct viv_view *view) {
 }
 
 void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
+    if (surface == NULL) {
+        surface = viv_view_get_toplevel_surface(view);
+    }
 	if (view == NULL) {
 		return;
 	}
 	struct viv_server *server = view->server;
-	struct wlr_seat *seat = server->seat;
-	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
-	if (prev_surface == surface) {
-		/* Don't re-focus an already focused surface. */
-		return;
-	}
-	if (prev_surface) {
-		/*
-		 * Deactivate the previously focused surface. This lets the client know
-		 * it no longer has focus and the client will repaint accordingly, e.g.
-		 * stop displaying a caret.
-		 */
-        struct wlr_surface *surface = seat->keyboard_state.focused_surface;
-        if (wlr_surface_is_xdg_surface(surface)) {
-            struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(surface);
-            wlr_xdg_toplevel_set_activated(previous, false);
-        } else if (wlr_surface_is_xwayland_surface(surface)) {
-            struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(surface);
-            wlr_xwayland_surface_activate(previous, false);
-        } else {
-            UNREACHABLE();
-        }
-	}
-	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
 
 	/* Activate the new surface */
     viv_view_set_activated(view, true);
-	/*
-	 * Tell the seat to have the keyboard enter this surface. wlroots will keep
-	 * track of this and automatically send key events to the appropriate
-	 * clients without additional work on your part.
-	 */
-    struct wlr_surface *toplevel_surface = viv_view_get_toplevel_surface(view);
-	wlr_seat_keyboard_notify_enter(seat, toplevel_surface, keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
-
     view->workspace->active_view = view;
+    viv_surface_focus(server, surface);
 }
 
 struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view) {
