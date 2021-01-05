@@ -6,6 +6,7 @@
 #include "viv_output.h"
 #include "viv_server.h"
 #include "viv_types.h"
+#include "viv_view.h"
 
 static void layer_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -30,6 +31,15 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
 	layer_view->mapped = false;
 
     layer_view->output->needs_layout = true;
+
+	struct wlr_seat *seat = layer_view->output->server->seat;
+	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+    struct wlr_surface *our_surface = layer_view->layer_surface->surface;
+    if (prev_surface == our_surface) {
+        seat->keyboard_state.focused_surface = NULL;
+    }
+
+    viv_view_focus(layer_view->output->server->active_output->current_workspace->active_view, NULL);
 }
 
 static void layer_surface_destroy(struct wl_listener *listener, void *data) {
