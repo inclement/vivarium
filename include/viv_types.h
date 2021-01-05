@@ -238,6 +238,8 @@ struct viv_config {
     float inactive_border_colour[4];
     float clear_colour[4];
 
+    int gap_width;
+
     struct viv_keybind *keybinds;
 
     struct viv_layout *layouts;

@@ -8,6 +8,8 @@
 #include "viv_types.h"
 #include "viv_view.h"
 
+#define MAX(A, B) (A > B ? A : B)
+
 /* Used to move all of the data necessary to render a surface from the top-level
  * frame handler to the per-surface render function. */
 // TODO: should this be internal to viv_render.c?
@@ -79,13 +81,14 @@ static void render_borders(struct viv_view *view, struct viv_output *output, boo
 	struct wlr_renderer *renderer = output->server->renderer;
 
     struct viv_server *server = output->server;
+    int gap_width = server->config->gap_width;
 
     double x = 0, y = 0;
 	wlr_output_layout_output_coords(server->output_layout, output->wlr_output, &x, &y);
-	x += view->target_x;
-    y += view->target_y;
-    int width = view->target_width;
-    int height = view->target_height;
+	x += view->target_x + gap_width;
+    y += view->target_y + gap_width;
+    int width = MAX(1, view->target_width - 2 * gap_width);
+    int height = MAX(1, view->target_height - 2 * gap_width);
     float *colour = (is_active ?
                      server->config->active_border_colour :
                      server->config->inactive_border_colour);

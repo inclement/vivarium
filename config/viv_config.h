@@ -163,6 +163,9 @@ static struct viv_config the_config = {
     .active_border_colour = { 1, 0, 0.7, 1 },  // Active window border colour: RGBA in 0-1 range
     .inactive_border_colour = { 0.6, 0.6, 0.9, 1 },  // Inactive window colour: RGBA in 0-1 range
 
+    // Configure gaps between windows
+    .gap_width = 0,  // defined in pixels
+
     // The overall Vivarium background colour, RGBA in the 0-1 range.
     // This may be overridden by the more sophisticated background settings below.
     .clear_colour = { 0.73, 0.73, 0.73, 1.0 },
