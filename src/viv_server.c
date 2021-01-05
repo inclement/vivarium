@@ -144,7 +144,7 @@ void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface) {
             wlr_xwayland_surface_activate(previous, false);
         } else {
             // Not an error as this could be a layer surface
-            wlr_log(WLR_INFO, "Could not deactivate previous keyboard-focused surface");
+            wlr_log(WLR_DEBUG, "Could not deactivate previous keyboard-focused surface");
         }
 	}
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);

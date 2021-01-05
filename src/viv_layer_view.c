@@ -15,8 +15,6 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
 	struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, map);
 	layer_view->mapped = true;
 
-    wlr_log(WLR_ERROR, "New layer view, keyboard interactive? %d", layer_view->layer_surface->current.keyboard_interactive);
-
     layer_view->output->needs_layout = true;
 
     if (layer_view->layer_surface->current.keyboard_interactive) {
