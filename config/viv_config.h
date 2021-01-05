@@ -3,12 +3,14 @@
 
 #include <stdlib.h>
 
-#include "wlr/types/wlr_keyboard.h"
+#include <wayland-util.h>
+#include <wlr/types/wlr_keyboard.h>
 #include <wlr/util/log.h>
 
 #include "viv_types.h"
 #include "viv_layout.h"
 #include "viv_workspace.h"
+#include "viv_view.h"
 
 #include "viv_config_types.h"
 #include "viv_config_support.h"
@@ -18,6 +20,22 @@
 /// later in the config.
 static void example_user_function(struct viv_workspace *workspace) {
     wlr_log(WLR_INFO, "User-provided function called with workspace at address %p", workspace);
+}
+
+/// This example defines a custom tiling layout from scratch: each view takes up a fraction of the
+/// remaining horizontal space. This is just an example, not a useful layout.
+static void example_user_layout(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
+    struct viv_view *view;
+    float frac = workspace->active_layout->parameter;  // parameter can be modified at runtime
+    uint32_t available_width = width;
+    uint32_t x = 0;
+    uint32_t y = 0;
+    wl_list_for_each(view, &workspace->views, workspace_link) {
+        uint32_t current_width = available_width * frac;
+        viv_view_set_target_box(view, x, y, current_width, height);
+        x += current_width;
+        available_width -= current_width;
+    }
 }
 
 
@@ -102,6 +120,18 @@ struct viv_layout the_layouts[] = {
     {
         .name = "Fullscreen",
         .layout_function = &viv_layout_do_fullscreen,
+        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
+        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+    },
+    {
+        .name = "Spiral",
+        .layout_function = &viv_layout_do_fibonacci_spiral,
+        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
+        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+    },
+    {
+        .name = "User defined layout",
+        .layout_function = &example_user_layout,
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
     },

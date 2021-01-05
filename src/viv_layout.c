@@ -35,8 +35,49 @@
  *  |              |         |
  *  |--------------|---------|
  */
-void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace) {
-    UNUSED(workspace);
+void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
+    struct wl_list *views = &workspace->views;
+
+    struct viv_view *view;
+
+    uint32_t num_views = viv_workspace_num_tiled_views(workspace);
+
+    float frac = workspace->active_layout->parameter;
+
+    uint32_t x = 0;
+    uint32_t y = 0;
+    uint32_t available_width = width;
+    uint32_t available_height = height;
+
+    uint32_t view_index = 0;
+    wl_list_for_each(view, views, workspace_link) {
+        bool is_last_view = (view_index == num_views - 1);
+        if (view_index % 2 == 0) {
+
+            uint32_t cur_width = (uint32_t)(frac * available_width);
+            if (is_last_view) {
+                cur_width = available_width;
+            }
+
+            viv_view_set_target_box(view, x, y, cur_width, available_height);
+
+            x += cur_width;
+            available_width -= cur_width;
+        } else {
+            uint32_t cur_height = (uint32_t)(frac * available_height);
+
+            if (is_last_view) {
+                cur_height = available_height;
+            }
+
+            viv_view_set_target_box(view, x, y, available_width, cur_height);
+
+            y += cur_height;
+            available_height -= cur_height;
+        }
+
+        view_index++;
+    }
 }
 
 /**
@@ -81,7 +122,7 @@ void viv_layout_do_indented_tabs(struct viv_workspace *workspace) {
  *  |                        |
  *  |------------------------|
  */
-void viv_layout_do_fullscreen(struct viv_workspace *workspace, int32_t width, int32_t height) {
+void viv_layout_do_fullscreen(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
     struct wl_list *views = &workspace->views;
 
     struct viv_view *view;
@@ -104,7 +145,7 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace, int32_t width, in
  *  |              |    5    |
  *  |--------------|---------|
  */
-void viv_layout_do_split(struct viv_workspace *workspace, int32_t width, int32_t height) {
+void viv_layout_do_split(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
     struct wl_list *views = &workspace->views;
 
     struct viv_view *view;
@@ -122,7 +163,6 @@ void viv_layout_do_split(struct viv_workspace *workspace, int32_t width, int32_t
                                                (num_views > 1) ? ((float)height / ((float)num_views - 1)) : 100);
     uint32_t spare_pixels = height - (num_views - 1) * side_bar_view_height;
     uint32_t spare_pixels_used = 0;
-    wlr_log(WLR_DEBUG, "Laying out %d views, have to use %d space pixels", num_views, spare_pixels);
 
     uint32_t view_index = 0;
     wl_list_for_each(view, views, workspace_link) {
