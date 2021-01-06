@@ -10,11 +10,23 @@ project(
 )
 
 add_project_arguments([
-    '-DDEBUG',  # TODO: make this a build option
-    '-DXWAYLAND',  # TODO: make this a build option
     '-DWLR_USE_UNSTABLE',
     '-D_POSIX_C_SOURCE=200809',
 ], language : 'c')
+
+if get_option('develop')
+  add_project_arguments([
+    '-DDEBUG',
+  ], language : 'c')
+endif
+
+if get_option('xwayland')
+  add_project_arguments([
+    '-DXWAYLAND',
+  ], language : 'c')
+endif
+
+
 
 cc = meson.get_compiler('c')
 

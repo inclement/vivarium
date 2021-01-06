@@ -38,7 +38,10 @@
 #include "viv_layer_view.h"
 #include "viv_view.h"
 #include "viv_xdg_shell.h"
+
+#ifdef XWAYLAND
 #include "viv_xwayland_shell.h"
+#endif
 
 #include "viv_debug_support.h"
 #include "viv_config.h"
@@ -595,6 +598,7 @@ static void init_workspaces(struct wl_list *workspaces_list,
     }
 }
 
+#ifdef DEBUG
 void viv_check_data_consistency(struct viv_server *server) {
     struct viv_output *output;
     wl_list_for_each(output, &server->outputs, link) {
@@ -628,6 +632,7 @@ void viv_check_data_consistency(struct viv_server *server) {
         }
     }
 }
+#endif
 
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.

@@ -201,6 +201,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
 #endif
 }
 
+#ifdef XWAYLAND
 static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
     if (!view->mapped) {
         // Unmapped views don't need any further rendering
@@ -262,17 +263,20 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
             wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
         }
     }
-#endif
+#endif  // DEBUG
 }
+#endif  // XWAYLAND
 
 void viv_render_view(struct wlr_renderer *renderer, struct viv_view *view, struct viv_output *output) {
     switch (view->type) {
     case VIV_VIEW_TYPE_XDG_SHELL:
         viv_render_xdg_view(renderer, view, output);
         break;
+#ifdef XWAYLAND
     case VIV_VIEW_TYPE_XWAYLAND:
         viv_render_xwayland_view(renderer, view, output);
         break;
+#endif
     default:
         UNREACHABLE();
     }
