@@ -81,13 +81,14 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(e, right_output),
     KEYBIND_MAPPABLE(w, left_output),
     KEYBIND_MAPPABLE(space, next_layout),
-    KEYBIND_USER_FUNCTION(F, &example_user_function),
     KEYBIND_MAPPABLE(E, shift_active_window_to_right_output),
     KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
     KEYBIND_MAPPABLE(C, close_window),
     KEYBIND_MAPPABLE(Return, make_window_main),
     KEYBIND_MAPPABLE(o, do_exec, .executable = "bemenu-run"),
-    /// These volume adjust examples demonstrate how to run any shell command:
+    /// How to bind your own function rather than an existing command:
+    KEYBIND_USER_FUNCTION(F, &example_user_function),
+    /// How to run any shell command:
     KEYBIND_MAPPABLE(XF86AudioMute, do_shell, .command = "/home/sandy/bin/toggle_mute"),
     KEYBIND_MAPPABLE(XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),
     KEYBIND_MAPPABLE(XF86AudioRaiseVolume, do_shell, .command = "amixer -q sset Master 3%+"),
@@ -98,7 +99,8 @@ struct viv_keybind the_keybinds[] = {
 };
 
 
-/// Declare the layouts you want to use. All workspaces have the same layouts.
+/// Declare the layouts you want to use. All workspaces have the same layouts, initially cloned from
+/// this initial config although their parameters may change independently at runtime.
 #define CONFIG_LAYOUT_PARAMETER_DEFAULT 0.666
 #define CONFIG_LAYOUT_COUNTER_DEFAULT 1
 struct viv_layout the_layouts[] = {
@@ -130,6 +132,8 @@ struct viv_layout the_layouts[] = {
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
     },
+    // Example user-defined layout. You probably want to delete this from the config, but
+    // this is how to make your own layout.
     {
         .name = "User defined layout",
         .layout_function = &example_user_layout,
@@ -141,7 +145,7 @@ struct viv_layout the_layouts[] = {
 
 
 /// The primary application config.
-/// Every possible option is set here. To make your own config you only need to update these defaults.
+/// Every possible option is set below. To make your own config you only need to update these defaults.
 /// See `viv_types.h` for the raw struct declaration.
 static struct viv_config the_config = {
 
