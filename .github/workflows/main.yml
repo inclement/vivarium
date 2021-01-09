@@ -14,6 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install dependencies
+        run: |
+            sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev
+
       - name: Checkout vivarium
         uses: actions/checkout@v2
 
@@ -30,8 +34,5 @@ jobs:
 
       - name: Build vivarium
         run: |
-          ls
-          pwd
           meson build
-          cd build
           ninja -C build
