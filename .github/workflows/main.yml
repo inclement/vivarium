@@ -11,15 +11,9 @@ on:
 jobs:
   build:
     name: Build vivarium
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
-      - name: Install dependencies
-        run: |
-            sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev
-
-      - name: Checkout vivarium
-        uses: actions/checkout@v2
 
       - name: Set up Python 3.9
         uses: actions/setup-python@v2.2.1
@@ -28,9 +22,14 @@ jobs:
 
       - name: Install dependencies
         run: |
+           sudo apt-get update
+           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev
            python -m pip install --upgrade pip
            python -m pip install ninja
            python -m pip install meson
+
+      - name: Checkout vivarium
+        uses: actions/checkout@v2
 
       - name: Build vivarium
         run: |
