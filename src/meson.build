@@ -16,7 +16,7 @@ viv_sources = [
   'viv_xdg_shell.c',
 ]
 
-if get_option('xwayland')
+if get_option('xwayland').enabled()
   viv_sources += [
     'viv_xwayland_shell.c',
   ]
