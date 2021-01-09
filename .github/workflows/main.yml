@@ -1,4 +1,4 @@
-name: Check compile
+name: Build Vivarium
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: Build vivarium
+    name: Build Vivarium
     runs-on: ubuntu-20.04
 
     steps:
