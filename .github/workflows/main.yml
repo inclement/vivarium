@@ -34,4 +34,4 @@ jobs:
           pwd
           meson build
           cd build
-          ninja
+          ninja -C build

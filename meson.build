@@ -30,7 +30,14 @@ endif
 
 cc = meson.get_compiler('c')
 
-wlroots_dep = dependency('wlroots', version : '>=0.12')
+# For wlroots, use the system version if available
+wlroots_dep = dependency('wlroots', version : '>=0.12', required : false)
+if wlroots_dep.found()
+  wlroots_proj = subproject('wlroots')
+  wlroots_dep = wlroots_proj.get_variable('wlroots')
+endif
+
+
 wayland_server_dep = dependency('wayland-server')
 wayland_client_dep = dependency('wayland-client')
 wayland_protocols_dep = dependency('wayland-protocols')
