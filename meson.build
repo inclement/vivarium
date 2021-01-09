@@ -20,7 +20,7 @@ if get_option('develop')
   ], language : 'c')
 endif
 
-if get_option('xwayland')
+if get_option('xwayland').enabled()
   add_project_arguments([
     '-DXWAYLAND',
   ], language : 'c')
@@ -30,7 +30,9 @@ endif
 
 cc = meson.get_compiler('c')
 
-wlroots_dep = dependency('wlroots', version : '>=0.12')
+# For wlroots, use the system version if available
+wlroots_dep = dependency('wlroots', version : '>=0.12', fallback : ['wlroots', 'wlroots'])
+
 wayland_server_dep = dependency('wayland-server')
 wayland_client_dep = dependency('wayland-client')
 wayland_protocols_dep = dependency('wayland-protocols')

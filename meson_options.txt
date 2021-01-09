@@ -1,2 +1,2 @@
-option('xwayland', type : 'boolean', value : true, description : 'Include XWayland support')
+option('xwayland', type : 'feature', value : 'enabled', description : 'Include XWayland support')
 option('develop', type : 'boolean', value : true, description : 'Include debug logging and assertions')

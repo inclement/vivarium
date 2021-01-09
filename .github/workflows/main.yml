@@ -1,0 +1,51 @@
+name: Build Vivarium
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Vivarium
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2.2.1
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+           sudo apt-get update
+           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev
+           python -m pip install --upgrade pip
+           python -m pip install ninja
+           python -m pip install meson
+
+      - name: Checkout vivarium
+        uses: actions/checkout@v2
+
+      - name: Prepare build dir
+        run: |
+          meson build
+
+      - name: Build vivarium, debug=false, xwayland=disabled
+        run: |
+          meson --reconfigure build -Dxwayland=disabled -Ddebug=false
+          ninja -C build
+
+      - name: Build vivarium, debug=false, xwayland=enabled
+        run: |
+          meson --reconfigure build -Dxwayland=enabled -Ddebug=false
+          ninja -C build
+
+      - name: Build vivarium, debug=true xwayland=enabled
+        run: |
+          meson --reconfigure build -Dxwayland=enabled -Ddebug=true
+          ninja -C build

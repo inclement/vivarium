@@ -1,0 +1,5 @@
+[wrap-file]
+directory = wlroots-0.12.0
+source_url = https://github.com/swaywm/wlroots/archive/0.12.0.tar.gz
+source_filename = 0.12.0.tar.gz
+source_hash = c9e9f4f6d2f526d0b2886daf3ec37e64831773059aa669fb98a88522a1626bdb

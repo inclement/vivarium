@@ -1,5 +1,7 @@
 # Vivarium
 
+![Build Status](https://github.com/inclement/vivarium/workflows/Build%20Vivarium/badge.svg)
+
 A dynamic tiling [Wayland](https://wayland.freedesktop.org/) compositor using [wlroots](https://github.com/swaywm/wlroots), with desktop semantics inspired by [xmonad](https://xmonad.org/).
 
 <p align="center">
