@@ -33,5 +33,5 @@ jobs:
 
       - name: Build vivarium
         run: |
-          meson build
+          meson build -Dxwayland=false
           ninja -C build
