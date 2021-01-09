@@ -142,9 +142,11 @@ void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface) {
         if (wlr_surface_is_xdg_surface(focused_surface)) {
             struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(focused_surface);
             wlr_xdg_toplevel_set_activated(previous, false);
+#ifdef XWAYLAND
         } else if (wlr_surface_is_xwayland_surface(focused_surface)) {
             struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(focused_surface);
             wlr_xwayland_surface_activate(previous, false);
+#endif
         } else {
             // Not an error as this could be a layer surface
             wlr_log(WLR_DEBUG, "Could not deactivate previous keyboard-focused surface");
