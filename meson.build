@@ -20,7 +20,7 @@ if get_option('develop')
   ], language : 'c')
 endif
 
-if get_option('xwayland')
+if get_option('xwayland').enabled()
   add_project_arguments([
     '-DXWAYLAND',
   ], language : 'c')
