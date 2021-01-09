@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
     // Initialise our vivarium server. This sets up all the event bindings so that inputs,
     // outputs and window events can be handles.
-	struct viv_server server;
+	struct viv_server server = { .config = NULL };
     viv_server_init(&server);
 
 	// Add a Unix socket to the Wayland display.
