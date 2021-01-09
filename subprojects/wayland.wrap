@@ -1,6 +1,0 @@
-
-[wrap-file]
-directory = wayland-1.18.92
-source_url = https://github.com/wayland-project/wayland/archive/1.18.92.tar.gz
-source_filename = 1.18.92.tar.gz
-source_hash = bc50d29bb1f30b2625521c6ad69e2de89e6cbf9459d538e4b0208ad15daff73a
