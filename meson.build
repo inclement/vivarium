@@ -33,8 +33,8 @@ cc = meson.get_compiler('c')
 # For wlroots, use the system version if available
 wlroots_dep = dependency('wlroots', version : '>=0.12', fallback : ['wlroots', 'wlroots'])
 
-wayland_server_dep = dependency('wayland-server')
-wayland_client_dep = dependency('wayland-client')
+wayland_server_dep = dependency('wayland-server', fallback : ['wayland', 'wayland_server_dep'])
+wayland_client_dep = dependency('wayland-client', fallback : ['wayland', 'wayland_client_dep'])
 wayland_protocols_dep = dependency('wayland-protocols')
 xkbcommon_dep = dependency('xkbcommon')
 
