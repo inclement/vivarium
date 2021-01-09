@@ -31,7 +31,17 @@ jobs:
       - name: Checkout vivarium
         uses: actions/checkout@v2
 
-      - name: Build vivarium
+      - name: Build vivarium, debug=false, xwayland=false
         run: |
-          meson build -Dxwayland=false
+          meson build -Dxwayland=false -Ddebug=false
+          ninja -C build
+
+      - name: Build vivarium, debug=false, xwayland=true
+        run: |
+          meson --reconfigure build -Dxwayland=true -Ddebug=false
+          ninja -C build
+
+      - name: Build vivarium, debug=true xwayland=true
+        run: |
+          meson --reconfigure build -Dxwayland=true -Ddebug=true
           ninja -C build
