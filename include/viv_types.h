@@ -248,6 +248,8 @@ struct viv_config {
 
     struct xkb_rule_names xkb_rules;
 
+    struct viv_libinput_config *libinput_configs;
+
     struct {
         char *colour;
         char *image;

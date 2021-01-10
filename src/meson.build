@@ -3,6 +3,7 @@ viv_sources = [
   'viv_background.c',
   'viv_bar.c',
   'viv_cursor.c',
+  'viv_input.c',
   'viv_ipc.c',
   'viv_layout.c',
   'viv_mappable_functions.c',
@@ -26,6 +27,7 @@ viv_deps = [
     wlroots_dep,
     wayland_server_dep,
     xkbcommon_dep,
+    libinput_dep,
     xdg_shell_protocol_dep,
     layer_shell_protocol_dep,
 ]

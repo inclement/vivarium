@@ -5,7 +5,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
+#include <libinput.h>
 #include <wlr/backend.h>
+#include <wlr/backend/libinput.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
@@ -30,6 +32,7 @@
 #include "viv_config_types.h"
 #include "viv_types.h"
 #include "viv_cursor.h"
+#include "viv_input.h"
 #include "viv_server.h"
 #include "viv_workspace.h"
 #include "viv_layout.h"
@@ -503,6 +506,11 @@ static void server_new_input(struct wl_listener *listener, void *data) {
         wlr_log(WLR_ERROR, "Received an unrecognised/unhandled new input, type %d", device->type);
 		break;
 	}
+
+    wlr_log(WLR_INFO, "New input device with name \"%s\"", device->name);
+
+    // Configure the new device, e.g. applying libinput config options
+    viv_input_configure(device, server->config->libinput_configs);
 
     // Let the wlr_seat know what our capabilities are. This information is available to
     // clients. We always support a cursor even if no input device can actually move it.

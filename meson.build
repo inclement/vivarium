@@ -37,6 +37,7 @@ wayland_server_dep = dependency('wayland-server')
 wayland_client_dep = dependency('wayland-client')
 wayland_protocols_dep = dependency('wayland-protocols')
 xkbcommon_dep = dependency('xkbcommon')
+libinput_dep = dependency('libinput')
 
 
 includes = [

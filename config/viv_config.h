@@ -99,6 +99,30 @@ struct viv_keybind the_keybinds[] = {
 };
 
 
+/// Declare any number of libinput device configurations
+/// Whenever a new libinput device is detected, every device config whose device_name is a
+/// substring of the new device name will be applied to that device.
+/// This example config sets every possible option, for reference.
+struct viv_libinput_config the_libinput_configs[] = {
+    // This example config can be safely deleted.
+    {
+        // This config will match any libinput device whose name contains the following substring.
+        .device_name = "Logitech USB Trackball",
+        // scroll_method options can be found in libinput.h
+        .scroll_method = LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN,
+        // Only used if the scroll method is as above
+        .scroll_button = 8,
+        // Emulate middle click when left and right buttons are clicked simultaneously
+        .middle_emulation = LIBINPUT_CONFIG_MIDDLE_EMULATION_ENABLED,
+        // Switch left and right buttons
+        .left_handed = 0,
+        // Invert scroll direction
+        .natural_scroll = 0,
+    },
+    TERMINATE_LIBINPUT_CONFIG_LIST(),
+};
+
+
 /// Declare the layouts you want to use. All workspaces have the same layouts, initially cloned from
 /// this initial config although their parameters may change independently at runtime.
 #define CONFIG_LAYOUT_PARAMETER_DEFAULT 0.666
@@ -200,6 +224,9 @@ static struct viv_config the_config = {
         .variant = "widecolemak",
         .options = "ctrl:nocaps",
     },
+
+    // Use the libinput configs list configured above.
+    .libinput_configs = the_libinput_configs,
 
     // Filename at which to write a workspace status string each time the workspace state changes.
     // This exists for basic inter-process communication e.g. with waybar, see below
