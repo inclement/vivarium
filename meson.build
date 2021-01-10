@@ -42,7 +42,7 @@ xkbcommon_dep = dependency('xkbcommon')
 includes = [
   include_directories('include'),
   include_directories('protocols'),
-  include_directories('config'),
+  include_directories(get_option('config-dir')),
 ]
 
 subdir('include')

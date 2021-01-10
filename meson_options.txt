@@ -1,2 +1,3 @@
 option('xwayland', type : 'feature', value : 'enabled', description : 'Include XWayland support')
 option('develop', type : 'boolean', value : true, description : 'Include debug logging and assertions')
+option('config-dir', type : 'string', value : 'config', description : 'Path to your config folder, must contain viv_config.h defining `struct viv_config the_config`')
