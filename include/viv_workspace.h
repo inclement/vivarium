@@ -34,4 +34,11 @@ void viv_workspace_do_layout(struct viv_workspace *workspace);
 
 /// Get the number of tiled (i.e. non-floating) views in the workspace
 uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace);
+
+/// Add the given view to the current workspace, taking the place of the current active
+/// view in the views list (if any). The `view` must not already be in any views list, its
+/// link will be reused without checking.
+void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *view);
+
+
 #endif

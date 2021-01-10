@@ -9,13 +9,10 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
     wlr_log(WLR_DEBUG, "xwayland surface mapped");
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
-	viv_view_focus(view, viv_view_get_toplevel_surface(view));
 
     wl_list_remove(&view->workspace_link);
-    wl_list_insert(&view->workspace->views, &view->workspace_link);
 
-    struct viv_workspace *workspace = view->workspace;
-    workspace->needs_layout = true;
+    viv_workspace_add_view(view->workspace, view);
 }
 
 static void event_xwayland_surface_unmap(struct wl_listener *listener, void *data) {

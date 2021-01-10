@@ -198,3 +198,17 @@ uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace) {
     }
     return num_views;
 }
+
+void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *view) {
+    view->workspace = workspace;
+
+    if (workspace->active_view != NULL) {
+        wl_list_insert(workspace->active_view->workspace_link.prev, &view->workspace_link);
+    } else {
+        wl_list_insert(&workspace->views, &view->workspace_link);
+    }
+
+	viv_view_focus(view, viv_view_get_toplevel_surface(view));
+
+    workspace->needs_layout = true;
+}
