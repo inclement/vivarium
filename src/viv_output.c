@@ -9,6 +9,7 @@
 #include "viv_render.h"
 #include "viv_server.h"
 #include "viv_types.h"
+#include "viv_view.h"
 #include "viv_workspace.h"
 
 /// Handle a render frame event: render everything on the output, then do any scheduled relayouts
@@ -113,6 +114,10 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
         other_output->needs_layout = true;
     } else {
         output->current_workspace->output = NULL;
+    }
+
+    if (workspace->active_view) {
+        viv_view_focus(workspace->active_view, NULL);
     }
 
     output->current_workspace = workspace;
