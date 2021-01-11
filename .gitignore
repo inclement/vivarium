@@ -3,4 +3,5 @@ vivarium
 .cache
 obj
 build
+build_*
 compile_commands.json
