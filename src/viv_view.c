@@ -31,9 +31,9 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 	struct viv_server *server = view->server;
 
 	/* Activate the new surface */
-    viv_view_set_activated(view, true);
     view->workspace->active_view = view;
     viv_surface_focus(server, surface);
+    viv_view_set_activated(view, true);
 }
 
 struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view) {
