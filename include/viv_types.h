@@ -177,8 +177,10 @@ struct viv_view {
 	struct viv_server *server;
     struct viv_workspace *workspace;
 
-	struct wlr_xdg_surface *xdg_surface;
-    struct wlr_xwayland_surface *xwayland_surface;
+    union {
+        struct wlr_xdg_surface *xdg_surface;
+        struct wlr_xwayland_surface *xwayland_surface;
+    };
 
 	struct wl_listener map;
 	struct wl_listener unmap;
