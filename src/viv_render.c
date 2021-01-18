@@ -20,11 +20,16 @@ struct viv_render_data {
 	struct timespec *when;
     bool limit_render_count;
     uint32_t max_surfaces_to_render;
+    int sx;
+    int sy;
 };
 
 static void render_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
 	/* This function is called for every surface that needs to be rendered. */
 	struct viv_render_data *rdata = data;
+
+    sx += rdata->sx;
+    sy += rdata->sy;
 
     if (rdata->limit_render_count && !rdata->max_surfaces_to_render) {
         // We already rendered as many surfaces as allowed in this recursive pass
@@ -72,6 +77,14 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
     if (rdata->limit_render_count) {
         rdata->max_surfaces_to_render--;
     }
+}
+
+static void popup_render_surface(struct wlr_surface *surface, int sx, int sy, void *data) {
+    // TODO: wlroots 0.13 probably iterates over each popup surface autoamtically
+	struct viv_render_data *rdata = data;
+    rdata->sx = sx;
+    rdata->sy = sy;
+    wlr_surface_for_each_surface(surface, render_surface, rdata);
 }
 
 
@@ -145,6 +158,8 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
         .when = &now,
         .limit_render_count = true,
         .max_surfaces_to_render = 1 + wl_list_length(&view->xdg_surface->surface->subsurfaces),
+        .sx = 0,
+        .sy = 0,
     };
 
     // Note this renders both the toplevel and any popups
@@ -185,7 +200,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
 
     // Then render any popups
     rdata.limit_render_count = false;
-    wlr_xdg_surface_for_each_popup(view->xdg_surface, render_surface, &rdata);
+    wlr_xdg_surface_for_each_popup(view->xdg_surface, popup_render_surface, &rdata);
 
 #ifdef DEBUG
     if (output->server->config->debug_mark_views_by_shell) {
@@ -217,6 +232,8 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
         .renderer = renderer,
         .when = &now,
         .limit_render_count = false,
+        .sx = 0,
+        .sy = 0,
     };
 
     struct wlr_box target_geometry = {
