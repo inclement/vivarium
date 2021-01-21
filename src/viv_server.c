@@ -243,7 +243,10 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 		server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 	} else {
         // Always focus the clicked-on window
-		viv_view_focus(view, surface);
+        struct viv_view *active_view = server->active_output->current_workspace->active_view;
+        if (view != active_view) {
+            viv_view_focus(view, surface);
+        }
 
         // If making a window floating, always bring it to the front
         if (global_meta_held(server)) {

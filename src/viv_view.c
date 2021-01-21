@@ -22,12 +22,12 @@ void viv_view_bring_to_front(struct viv_view *view) {
 }
 
 void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
-    if (surface == NULL) {
-        surface = viv_view_get_toplevel_surface(view);
-    }
 	if (view == NULL) {
 		return;
 	}
+    if (surface == NULL) {
+        surface = viv_view_get_toplevel_surface(view);
+    }
 	struct viv_server *server = view->server;
 
 	/* Activate the new surface */

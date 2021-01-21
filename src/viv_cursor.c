@@ -89,7 +89,6 @@ static void process_cursor_pass_through_to_surface(struct viv_server *server, ui
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *surface = NULL;
 
-
     // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
 	struct viv_view *view = viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 	if (!view) {
@@ -104,7 +103,8 @@ static void process_cursor_pass_through_to_surface(struct viv_server *server, ui
 				server->cursor_mgr, "left_ptr", server->cursor);
 	} else {
         // View under the cursor => focus it if appropriate
-        if (server->config->focus_follows_mouse) {
+        struct viv_view *active_view = server->active_output->current_workspace->active_view;
+        if ((view != active_view) && server->config->focus_follows_mouse) {
             viv_view_focus(view, surface);
         }
     }
