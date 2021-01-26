@@ -16,9 +16,12 @@
 
 #include <wlr/util/log.h>
 
-#define KEYBIND_MAPPABLE(KEY, BINDING, ...) \
+#define NO_MODIFIERS (0u)
+
+#define KEYBIND_MAPPABLE(MODIFIERS, KEY, BINDING, ...)   \
     {                                           \
         .key = XKB_KEY_ ## KEY,                 \
+        .modifiers = (MODIFIERS),               \
         .binding = &viv_mappable_ ## BINDING,   \
         .payload = { .BINDING = { ._empty = 0u, __VA_ARGS__ } }  \
     }

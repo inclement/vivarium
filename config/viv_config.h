@@ -15,6 +15,7 @@
 #include "viv_config_types.h"
 #include "viv_config_support.h"
 
+#define META WLR_MODIFIER_ALT  // convenience define as most keybindings use the same meta key
 
 /// Your configuration can include your own functions. This example is bound to a key
 /// later in the config.
@@ -57,9 +58,9 @@ static void example_user_layout(struct viv_workspace *workspace, uint32_t width,
 #define WORKSPACE_NAME(name, _1, _2) \
     name,
 #define BIND_SWITCH_TO_WORKSPACE(name, key, _) \
-    KEYBIND_MAPPABLE(key, switch_to_workspace, .workspace_name = name),
+    KEYBIND_MAPPABLE(META, key, switch_to_workspace, .workspace_name = name),
 #define BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE(name, _, key) \
-    KEYBIND_MAPPABLE(key, shift_active_window_to_workspace, .workspace_name = name),
+    KEYBIND_MAPPABLE(META, key, shift_active_window_to_workspace, .workspace_name = name),
 
 
 /// Declare any number of keybindings.
@@ -69,29 +70,32 @@ static void example_user_layout(struct viv_workspace *workspace, uint32_t width,
 #define CONFIG_TERMINAL "alacritty"
 #define CONFIG_SPACER_INCREMENT 0.05
 struct viv_keybind the_keybinds[] = {
-    KEYBIND_MAPPABLE(Q, terminate),
-    KEYBIND_MAPPABLE(T, do_exec, .executable = CONFIG_TERMINAL),
-    KEYBIND_MAPPABLE(l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
-    KEYBIND_MAPPABLE(h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
-    KEYBIND_MAPPABLE(j, next_window),
-    KEYBIND_MAPPABLE(k, prev_window),
-    KEYBIND_MAPPABLE(J, shift_active_window_down),
-    KEYBIND_MAPPABLE(K, shift_active_window_up),
-    KEYBIND_MAPPABLE(t, tile_window),
-    KEYBIND_MAPPABLE(e, right_output),
-    KEYBIND_MAPPABLE(w, left_output),
-    KEYBIND_MAPPABLE(space, next_layout),
-    KEYBIND_MAPPABLE(E, shift_active_window_to_right_output),
-    KEYBIND_MAPPABLE(W, shift_active_window_to_left_output),
-    KEYBIND_MAPPABLE(C, close_window),
-    KEYBIND_MAPPABLE(Return, make_window_main),
-    KEYBIND_MAPPABLE(o, do_exec, .executable = "bemenu-run"),
+    // Note the META key is defined above
+    // The first argument is a bitmask, so you can require any set of modifiers from wlr_keyboard.h
+    KEYBIND_MAPPABLE(META, Q, terminate),
+    KEYBIND_MAPPABLE(META, T, do_exec, .executable = CONFIG_TERMINAL),
+    KEYBIND_MAPPABLE(META | WLR_MODIFIER_SHIFT, Return, do_exec, .executable = CONFIG_TERMINAL),
+    KEYBIND_MAPPABLE(META, l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
+    KEYBIND_MAPPABLE(META, h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
+    KEYBIND_MAPPABLE(META, j, next_window),
+    KEYBIND_MAPPABLE(META, k, prev_window),
+    KEYBIND_MAPPABLE(META, J, shift_active_window_down),
+    KEYBIND_MAPPABLE(META, K, shift_active_window_up),
+    KEYBIND_MAPPABLE(META, t, tile_window),
+    KEYBIND_MAPPABLE(META, e, right_output),
+    KEYBIND_MAPPABLE(META, w, left_output),
+    KEYBIND_MAPPABLE(META, space, next_layout),
+    KEYBIND_MAPPABLE(META, E, shift_active_window_to_right_output),
+    KEYBIND_MAPPABLE(META, W, shift_active_window_to_left_output),
+    KEYBIND_MAPPABLE(META, C, close_window),
+    KEYBIND_MAPPABLE(META, Return, make_window_main),
+    KEYBIND_MAPPABLE(META, o, do_exec, .executable = "bemenu-run"),
     /// How to bind your own function rather than an existing command:
     KEYBIND_USER_FUNCTION(F, &example_user_function),
     /// How to run any shell command:
-    KEYBIND_MAPPABLE(XF86AudioMute, do_shell, .command = "/home/sandy/bin/toggle_mute"),
-    KEYBIND_MAPPABLE(XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),
-    KEYBIND_MAPPABLE(XF86AudioRaiseVolume, do_shell, .command = "amixer -q sset Master 3%+"),
+    KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioMute, do_shell, .command = "pactl set-sink-mute 0 toggle"),
+    KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),
+    KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioRaiseVolume, do_shell, .command = "amixer -q sset Master 3%+"),
     /// Autogenerate keybindings to switch to and/or send windows to each workspace:
     FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
     FOR_EACH_WORKSPACE(BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE)

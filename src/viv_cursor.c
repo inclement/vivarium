@@ -102,7 +102,7 @@ static void process_cursor_pass_through_to_surface(struct viv_server *server, ui
 		wlr_xcursor_manager_set_cursor_image(
 				server->cursor_mgr, "left_ptr", server->cursor);
 	} else {
-        // View under the cursor => focus it if appropriate
+        // View under the cursor and not already active => focus it if appropriate
         struct viv_view *active_view = server->active_output->current_workspace->active_view;
         if ((view != active_view) && server->config->focus_follows_mouse) {
             viv_view_focus(view, surface);

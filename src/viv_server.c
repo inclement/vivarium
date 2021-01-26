@@ -400,11 +400,30 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
 		&keyboard->device->keyboard->modifiers);
 }
 
+/// Handle builtin keybindings that cannot be overridden
+static bool handle_server_keybinding(struct viv_server *server, xkb_keysym_t sym) {
+
+    // Handle TTY switching
+    if ((sym >= XKB_KEY_XF86Switch_VT_1) && (sym <= XKB_KEY_XF86Switch_VT_12)) {
+        struct wlr_session *session = wlr_backend_get_session(server->backend);
+        if (session) {
+            unsigned int vt_num = sym - XKB_KEY_XF86Switch_VT_1 + 1;
+            wlr_session_change_vt(session, vt_num);
+            return true;
+        }
+    }
+    return false;
+}
+
 /// Look up a key press in the configured keybindings, and run the bound function if found
-static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
+static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym, uint32_t modifiers) {
     struct viv_output *output = server->active_output;
 
     struct viv_workspace *workspace = output->current_workspace;
+
+    if (handle_server_keybinding(server, sym)) {
+        return true;
+    }
 
     struct viv_keybind keybind;
     for (uint32_t i = 0; i < MAX_NUM_KEYBINDS; i++) {
@@ -414,7 +433,9 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym) {
             break;
         }
 
-        if (keybind.key == sym) {
+        bool all_modifiers_pressed = ((modifiers & keybind.modifiers) == keybind.modifiers);
+
+        if (keybind.key == sym && all_modifiers_pressed) {
             keybind.binding(workspace, keybind.payload);
             return true;
         }
@@ -441,10 +462,10 @@ static void server_keyboard_handle_key(
     // If the key completes a configured keybinding, run the configured response function
 	bool handled = false;
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-	if ((modifiers & server->config->global_meta_key) && event->state == WLR_KEY_PRESSED) {
+	if (event->state == WLR_KEY_PRESSED) {
 		for (int i = 0; i < nsyms; i++) {
             wlr_log(WLR_DEBUG, "Key %d pressed", syms[i]);
-			handled = handle_keybinding(server, syms[i]);
+			handled = handle_keybinding(server, syms[i], modifiers);
 		}
 	}
 

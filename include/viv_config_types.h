@@ -9,6 +9,7 @@
 
 struct viv_keybind {
     xkb_keysym_t key;
+    uint32_t modifiers;
     void (*binding)(struct viv_workspace *workspace, union viv_mappable_payload payload);
     union viv_mappable_payload payload;
 };
