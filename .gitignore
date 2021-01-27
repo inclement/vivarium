@@ -5,3 +5,5 @@ obj
 build
 build_*
 compile_commands.json
+subprojects/*
+!subprojects/*.wrap
