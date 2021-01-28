@@ -147,12 +147,27 @@ struct viv_layout the_layouts[] = {
         // layout but usually controls the number of windows sharing the space
         // allocated to the main layout region.
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+        // A boolean controlling whether window borders are drawn. If true, borders are
+        // not drawn for any window in the layout, nor is space reserved for them.
+        .no_borders = false,
+        // A boolean controlling whether excluded regions (e.g. taskbars) are considered
+        // during layout. If true, windows will be drawn over/under excluded regions
+        // (depending on e.g. layer shell ordering)
+        .ignore_excluded_regions = false,
     },
     {
         .name = "Fullscreen",
         .layout_function = &viv_layout_do_fullscreen,
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+    },
+    {
+        .name = "Fullscreen No Borders",
+        .layout_function = &viv_layout_do_fullscreen,
+        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
+        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+        .ignore_excluded_regions = true,
+        .no_borders = true,
     },
     {
         .name = "Spiral",

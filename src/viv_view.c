@@ -199,8 +199,12 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     int gap_width = output->server->config->gap_width;
 
-    int ox = output_layout_output->x + output->excluded_margin.left;
-    int oy = output_layout_output->y + output->excluded_margin.top;
+    int ox = output_layout_output->x;
+    int oy = output_layout_output->y;
+    if (!output->current_workspace->active_layout->ignore_excluded_regions) {
+        ox += output->excluded_margin.left;
+        oy += output->excluded_margin.top;
+    }
 
     x += ox;
     y += oy;
@@ -211,6 +215,9 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     view->target_height = height;
 
     int border_width = output->server->config->border_width;
+    if (output->current_workspace->active_layout->no_borders) {
+        border_width = 0u;
+    }
 
     width -= 2 * border_width + 2 * gap_width;
     height -= 2 * border_width + 2 * gap_width;

@@ -124,8 +124,11 @@ struct viv_layout {
     char name[100];
     void (*layout_function)(struct viv_workspace *workspace, uint32_t width, uint32_t height);  /// Function that applies the layout
 
-    float parameter;  // A value between 0-1 which the user may configure
-    uint32_t counter;  /// User-configurable int, effectively unbounded
+    float parameter;  /// A float between 0-1 which the user may configure at runtime
+    uint32_t counter;  /// User-configurable uint which the user may configure at runtime, effectively unbounded
+
+    bool no_borders;  /// If true, don't draw borders around windows (including the active window)
+    bool ignore_excluded_regions;  /// If true, ignore regions marked excluded by other apps such as taskbars
 
     struct wl_list workspace_link;
 };

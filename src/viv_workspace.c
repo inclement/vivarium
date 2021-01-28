@@ -170,9 +170,14 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace) {
 
 void viv_workspace_do_layout(struct viv_workspace *workspace) {
     struct viv_output *output = workspace->output;
+    struct viv_layout *layout = workspace->active_layout;
 
-    int32_t width = output->wlr_output->width - output->excluded_margin.left - output->excluded_margin.right;
-    int32_t height = output->wlr_output->height - output->excluded_margin.top - output->excluded_margin.bottom;
+    int32_t width = output->wlr_output->width;
+    int32_t height = output->wlr_output->height;
+    if (!layout->ignore_excluded_regions) {
+        width -= (output->excluded_margin.left + output->excluded_margin.right);
+        height -= (output->excluded_margin.top - output->excluded_margin.bottom);
+    }
 
     workspace->active_layout->layout_function(workspace, width, height);
 
