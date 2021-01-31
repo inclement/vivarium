@@ -16,6 +16,19 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
     wl_list_remove(&view->workspace_link);
 
+    // If this view is actually a child of some parent, which is the
+    // case for e.g. file dialogs, we should make it float instead of tiling
+    if (view->xdg_surface->toplevel->parent) {
+        view->is_floating = true;
+
+        // TODO: we shouldn't use the minimum size, probably actually
+        // want some indication of fractional pos and size relative to
+        // workspace output, which is handled during layout
+        struct wlr_xdg_toplevel_state *current = &view->xdg_surface->toplevel->current;
+        viv_view_set_target_box(view, 0, 0, current->min_width, current->min_height);
+
+    }
+
     viv_workspace_add_view(view->workspace, view);
 }
 

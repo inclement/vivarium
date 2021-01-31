@@ -207,7 +207,9 @@ uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace) {
 void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *view) {
     view->workspace = workspace;
 
-    if (workspace->active_view != NULL) {
+    if (view->is_floating) {
+        wl_list_insert(&workspace->views, &view->workspace_link);
+    } else if (workspace->active_view != NULL) {
         wl_list_insert(workspace->active_view->workspace_link.prev, &view->workspace_link);
     } else {
         wl_list_insert(&workspace->views, &view->workspace_link);
