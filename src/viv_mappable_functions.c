@@ -52,7 +52,7 @@ void viv_mappable_increment_divide(struct viv_workspace *workspace, union viv_ma
 void viv_mappable_terminate(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable terminate");
-    wl_display_terminate(workspace->output->server->wl_display);
+    wl_display_terminate(workspace->server->wl_display);
 }
 
 void viv_mappable_next_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
@@ -208,7 +208,7 @@ void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspa
 void viv_mappable_switch_to_workspace(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(workspace);
 
-    struct viv_server *server = workspace->output->server;
+    struct viv_server *server = workspace->server;
 
     char *workspace_name = payload.switch_to_workspace.workspace_name;
     struct viv_workspace *target_workspace = viv_server_retrieve_workspace_by_name(server, workspace_name);

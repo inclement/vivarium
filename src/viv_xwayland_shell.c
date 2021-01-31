@@ -22,7 +22,7 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
 	view->mapped = false;
 
 
-	struct wlr_seat *seat = view->workspace->output->server->seat;
+	struct wlr_seat *seat = view->workspace->server->seat;
     seat->keyboard_state.focused_surface = NULL;
     viv_view_ensure_not_active_in_workspace(view);
 

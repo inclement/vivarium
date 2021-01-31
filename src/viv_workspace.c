@@ -187,7 +187,7 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
     // Reset cursor focus as the view under the cursor may have changed
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    viv_cursor_reset_focus(workspace->output->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+    viv_cursor_reset_focus(workspace->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
 
     workspace->was_laid_out = true;
 }

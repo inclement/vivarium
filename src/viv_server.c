@@ -601,8 +601,9 @@ static void init_layouts(struct wl_list *layouts_list, struct viv_layout *layout
 /// For each workspace name, create an initialise a ::viv_workspace with the specified
 /// layouts.
 static void init_workspaces(struct wl_list *workspaces_list,
-                                       char workspace_names[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH],
-                                       struct viv_layout *layouts) {
+                            char workspace_names[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH],
+                            struct viv_layout *layouts,
+                            struct viv_server *server) {
     wlr_log(WLR_INFO, "Making workspaces");
 
     wl_list_init(workspaces_list);
@@ -624,6 +625,8 @@ static void init_workspaces(struct wl_list *workspaces_list,
         memcpy(workspace->name, name, sizeof(char) * MAX_WORKSPACE_NAME_LENGTH);
         wl_list_init(&workspace->views);
         wl_list_insert(workspaces_list->prev, &workspace->server_link);
+
+        workspace->server = server;
 
         // Set up layouts for the new workspace
         init_layouts(&workspace->layouts, layouts);
@@ -679,7 +682,7 @@ void viv_server_init(struct viv_server *server) {
     server->config = &the_config;
 
     // Dynamically create workspaces according to the user configuration
-    init_workspaces(&server->workspaces, server->config->workspaces, server->config->layouts);
+    init_workspaces(&server->workspaces, server->config->workspaces, server->config->layouts, server);
 
     // Prepare our app's wl_display
 	server->wl_display = wl_display_create();

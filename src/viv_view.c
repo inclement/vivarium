@@ -229,7 +229,7 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
     struct viv_workspace *workspace = view->workspace;
     if  (view == workspace->active_view) {
-        struct wlr_seat *seat = view->workspace->output->server->seat;
+        struct wlr_seat *seat = view->workspace->server->seat;
         seat->keyboard_state.focused_surface = NULL;
         if (wl_list_length(&workspace->views) > 1) {
             viv_workspace_focus_next_window(workspace);

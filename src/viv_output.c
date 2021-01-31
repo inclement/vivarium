@@ -34,7 +34,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
     if (workspace->was_laid_out) {
         struct timespec now;
         clock_gettime(CLOCK_MONOTONIC, &now);
-        viv_cursor_reset_focus(workspace->output->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+        viv_cursor_reset_focus(workspace->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
         workspace->was_laid_out = false;
     }
 

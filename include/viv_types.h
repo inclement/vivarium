@@ -212,6 +212,7 @@ struct viv_workspace {
     bool needs_layout;  // true if the layout function needs applying, e.g. in response to a new view
     bool was_laid_out;  // true if the workspace was laid out at the end of the last frame, else false
 
+    struct viv_server *server;
     struct viv_output *output;
 
     /* void (*do_layout)(struct viv_workspace *workspace); */
