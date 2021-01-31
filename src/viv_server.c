@@ -477,6 +477,12 @@ static void server_keyboard_handle_key(
 	}
 }
 
+static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct viv_keyboard *keyboard = wl_container_of(listener, keyboard, destroy);
+    wl_list_remove(&keyboard->link);
+}
+
 /// Handle a new-keyboard event
 static void server_new_keyboard(struct viv_server *server,
 		struct wlr_input_device *device) {
@@ -496,13 +502,16 @@ static void server_new_keyboard(struct viv_server *server,
 	xkb_context_unref(context);
 	wlr_keyboard_set_repeat_info(device->keyboard, 25, 600);
 
-	/* Here we set up listeners for keyboard events. */
+    // Handle events from the wlr_keyboard
 	keyboard->modifiers.notify = keyboard_handle_modifiers;
 	wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifiers);
 	keyboard->key.notify = server_keyboard_handle_key;
 	wl_signal_add(&device->keyboard->events.key, &keyboard->key);
-
 	wlr_seat_set_keyboard(server->seat, device);
+
+    // Handle the destruction of the input device
+    keyboard->destroy.notify = keyboard_handle_destroy;
+    wl_signal_add(&device->events.destroy, &keyboard->destroy);
 
 	/* And add the keyboard to our list of keyboards */
 	wl_list_insert(&server->keyboards, &keyboard->link);

@@ -228,6 +228,7 @@ struct viv_keyboard {
 	struct viv_server *server;
 	struct wlr_input_device *device;
 
+    struct wl_listener destroy;
 	struct wl_listener modifiers;
 	struct wl_listener key;
 };
