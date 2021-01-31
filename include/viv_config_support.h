@@ -26,11 +26,12 @@
         .payload = { .BINDING = { ._empty = 0u, __VA_ARGS__ } }  \
     }
 
-#define KEYBIND_USER_FUNCTION(KEY, BINDING)                     \
-    {                                                           \
-        .key = XKB_KEY_ ## KEY,                                 \
-        .binding = &viv_mappable_user_function,                 \
-        .payload = { .user_function = { .function = BINDING } } \
+#define KEYBIND_USER_FUNCTION(MODIFIERS, KEY, BINDING)           \
+    {                                                            \
+        .key = XKB_KEY_ ## KEY,                                  \
+        .modifiers = (MODIFIERS),                                \
+        .binding = &viv_mappable_user_function,                  \
+        .payload = { .user_function = { .function = BINDING } }  \
     }
 
 #define EXIT_WITH_MESSAGE(MESSAGE)             \

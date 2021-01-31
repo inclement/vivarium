@@ -91,7 +91,7 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(META, Return, make_window_main),
     KEYBIND_MAPPABLE(META, o, do_exec, .executable = "bemenu-run"),
     /// How to bind your own function rather than an existing command:
-    KEYBIND_USER_FUNCTION(F, &example_user_function),
+    KEYBIND_USER_FUNCTION(META, F, &example_user_function),
     /// How to run any shell command:
     KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioMute, do_shell, .command = "pactl set-sink-mute 0 toggle"),
     KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),
