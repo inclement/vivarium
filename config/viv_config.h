@@ -195,7 +195,7 @@ static struct viv_config the_config = {
     // Modifier key used for all keybindings.
     // More sophisticated keybindings with multiple or different modifiers are not yet supported.
     // Available modifiers can be found in `wlr_keyboard.h`.
-    .global_meta_key = WLR_MODIFIER_ALT,
+    .global_meta_key = META,
 
     // Focus follows mouse: many window managers default to false, but true works well for tiling WMs.
     .focus_follows_mouse = true,
