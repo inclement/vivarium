@@ -170,6 +170,7 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace) {
 
 void viv_workspace_do_layout(struct viv_workspace *workspace) {
     struct viv_output *output = workspace->output;
+    ASSERT(output);
     struct viv_layout *layout = workspace->active_layout;
 
     int32_t width = output->wlr_output->width;

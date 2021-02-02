@@ -44,7 +44,7 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
     wl_list_insert(&view->server->unmapped_views, &view->workspace_link);
 
     struct viv_workspace *workspace = view->workspace;
-    workspace->output->needs_layout = true;
+    workspace->needs_layout = true;
 }
 
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
