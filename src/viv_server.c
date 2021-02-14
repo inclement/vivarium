@@ -38,6 +38,7 @@
 #include "viv_layout.h"
 #include "viv_output.h"
 #include "viv_render.h"
+#include "viv_toml_config.h"
 #include "viv_layer_view.h"
 #include "viv_view.h"
 #include "viv_xdg_shell.h"
@@ -492,9 +493,15 @@ static void server_new_keyboard(struct viv_server *server,
 	keyboard->server = server;
 	keyboard->device = device;
 
-    struct xkb_rule_names *rules = &server->config->xkb_rules;
+    struct xkb_rule_names rules = {
+        .rules = server->config->xkb_rules.rules,
+        .model = server->config->xkb_rules.model,
+        .layout = server->config->xkb_rules.layout,
+        .variant = server->config->xkb_rules.variant,
+        .options = server->config->xkb_rules.options,
+    };
 	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules,
+	struct xkb_keymap *keymap = xkb_map_new_from_names(context, &rules,
 		XKB_KEYMAP_COMPILE_NO_FLAGS);
 
 	wlr_keyboard_set_keymap(device->keyboard, keymap);
@@ -689,6 +696,7 @@ void viv_server_init(struct viv_server *server) {
 
     // The config is declared globally for easy configuration, we just have to use it.
     server->config = &the_config;
+    viv_load_toml_config();
 
     // Dynamically create workspaces according to the user configuration
     init_workspaces(&server->workspaces, server->config->workspaces, server->config->layouts, server);

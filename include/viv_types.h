@@ -185,6 +185,7 @@ struct viv_view {
         struct wlr_xwayland_surface *xwayland_surface;
     };
 
+    // XDG view bindings
 	struct wl_listener map;
 	struct wl_listener unmap;
 	struct wl_listener destroy;
@@ -195,6 +196,9 @@ struct viv_view {
 	struct wl_listener set_title;
 	bool mapped;
 	int x, y;
+
+    // Surface bindings
+    struct wl_listener surface_commit;
 
     // Target positions, where the layout is trying to place the view
     int target_x, target_y;
@@ -247,15 +251,7 @@ struct viv_config {
 
     int gap_width;
 
-    struct viv_keybind *keybinds;
-
-    struct viv_layout *layouts;
-
     char workspaces[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH];
-
-    struct xkb_rule_names xkb_rules;
-
-    struct viv_libinput_config *libinput_configs;
 
     struct {
         char *colour;
@@ -269,6 +265,20 @@ struct viv_config {
         char *command;
         uint32_t update_signal_number;
     } bar;
+
+    struct {
+        char *rules;
+        char *model;
+        char *layout;
+        char *variant;
+        char *options;
+    } xkb_rules;
+
+    struct viv_keybind *keybinds;
+
+    struct viv_layout *layouts;
+
+    struct viv_libinput_config *libinput_configs;
 
     bool debug_mark_views_by_shell;
     bool debug_mark_active_output;
