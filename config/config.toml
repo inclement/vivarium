@@ -161,19 +161,19 @@ action = "make_window_main"
 
 [[keybind]]
 modifiers = []
-key = "XF86AudioMute"
+keysym = "XF86AudioMute"
 action = "do_shell"
 command = "pactl set-sink-mute 0 toggle"
 
 [[keybind]]
 modifiers = []
-key = "XF86AudioLowerVolume"
+keysym = "XF86AudioLowerVolume"
 action = "do_shell"
 command = "amixer -q sset Master 3%-"
 
 [[keybind]]
 modifiers = []
-key = "XF86AudioRaiseVolume"
+keysym = "XF86AudioRaiseVolume"
 action = "do_shell"
 command = "amixer -q sset Master 3%+"
 
