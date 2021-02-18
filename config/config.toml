@@ -183,12 +183,7 @@ command = "amixer -q sset Master 3%+"
 [[libinput-config]]
 device-name = "Logitech USB Trackball"
 scroll-method = "scroll-button"
-scroll-button = "8"
+scroll-button = 8
 middle-emulation = true
 left-handed = false
 natural-scroll = false
-
-### OUTPUT CONFIG ###
-# An output is a Vivarium backend surface: usually each of your monitors is one output.
-
-[[output-config]]

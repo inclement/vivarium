@@ -1,3 +1,4 @@
+#include <libinput.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -43,6 +44,14 @@ static struct pair cursor_button_map[] = {
     {"right", VIV_RIGHT_BUTTON},
     {"middle", VIV_MIDDLE_BUTTON},
     NULL_PAIR,
+};
+
+static struct pair scroll_method_map[] = {
+    {"no-scroll", LIBINPUT_CONFIG_SCROLL_NO_SCROLL},
+    {"2-finger", LIBINPUT_CONFIG_SCROLL_2FG},
+    {"edge", LIBINPUT_CONFIG_SCROLL_EDGE},
+    {"on-button-down", LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN},
+    {"scroll-button", LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN},
 };
 
 static bool is_null_pair(struct pair *row) {
@@ -381,6 +390,52 @@ static void parse_layout_table(toml_table_t *layout_table, struct viv_layout *la
     free(name.u.s);
 }
 
+static void parse_libinput_config_table(toml_table_t *libinput_table, struct viv_libinput_config *libinput_config) {
+    toml_datum_t device_name = toml_string_in(libinput_table, "device-name");
+    if (!device_name.ok) {
+        EXIT_WITH_MESSAGE("Error parsing [[libinput-config]]: no \"device-name\" provided");
+    }
+
+    toml_datum_t scroll_method = toml_string_in(libinput_table, "scroll-method");
+    if (scroll_method.ok) {
+        enum libinput_config_scroll_method scroll_method_enum;
+        bool success = look_up_string_in_map(scroll_method.u.s, scroll_method_map, &scroll_method_enum);
+        if (!success) {
+            EXIT_WITH_FORMATTED_MESSAGE("Error parsing [[libinput-config]] for device \"%s\": scroll-method \"%s\" not recognised",
+                                        device_name.u.s, scroll_method.u.s);
+        } else {
+            libinput_config->scroll_method = scroll_method_enum;
+        }
+        free(scroll_method.u.s);
+    }
+
+    toml_datum_t scroll_button = toml_int_in(libinput_table, "scroll-button");
+    if (scroll_button.ok) {
+        libinput_config->scroll_button = (uint32_t)scroll_button.u.i;
+    }
+
+    toml_datum_t middle_emulation = toml_bool_in(libinput_table, "middle-emulation");
+    if (middle_emulation.ok) {
+        libinput_config->middle_emulation = (uint32_t)middle_emulation.u.i;
+    }
+
+    toml_datum_t left_handed = toml_bool_in(libinput_table, "left-handed");
+    if (left_handed.ok) {
+        libinput_config->left_handed = (uint32_t)left_handed.u.i;
+    }
+
+    toml_datum_t natural_scroll = toml_bool_in(libinput_table, "natural-scroll");
+    if (natural_scroll.ok) {
+        libinput_config->natural_scroll = (uint32_t)natural_scroll.u.i;
+    }
+
+    wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d",
+            device_name.u.s, libinput_config->scroll_method, libinput_config->scroll_button,
+            libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll);
+
+    libinput_config->device_name = device_name.u.s;
+}
+
 struct viv_config *viv_load_toml_config(void) {
     UNUSED(parse_config_double);
 
@@ -444,6 +499,7 @@ struct viv_config *viv_load_toml_config(void) {
     /* parse_config_array_variable_length(root, "layout", parse_layout); */
 
     // [[libinput-config]] list
+    PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "libinput-config", struct viv_libinput_config, parse_libinput_config_table, &config->libinput_configs);
     /* parse_config_array_variable_length(root, "keybind", NULL); */
     /* parse_config_array_variable_length(root, "keybind", parse_libinput_config); */
 
