@@ -59,7 +59,7 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
             return workspace;
         }
     }
-    wlr_log(WLR_ERROR, "Could not find workspace with name %s", name);
+    wlr_log(WLR_ERROR, "Could not find workspace with name \"%s\"", name);
     return NULL;
 }
 
@@ -438,8 +438,8 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym, uint3
         bool all_modifiers_pressed = ((modifiers & keybind.modifiers) == keybind.modifiers);
 
         if (keybind.key == sym && all_modifiers_pressed) {
-            wlr_log(WLR_INFO, "Found key: sym %d, modifiers %d, binding %p, payload %p",
-                    sym, keybind.modifiers, keybind.binding, keybind.payload);
+            wlr_log(WLR_INFO, "Found key: sym %d, modifiers %d, binding %p",
+                    sym, keybind.modifiers, keybind.binding);
             keybind.binding(workspace, keybind.payload);
             return true;
         }

@@ -138,7 +138,7 @@ static void parse_config_uint(toml_table_t *root, char *section_name, char *key_
     }
     if (!(key.u.i >= 0)) {
         EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as unsigned int, got %d",
-                                    section_name, key_name, key.u.i);
+                                    section_name, key_name, (int)key.u.i);
     }
     *target = (uint32_t)key.u.i;
     wlr_log(WLR_DEBUG, "Parsed %s.%s = %d as int", section_name, key_name, *target);
@@ -379,7 +379,7 @@ static void parse_layout_table(toml_table_t *layout_table, struct viv_layout *la
     } else {
         if (counter.u.i < 1) {
             EXIT_WITH_FORMATTED_MESSAGE("Error parsing [[layout]] with name \"%s\": counter %d not greater than 0",
-                                        layout_struct->name, counter.u.i);
+                                        layout_struct->name, (int)counter.u.i);
         }
         layout_struct->counter = counter.u.i;
     }
