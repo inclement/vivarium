@@ -89,6 +89,7 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(META, W, shift_active_window_to_left_output),
     KEYBIND_MAPPABLE(META, C, close_window),
     KEYBIND_MAPPABLE(META, Return, make_window_main),
+    KEYBIND_MAPPABLE(META, R, reload_config),
     KEYBIND_MAPPABLE(META, o, do_exec, .executable = "bemenu-run"),
     /// How to bind your own function rather than an existing command:
     KEYBIND_USER_FUNCTION(META, F, &example_user_function),

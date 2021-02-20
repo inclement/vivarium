@@ -230,3 +230,9 @@ void viv_mappable_make_window_main(struct viv_workspace *workspace, union viv_ma
     UNUSED(payload);
     viv_workspace_swap_active_and_main(workspace);
 }
+
+void viv_mappable_reload_config(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    struct viv_server *server = workspace->server;
+    viv_server_reload_config(server);
+}

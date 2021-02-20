@@ -21,4 +21,7 @@ void viv_check_data_consistency(struct viv_server *server);
 
 /// Give keyboard focus to the given surface
 void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface);
+
+/// Reload the TOML config file
+void viv_server_reload_config(struct viv_server *server);
 #endif

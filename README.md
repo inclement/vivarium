@@ -45,9 +45,7 @@ Vivarium expects to be run from a TTY, but also supports embedding in an X sessi
 
 ## Configuration
 
-Vivarium supports a static configuration using using `config.toml`, or a build-time configuration using `viv_config.h`, or both!
-
-The static configuration is expected to be convenient for most users, but the config header can be used to inject arbitrary code as event handlers more more advanced customisation.
+Vivarium supports a static configuration using using `config.toml`, or a build-time configuration using `viv_config.h`, or both! The static configuration is intended to be convenient for most users, but the build-time header can be used to inject your own code for e.g. custom layouts or keypress events.
 
 Configuration options include but are not limited to:
 
@@ -70,9 +68,9 @@ The default config is extensively documented and includes all the Vivarium defau
 
 ### viv_config.h
 
-Vivarium automatically uses the configuration struct defined as `struct viv_config the_config` in `viv_config.h`. Edit that file before compiling to update the configuration.
+Vivarium automatically uses the configuration struct defined in `viv_config.h`. Edit that file before compiling to update the configuration.
 
-If you'd like to set up different configs, copy the config directory to somewhere else and tell Vivarium to use the new version at compile time:
+If you'd like to maintain multiple different configs, copy the config directory to somewhere else and tell Vivarium to use the appropriate version at compile time:
 
     cp -r config myconfig
     meson build_myconfig -Dconfig-dir=myconfig

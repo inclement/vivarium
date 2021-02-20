@@ -708,6 +708,27 @@ static char *get_default_config_path(void) {
     return NULL;
 }
 
+void load_toml_config(struct viv_config *config) {
+    char *config_search_path = get_default_config_path();
+    if (config_search_path) {
+        wlr_log(WLR_DEBUG, "Resolved that default config path is \"%s\"", config_search_path);
+        viv_toml_config_load(config_search_path, config, false);
+    } else {
+        EXIT_WITH_MESSAGE("Could not locate default config path for some reason - is $HOME not defined?");
+    }
+}
+
+void viv_server_reload_config(struct viv_server *server) {
+    load_toml_config(server->config);
+
+    struct viv_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        output->needs_layout = true;
+    }
+
+    // TODO: Reset workspaces and layouts according to new config
+}
+
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.
  */
@@ -718,13 +739,7 @@ void viv_server_init(struct viv_server *server) {
     // Always start with the config from build-time header
     struct viv_config *config = &the_config;
     // Load other config options from config.toml if possible
-    char *config_search_path = get_default_config_path();
-    if (config_search_path) {
-        wlr_log(WLR_DEBUG, "Resolved that default config path is \"%s\"", config_search_path);
-        viv_toml_config_load(config_search_path, config, false);
-    } else {
-        EXIT_WITH_MESSAGE("Could not locate default config path for some reason - is $HOME not defined?");
-    }
+    load_toml_config(config);
     // Use the config, in whatever state it's ended up in
     server->config = config;
 

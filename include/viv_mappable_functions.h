@@ -40,6 +40,7 @@ union viv_mappable_payload;
     MACRO(switch_to_workspace, char workspace_name[100];)                    \
     MACRO(close_window)                                                      \
     MACRO(make_window_main)                                                  \
+    MACRO(reload_config)                                                     \
 
 // Declare each mappable function and generate a payload struct to pass as its argument
 MACRO_FOR_EACH_MAPPABLE(GENERATE_DECLARATION)

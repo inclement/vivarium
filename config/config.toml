@@ -160,6 +160,10 @@ keysym = "Return"
 action = "make_window_main"
 
 [[keybind]]
+keysym = "R"
+action = "reload_config"
+
+[[keybind]]
 modifiers = []
 keysym = "XF86AudioMute"
 action = "do_shell"
