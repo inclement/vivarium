@@ -22,6 +22,7 @@
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "viv_toml_config.h"
 #include "viv_types.h"
 #include "viv_server.h"
 

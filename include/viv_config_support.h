@@ -35,7 +35,11 @@
     }
 
 #define EXIT_WITH_MESSAGE(MESSAGE)             \
-    wlr_log(WLR_ERROR, MESSAGE);                  \
+    wlr_log(WLR_ERROR, "%s", MESSAGE);          \
+    exit(EXIT_FAILURE);
+
+#define EXIT_WITH_FORMATTED_MESSAGE(MESSAGE, ...)   \
+    wlr_log(WLR_ERROR, MESSAGE, __VA_ARGS__);                   \
     exit(EXIT_FAILURE);
 
 #define CHECK_ALLOCATION(POINTER)                           \

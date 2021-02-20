@@ -26,6 +26,7 @@
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/util/log.h>
 #include <wlr/xwayland.h>
+#include <wordexp.h>
 
 #include "viv_background.h"
 #include "viv_bar.h"
@@ -38,6 +39,7 @@
 #include "viv_layout.h"
 #include "viv_output.h"
 #include "viv_render.h"
+#include "viv_toml_config.h"
 #include "viv_layer_view.h"
 #include "viv_view.h"
 #include "viv_xdg_shell.h"
@@ -57,7 +59,7 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
             return workspace;
         }
     }
-    wlr_log(WLR_ERROR, "Could not find workspace with name %s", name);
+    wlr_log(WLR_ERROR, "Could not find workspace with name \"%s\"", name);
     return NULL;
 }
 
@@ -436,6 +438,8 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym, uint3
         bool all_modifiers_pressed = ((modifiers & keybind.modifiers) == keybind.modifiers);
 
         if (keybind.key == sym && all_modifiers_pressed) {
+            wlr_log(WLR_INFO, "Found key: sym %d, modifiers %d, binding %p",
+                    sym, keybind.modifiers, keybind.binding);
             keybind.binding(workspace, keybind.payload);
             return true;
         }
@@ -492,9 +496,15 @@ static void server_new_keyboard(struct viv_server *server,
 	keyboard->server = server;
 	keyboard->device = device;
 
-    struct xkb_rule_names *rules = &server->config->xkb_rules;
+    struct xkb_rule_names rules = {
+        .rules = server->config->xkb_rules.rules,
+        .model = server->config->xkb_rules.model,
+        .layout = server->config->xkb_rules.layout,
+        .variant = server->config->xkb_rules.variant,
+        .options = server->config->xkb_rules.options,
+    };
 	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules,
+	struct xkb_keymap *keymap = xkb_map_new_from_names(context, &rules,
 		XKB_KEYMAP_COMPILE_NO_FLAGS);
 
 	wlr_keyboard_set_keymap(device->keyboard, keymap);
@@ -680,6 +690,24 @@ void viv_check_data_consistency(struct viv_server *server) {
 }
 #endif
 
+static char *get_default_config_path(void) {
+    char *xdg_config_home = getenv("XDG_CONFIG_HOME");
+    char *config_path;
+    if (xdg_config_home && *xdg_config_home) {
+        config_path = "$XDG_CONFIG_HOME/vivarium/config.toml";
+    } else {
+        config_path ="$HOME/.config/vivarium/config.toml";
+    }
+
+    wordexp_t exp;
+    if (wordexp(config_path, &exp, WRDE_UNDEF | WRDE_SHOWERR) == 0) {
+        char *path = strdup(exp.we_wordv[0]);
+        wordfree(&exp);
+        return path;
+    }
+    return NULL;
+}
+
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.
  */
@@ -687,8 +715,18 @@ void viv_server_init(struct viv_server *server) {
     // Initialise logging, NULL indicates no callback so default logger is used
     wlr_log_init(WLR_DEBUG, NULL);
 
-    // The config is declared globally for easy configuration, we just have to use it.
-    server->config = &the_config;
+    // Always start with the config from build-time header
+    struct viv_config *config = &the_config;
+    // Load other config options from config.toml if possible
+    char *config_search_path = get_default_config_path();
+    if (config_search_path) {
+        wlr_log(WLR_DEBUG, "Resolved that default config path is \"%s\"", config_search_path);
+        viv_toml_config_load(config_search_path, config, false);
+    } else {
+        EXIT_WITH_MESSAGE("Could not locate default config path for some reason - is $HOME not defined?");
+    }
+    // Use the config, in whatever state it's ended up in
+    server->config = config;
 
     // Dynamically create workspaces according to the user configuration
     init_workspaces(&server->workspaces, server->config->workspaces, server->config->layouts, server);
