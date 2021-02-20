@@ -45,10 +45,9 @@ Vivarium expects to be run from a TTY, but also supports embedding in an X sessi
 
 ## Configuration
 
+Vivarium supports a static configuration using using `config.toml`, or a build-time configuration using `viv_config.h`, or both!
 
-Vivarium is currently configured via a configuration struct defined in `config/viv_config.h`: edit that file before building to update its behaviour.
-
-This configuration method is unstable and expected to change significantly, but for now it keeps things simple in order to focus on developing the main body of the compositor.
+The static configuration is expected to be convenient for most users, but the config header can be used to inject arbitrary code as event handlers more more advanced customisation.
 
 Configuration options include but are not limited to:
 
@@ -59,6 +58,25 @@ Configuration options include but are not limited to:
 * Status bar configuration.
 * Background image/colour.
 * Mouse interaction options.
+
+### config.toml
+
+Copy the default config so that Vivarium will find it:
+
+    mkdir -p $HOME/.config/vivarium
+    cp config/config.toml $HOME/.config/vivarium
+
+The default config is extensively documented and includes all the Vivarium default bindings. See the documentation inside the file to see what other options you can set.
+
+### viv_config.h
+
+Vivarium automatically uses the configuration struct defined as `struct viv_config the_config` in `viv_config.h`. Edit that file before compiling to update the configuration.
+
+If you'd like to set up different configs, copy the config directory to somewhere else and tell Vivarium to use the new version at compile time:
+
+    cp -r config myconfig
+    meson build_myconfig -Dconfig-dir=myconfig
+    ninja -C build_myconfig
 
 ### Bar support
 
@@ -94,16 +112,24 @@ Note that the `"signal"` option matches the `update_signal_number` from Vivarium
 
 > What does "desktop semantics inspired by xmonad" mean?
 
-The core tiling experience provides something similar to xmonad's defaults: new windows are added to the current workspace and tiled automatically within a current layout. Each workspace may independently switch between different layouts. Each output (usually equivalent to each monitor) displays a single workspace, and each may be switched independently.
+The core tiling experience provides something similar to xmonad's defaults: new windows are added to the current workspace and tiled automatically within a current layout. Each workspace may independently switch between different layouts. Each output (usually equivalent to each monitor) displays a single workspace, and each may be switched independently. Windows may be made floating and moved/resized smoothly, but this is generally the exception rather than the rule.
 
 Vivarium makes no attempt to rigorously mimic xmonad or to replicate its internal design philosophy. Not least, Vivarium is written in C and is not (for now) so directly and transparently extensible.
 
 > Why do some windows display title bars with maximize/minimize/close buttons that don't do anything?
 > Can I turn that off?
 
-Vivarium attempts to tell windows not to draw their own decorations, but the protocols for doing so are not yet standard or universally supported so some windows still do so. For now there's probably nothing you can do about it, but this is likely to improve in the future.
+Vivarium attempts to tell windows not to draw their own decorations and this works for most applications, but the protocols for doing so are not yet standard or universally supported so some windows still draw their own. For now there's probably nothing you can do about it, but this is likely to improve in the future.
 
-(It's also possible that there are bugs in Vivarium's window decoration configuration, bug reports welcome if so.)
+It's also possible that there are bugs in Vivarium's window decoration configuration, bug reports welcome if so.
+
+> Why TOML for configuration? How can I configure dynamic behaviour like my own layouts?
+
+TOML is chosen because it is especially simple and easy to read (and also easy to write and parse!). In most cases a window manager configuration is something you'll set up once, then leave for a long time with occasional tweaks like changing your layouts or adjusting keybinds. The idea behind using a simple static configuration is that it makes it easy to tweak minor options even a long time after initially writing it, without remembering (for instance) the more complicated syntax of a programming language you don't otherwise use much.
+
+This does have the disadvantage that dynamic configuration is not possible using the config.toml: for instance, you can't bind arbitrary functions to keypresses, only the specific predefined actions hardcoded in Vivarium. In these cases you can instead configure Vivarium via C code using the `viv_config.h` header described in the Configuration section above, but you will need to recompile Vivarium each time you update the config.
+
+In the longer term I would like to explore providing Vivarium as a library so that you can run Vivarium, and inject arbitrary event handlers, from any language with a FFI. However, this is not an immediate goal.
 
 > Does Vivarium support $PROTOCOL? Will it in the future?
 

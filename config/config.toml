@@ -75,7 +75,7 @@ show-borders = false
 # - keycode : Keycode to bind to. The keycode is the numerical identifier of the hardware key.
 #             It always has the same value for a given physical key regardless of your keyboard layout.
 # - action : Any Vivarium action.
-#            Run `vivarium -h` to show documentation of all available actions, or see examples below
+#            Run `vivarium -h` to show documentation of all available actions, or see examples below.
 # - <action-arguments> : Arguments for the `action`, if applicable.
 #                        See action documentation for available arguments.
 #
@@ -178,9 +178,19 @@ action = "do_shell"
 command = "amixer -q sset Master 3%+"
 
 ### LIBINPUT CONFIG ###
-# Create any number of libinput configurations
+# Create any number of libinput configurations. The following options are available for each libinput config:
+# - device-name : A string to match libinput devices that should have your rules applied.
+# - scroll-method : One of "no-scroll", "2-finger", "edge" or "scroll-button".
+# - scroll-button : An integer representing the libinput button index to use for scrolling.
+#                   Has no effect unless scroll-method="scroll-button".
+# - middle-emulation : If true, emulate middle click events when clicking left and right simultaneously.
+#                      Defaults to false.
+# - left-handed : If true, switch left and right buttons. Defaults to false.
+# - natural-scroll : If true, switch the scrolling direction from default style (scroll down => go down)
+#                    to so-called "natural" style (scroll down => go up). Defaults to false.
 
 [[libinput-config]]
+# Example libinput-config for a popular trackball:
 device-name = "Logitech USB Trackball"
 scroll-method = "scroll-button"
 scroll-button = 8

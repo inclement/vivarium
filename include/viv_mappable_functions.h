@@ -37,7 +37,6 @@ union viv_mappable_payload;
     MACRO(shift_active_window_to_workspace, char workspace_name[100];)       \
     MACRO(shift_active_window_to_right_output)                               \
     MACRO(shift_active_window_to_left_output)                                \
-    MACRO(swap_with_main_window)                                             \
     MACRO(switch_to_workspace, char workspace_name[100];)                    \
     MACRO(close_window)                                                      \
     MACRO(make_window_main)                                                  \

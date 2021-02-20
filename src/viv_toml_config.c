@@ -10,24 +10,60 @@
 #include "viv_layout.h"
 #include "viv_config_support.h"
 #include "viv_config_types.h"
+#include "viv_mappable_functions.h"
 #include "viv_toml_config.h"
 #include "viv_types.h"
 
 #define ERRBUF_SIZE 200
 
-struct pair {
+struct string_map_pair {
     char *key;
     uint32_t value;
 };
 
-#define NULL_PAIR {"", 0}
-#define IS_NULL_PAIR(ROW) (strlen(ROW) == 0)
+#define NULL_STRING_MAP_PAIR {"", 0}
+#define IS_NULL_STRING_MAP_PAIR(ROW) (strlen(ROW) == 0)
 #define MAX_MAP_LEN 1000
 
 #define GLOBAL_META_STRING "meta"
 
-static struct pair meta_map[] = {
-    {GLOBAL_META_STRING, 0u},
+#define PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(ROOT, SECTION_NAME, TYPE, PARSE_FUNC, ARRAY_TERMINATOR, TARGET) \
+    do {                                                                \
+        toml_array_t *array = toml_array_in(ROOT, SECTION_NAME);            \
+        wlr_log(WLR_INFO, "Config section %s is an array of kind %c with %d items", \
+                SECTION_NAME, toml_array_kind(array), toml_array_nelem(array)); \
+                                                                            \
+        if (toml_array_kind(array) != 't') {                                \
+            EXIT_WITH_FORMATTED_MESSAGE("Config error parsing [[%s]]: expected array of type 't', got type %c", \
+                                        SECTION_NAME, toml_array_kind(array)); \
+        }                                                                   \
+                                                                            \
+        uint32_t our_array_nelem = toml_array_nelem(array) + 1;             \
+        TYPE *the_array = calloc(our_array_nelem, sizeof(TYPE)); \
+                                                                            \
+        for (size_t i = 0; i < our_array_nelem - 1; i++) {                  \
+            PARSE_FUNC(toml_table_at(array, i), &the_array[i]);          \
+        }                                                                   \
+                                                                        \
+        TYPE terminator = ARRAY_TERMINATOR;                             \
+        memcpy(&the_array[our_array_nelem - 1], &terminator, sizeof(TYPE)); \
+                                                                        \
+        *TARGET = the_array;                                            \
+    } while (false);
+
+#define CHECK_MAPPABLE_ACTION_STRING(FUNCTION_NAME, ...)                \
+    if (strcmp(action, #FUNCTION_NAME) == 0) {                          \
+        *mappable = &viv_mappable_ ## FUNCTION_NAME;                    \
+        result = true;                                                  \
+    }
+static bool action_string_to_mappable(char *action, void (**mappable)(struct viv_workspace *workspace, union viv_mappable_payload payload)) {
+    bool result = false;
+    MACRO_FOR_EACH_MAPPABLE(CHECK_MAPPABLE_ACTION_STRING);
+    return result;
+}
+
+static struct string_map_pair meta_map[] = {
+    {GLOBAL_META_STRING, 0u},  // note 0u is replaced with the user's meta choice at runtime
     {"shift", WLR_MODIFIER_SHIFT},
     {"caps", WLR_MODIFIER_CAPS},
     {"ctrl", WLR_MODIFIER_CTRL},
@@ -36,38 +72,38 @@ static struct pair meta_map[] = {
     {"mod3", WLR_MODIFIER_MOD3},
     {"logo", WLR_MODIFIER_LOGO},
     {"mod5", WLR_MODIFIER_MOD5},
-    NULL_PAIR,
+    NULL_STRING_MAP_PAIR,
 };
 
-static struct pair cursor_button_map[] = {
+static struct string_map_pair cursor_button_map[] = {
     {"left", VIV_LEFT_BUTTON},
     {"right", VIV_RIGHT_BUTTON},
     {"middle", VIV_MIDDLE_BUTTON},
-    NULL_PAIR,
+    NULL_STRING_MAP_PAIR,
 };
 
-static struct pair scroll_method_map[] = {
+static struct string_map_pair scroll_method_map[] = {
     {"no-scroll", LIBINPUT_CONFIG_SCROLL_NO_SCROLL},
     {"2-finger", LIBINPUT_CONFIG_SCROLL_2FG},
     {"edge", LIBINPUT_CONFIG_SCROLL_EDGE},
     {"on-button-down", LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN},
     {"scroll-button", LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN},
+    NULL_STRING_MAP_PAIR,
 };
 
-static bool is_null_pair(struct pair *row) {
+static bool is_null_string_map_pair(struct string_map_pair *row) {
     return (strlen(row->key) == 0);
 }
 
-static bool look_up_string_in_map(char *string, struct pair *map, uint32_t *result) {
+static bool look_up_string_in_map(char *string, struct string_map_pair *map, uint32_t *result) {
     for (size_t i = 0; i < MAX_MAP_LEN; i++) {
-        struct pair row = map[i];
-        if (is_null_pair(&row)) {
+        struct string_map_pair row = map[i];
+        if (is_null_string_map_pair(&row)) {
             break;
         }
 
         if (strcmp(string, row.key) == 0) {
             *result = row.value;
-            wlr_log(WLR_DEBUG, "Parsed string %s as value %d", string, *result);
             return true;
         }
     }
@@ -81,7 +117,7 @@ static void parse_config_bool(toml_table_t *root, char *section_name, char *key_
         EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as bool", section_name, key_name);
     }
     *target = key.u.b;
-    wlr_log(WLR_DEBUG, "Parsing config %s.%s = %d as bool", section_name, key_name, *target);
+    wlr_log(WLR_DEBUG, "Parsed %s.%s = %d as bool", section_name, key_name, *target);
 }
 
 static void parse_config_int(toml_table_t *root, char *section_name, char *key_name, int *target) {
@@ -91,7 +127,21 @@ static void parse_config_int(toml_table_t *root, char *section_name, char *key_n
         EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as int", section_name, key_name);
     }
     *target = key.u.i;
-    wlr_log(WLR_DEBUG, "Parsing config %s.%s = %d as int", section_name, key_name, *target);
+    wlr_log(WLR_DEBUG, "Parsed %s.%s = %d as int", section_name, key_name, *target);
+}
+
+static void parse_config_uint(toml_table_t *root, char *section_name, char *key_name, uint32_t *target) {
+    toml_table_t *section = toml_table_in(root, section_name);
+    toml_datum_t key = toml_int_in(section, key_name);
+    if (!key.ok) {
+        EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as int", section_name, key_name);
+    }
+    if (!(key.u.i >= 0)) {
+        EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as unsigned int, got %d",
+                                    section_name, key_name, key.u.i);
+    }
+    *target = (uint32_t)key.u.i;
+    wlr_log(WLR_DEBUG, "Parsed %s.%s = %d as int", section_name, key_name, *target);
 }
 
 static void parse_config_double(toml_table_t *root, char *section_name, char *key_name, double *target) {
@@ -101,16 +151,16 @@ static void parse_config_double(toml_table_t *root, char *section_name, char *ke
         EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as double", section_name, key_name);
     }
     *target = key.u.d;
-    wlr_log(WLR_DEBUG, "Parsing config %s.%s = %f as double", section_name, key_name, *target);
+    wlr_log(WLR_DEBUG, "Parsed %s.%s = %f as double", section_name, key_name, *target);
 }
 
-static void parse_config_string_map(toml_table_t *root, char *section_name, char *key_name, struct pair *map, uint32_t *target) {
+static void parse_config_string_map(toml_table_t *root, char *section_name, char *key_name, struct string_map_pair *map, uint32_t *target) {
     toml_table_t *section = toml_table_in(root, section_name);
     toml_datum_t key = toml_string_in(section, key_name);
     if (!key.ok) {
         EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as string", section_name, key_name);
     }
-    wlr_log(WLR_DEBUG, "Parsing config %s.%s = \"%s\" as string", section_name, key_name, key.u.s);
+    wlr_log(WLR_DEBUG, "Parsed %s.%s = \"%s\" as string", section_name, key_name, key.u.s);
 
     bool success = look_up_string_in_map(key.u.s, map, target);
     if (!success) {
@@ -127,7 +177,7 @@ static void parse_config_string_raw(toml_table_t *root, char *section_name, char
         EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as string", section_name, key_name);
     }
     *target = key.u.s;
-    wlr_log(WLR_DEBUG, "Parsing config %s.%s = \"%s\" as string", section_name, key_name, *target);
+    wlr_log(WLR_DEBUG, "Parsed %s.%s = \"%s\" as string", section_name, key_name, *target);
 
     // TODO: save information about the fact that this is malloc'd, so that we know if we need to free it later
 }
@@ -156,50 +206,9 @@ static void parse_config_array_fixed_size_float_float(toml_table_t *root, char *
                                         section_name, key_name);
         }
         target[i] = (float)value.u.d;
-        wlr_log(WLR_DEBUG, "Parsing %s.%s[%d] = %f as float", section_name, key_name, (uint32_t)i, target[i]);
+        wlr_log(WLR_DEBUG, "Parsed %s.%s[%d] = %f as float", section_name, key_name, (uint32_t)i, target[i]);
     }
 }
-
-/* static struct viv_keybind *parse_config_array_variable_length(toml_table_t *root, char *section_name, void (*parse_func)(toml_table_t *keybind_table, struct viv_keybind *keybind)) { */
-/*     toml_array_t *array = toml_array_in(root, section_name); */
-/*     wlr_log(WLR_INFO, "Config section %s is an array of kind %c with %d items", */
-/*             section_name, toml_array_kind(array), toml_array_nelem(array)); */
-
-/*     if (toml_array_kind(array) != 't') { */
-/*         EXIT_WITH_FORMATTED_MESSAGE("Config error parsing [[%s]]: expected array of type 't', got type %c", */
-/*                                     section_name, toml_array_kind(array)); */
-/*     } */
-
-/*     uint32_t our_array_nelem = toml_array_nelem(array) + 1; */
-/*     struct viv_keybind *the_keybinds = calloc(our_array_nelem, sizeof(struct viv_keybind)); */
-
-/*     for (size_t i = 0; i < our_array_nelem - 1; i++) { */
-/*         parse_func(toml_table_at(array, i), &the_keybinds[i]); */
-/*     } */
-/*     static struct viv_keybind null_keybind = TERMINATE_KEYBINDS_LIST(); */
-/*     memcpy(&the_keybinds[our_array_nelem - 1], &null_keybind, sizeof(null_keybind)); */
-
-/*     return the_keybinds; */
-/* } */
-
-#define PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(ROOT, SECTION_NAME, TYPE, PARSE_FUNC, TARGET) \
-    do {                                                                \
-        toml_array_t *array = toml_array_in(ROOT, SECTION_NAME);            \
-        wlr_log(WLR_INFO, "Config section %s is an array of kind %c with %d items", \
-                SECTION_NAME, toml_array_kind(array), toml_array_nelem(array)); \
-                                                                            \
-        if (toml_array_kind(array) != 't') {                                \
-            EXIT_WITH_FORMATTED_MESSAGE("Config error parsing [[%s]]: expected array of type 't', got type %c", \
-                                        SECTION_NAME, toml_array_kind(array)); \
-        }                                                                   \
-                                                                            \
-        uint32_t our_array_nelem = toml_array_nelem(array) + 1;             \
-        TYPE *the_array = calloc(our_array_nelem, sizeof(TYPE)); \
-                                                                            \
-        for (size_t i = 0; i < our_array_nelem - 1; i++) {                  \
-            PARSE_FUNC(toml_table_at(array, i), &the_array[i]);          \
-        }                                                                   \
-    } while (false);
 
 
 // TODO: Can't we autogenerate some/all of this?
@@ -312,6 +321,13 @@ static void parse_keybind_table(toml_table_t *keybind_table, struct viv_keybind 
 
     keybind->key = key;
     keybind->modifiers = modifiers_bitfield;
+
+    bool action_recognised = action_string_to_mappable(action.u.s, &keybind->binding);
+    if (!action_recognised) {
+        EXIT_WITH_FORMATTED_MESSAGE("Config error reading [[keybind]] for keysym %s: action \"%s\" not recognised",
+                                    keysym.u.s, action.u.s);
+    }
+
     parse_mappable_arguments(keybind_table, action.u.s, &keybind->payload);
 
     wlr_log(WLR_DEBUG, "Parsed [[keybind]] for keysym %s, modifiers %d, action %s",
@@ -375,11 +391,11 @@ static void parse_layout_table(toml_table_t *layout_table, struct viv_layout *la
         layout_struct->ignore_excluded_regions = ignore_excluded_regions.u.b;
     }
 
-    toml_datum_t no_borders = toml_bool_in(layout_table, "no-borders");
-    if (!no_borders.ok) {
+    toml_datum_t show_borders = toml_bool_in(layout_table, "show-borders");
+    if (!show_borders.ok) {
         layout_struct->no_borders = false;
     } else {
-        layout_struct->no_borders = no_borders.u.b;
+        layout_struct->no_borders = !show_borders.u.b;
     }
 
     wlr_log(WLR_DEBUG, "Parsed [[layout]] with name \"%s\", layout function \"%s\", initial parameter %f, initial counter %d, ignore excluded regions %d, no borders %d",
@@ -436,21 +452,12 @@ static void parse_libinput_config_table(toml_table_t *libinput_table, struct viv
     libinput_config->device_name = device_name.u.s;
 }
 
-struct viv_config *viv_load_toml_config(void) {
+
+void load_file_as_toml_config(FILE *fp, struct viv_config *config) {
     UNUSED(parse_config_double);
-
-    struct viv_config *config = (struct viv_config *)(calloc(1, sizeof(struct viv_config)));
-
-    wlr_log(WLR_INFO, "Loading toml config");
-
-    FILE *fp = fopen("/home/sandy/devel/vivarium/config/config.toml", "r");
-    if (!fp) {
-        EXIT_WITH_MESSAGE("Could not open config.toml");
-    }
 
     char errbuf[ERRBUF_SIZE];
     toml_table_t *root = toml_parse_file(fp, errbuf, sizeof(errbuf));
-    fclose(fp);
 
     if (!root) {
         wlr_log(WLR_ERROR, "Could not parse config.toml:");
@@ -459,7 +466,7 @@ struct viv_config *viv_load_toml_config(void) {
 
     toml_table_t *global_config = toml_table_in(root, "global-config");
     if (!global_config) {
-        EXIT_WITH_MESSAGE("No [global-config] section found");
+        EXIT_WITH_MESSAGE("Config error: no [global-config] section found but this section is compulsory");
     }
 
     // Do parsing
@@ -475,6 +482,18 @@ struct viv_config *viv_load_toml_config(void) {
     parse_config_array_fixed_size_float_float(root, "global-config", "inactive-border-colour", 4, config->inactive_border_colour);
     parse_config_int(root, "global-config", "gap-width", &config->gap_width);
 
+    toml_array_t *workspace_names = toml_array_in(global_config, "workspace-names");
+    if (toml_array_kind(workspace_names) != 'v') {
+        EXIT_WITH_FORMATTED_MESSAGE("Config error parsing workspace-names: expected array of type 'v', got type %c",
+                                    toml_array_kind(workspace_names));
+    }
+    uint32_t our_array_nelem = toml_array_nelem(workspace_names);
+    for (size_t i = 0; i < our_array_nelem - 1; i++) {
+        toml_datum_t name = toml_string_at(workspace_names, i);
+        strncpy((char *)&config->workspaces[i], name.u.s, MAX_WORKSPACE_NAME_LENGTH);
+        wlr_log(WLR_DEBUG, "Parsed workspace name \"%s\"", config->workspaces[i]);
+    }
+
     // [background]
     parse_config_string_raw(root, "background", "colour", &config->background.colour);
     parse_config_string_raw(root, "background", "image", &config->background.image);
@@ -486,26 +505,43 @@ struct viv_config *viv_load_toml_config(void) {
     parse_config_string_raw(root, "xkb-config", "variant", &config->xkb_rules.variant);
     parse_config_string_raw(root, "xkb-config", "options", &config->xkb_rules.options);
 
+    // [ipc]
+    parse_config_string_raw(root, "ipc", "workspaces-filename", &config->ipc_workspaces_filename);
+
+    // [bar]
+    parse_config_string_raw(root, "bar", "command", &config->bar.command);
+    parse_config_uint(root, "bar", "update-signal-number", &config->bar.update_signal_number);
+
     // [debug]
     parse_config_bool(root, "debug", "mark-views-by-shell", &config->debug_mark_views_by_shell);
     parse_config_bool(root, "debug", "mark-active-output", &config->debug_mark_active_output);
 
     // [[keybind]] list
-    PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "keybind", struct viv_keybind, parse_keybind_table, &config->keybinds);
+    PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "keybind", struct viv_keybind, parse_keybind_table, TERMINATE_KEYBINDS_LIST(), &config->keybinds);
 
     // [[layout]] list
-    PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "layout", struct viv_layout, parse_layout_table, &config->layouts);
-    /* parse_config_array_variable_length(root, "layout", NULL); */
-    /* parse_config_array_variable_length(root, "layout", parse_layout); */
+    PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "layout", struct viv_layout, parse_layout_table, TERMINATE_LAYOUTS_LIST(), &config->layouts);
 
     // [[libinput-config]] list
-    PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "libinput-config", struct viv_libinput_config, parse_libinput_config_table, &config->libinput_configs);
-    /* parse_config_array_variable_length(root, "keybind", NULL); */
-    /* parse_config_array_variable_length(root, "keybind", parse_libinput_config); */
+    PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "libinput-config", struct viv_libinput_config, parse_libinput_config_table, TERMINATE_LIBINPUT_CONFIG_LIST(), &config->libinput_configs);
 
     toml_free(root);
+}
 
-    EXIT_WITH_MESSAGE("done");
+void viv_toml_config_load(char *path, struct viv_config *config, bool user_path) {
+    wlr_log(WLR_INFO, "Loading toml config at path \"%s\"", path);
 
-    return config;
+    FILE *fp = fopen(path, "r");
+    if (!fp) {
+        if (user_path) {
+            EXIT_WITH_FORMATTED_MESSAGE("Could not open user-specified config at \"%s\"", path);
+        } else {
+            // We didn't find the config in a default location, that's fine
+            wlr_log(WLR_INFO, "Config not found at path \"%s\", skipping config load", path);
+        }
+    } else
+    {
+        load_file_as_toml_config(fp, config);
+        fclose(fp);
+    }
 }
