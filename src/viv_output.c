@@ -118,6 +118,8 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
 
     if (workspace->active_view) {
         viv_view_focus(workspace->active_view, NULL);
+    } else {
+        viv_view_clear_all_focus(output->server);
     }
 
     output->current_workspace = workspace;

@@ -21,6 +21,10 @@ void viv_view_bring_to_front(struct viv_view *view) {
     wl_list_insert(&view->workspace->views, link);
 }
 
+void viv_view_clear_all_focus(struct viv_server *server) {
+    wlr_seat_keyboard_notify_clear_focus(server->seat);
+}
+
 void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 	if (view == NULL) {
 		return;
