@@ -1,44 +1,80 @@
 
 [global-config]
 # Options: alt, ctrl, logo/super, mod2, mod3
+# This key can be referenced in custom keybindings as `meta`
 meta-key = "alt"
 
 focus-follows-mouse = true
 
+# One workspace with each name is generated automatically. Each workspace receives layouts
+# as defined in the [[layout]] list below. You can configure keybindings to switch to
+# workspaces by name, or to move windows between them.
 workspace-names = ["main", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+# Create some keybindings to switch to workspaces:
+# - Bind meta-$N to switch to workspace number N, for each number key $N,
+# - Bind meta-shift-$N to move the active window to workspace number N, for each number key $N
+# You can also/alternatively create these bindings via custom [[keybind]]s below.
+# Set this to false to disable automatic keybind generation.
 bind-workspaces-to-numbers = true
 
+# Cursor button used to drag windows around (also making them floating) when meta is held
 win-move-cursor-button = "left"
+
+# Cursor button used to resize windows (also making them floating) when meta is held
 win-resize-cursor-button = "right"
 
+# Window border configuration
 border-width = 2  # pixels
 active-border-colour = [1.0, 0.0, 0.7, 1.0]  # rgba
 inactive-border-colour = [0.6, 0.6, 0.9, 1.0]  # rgba
 
-gap-width = 0
+# Gap distance between windows
+gap-width = 0  # pixels
 
+# Desktop background colour. Note this is overridden by the [background] if set.
 clear-colour = [0.73, 0.73, 0.73, 1.0]
 
+### BACKGROUND ###
+# The background options are displayed using `swaybg`. Make sure you have this installed
+# if you want to use them!
 [background]
 colour = "#ff0000"
 image = "/home/sandy/sway_bg.jpg"
 mode = "fill"
 
+### XKB-CONFIG ###
+# These all accept standard xkb syntax and options, e.g. as you would pass to `setxkbmap`
+# run from a shell.
 [xkb-config]
 model = "pc104"
 layout = "widecolemak"
 variant = "widecolemak"
 options = "ctrl:nocaps"
 
+### BAR ###
+# Options for configuring a bar program. The desktop bar (if any) is often used to display
+# information such as current workspaces, system information, and open windows.
 [bar]
-command = "waybar"
+command = "waybar"  # note this is a command to execute: this program must be installed to work
 update-signal-number = 1
 
+### IPC ###
+# Inter-process communication settings.
 [ipc]
+# The filename to which Vivarium will write workspace state information whenever something changes.
+# Programs can watch this file to display the workspace status.
+# This is a hacky solution that will be deprecated at some point.
 workspaces-filename = "/home/sandy/.viv_workspace_state.txt"
 
+### DEBUG ###
+# Vivarium debug options included for completion. You will want to leave these false under
+# normal operation.
 [debug]
+# Draw a graphical indicator of what shell (XDG, XWayland, Layer) is providing each window surface.
 mark-views-by-shell = false
+
+# Draw a graphical indicator of what shell (i.e. normally what monitor) is currently active.
 mark-active-output = false
 
 ### LAYOUTS ###
