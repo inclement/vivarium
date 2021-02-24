@@ -123,9 +123,9 @@ It's also possible that there are bugs in Vivarium's window decoration configura
 
 > Why TOML for configuration? How can I configure dynamic behaviour like my own layouts?
 
-TOML is chosen because it is especially simple and easy to read (and also easy to write and parse!). In most cases a window manager configuration is something you'll set up once, then leave for a long time with occasional tweaks like changing your layouts or adjusting keybinds. The idea behind using a simple static configuration is that it makes it easy to tweak minor options even a long time after initially writing it, without remembering (for instance) the more complicated syntax of a programming language you don't otherwise use much.
+TOML is especially simple and easy to read (and also easy to write and parse!). In general a window manager configuration is something you'll set up once, then leave for a long time with occasional tweaks like changing your layouts or adjusting keybinds. Using a simple static configuration makes it clear how to tweak minor options even a long time after first writing it, without remembering (for instance) the more complicated syntax of a programming language you don't otherwise use much.
 
-This does have the disadvantage that dynamic configuration is not possible using the config.toml: for instance, you can't bind arbitrary functions to keypresses, only the specific predefined actions hardcoded in Vivarium. In these cases you can instead configure Vivarium via C code using the `viv_config.h` header described in the Configuration section above, but you will need to recompile Vivarium each time you update the config.
+This does have the disadvantage that dynamic configuration is not possible using the config.toml: for instance, you can't bind arbitrary functions to keypresses, only the predefined actions hardcoded in Vivarium. In these cases you can instead configure Vivarium via C code using the `viv_config.h` header described in the Configuration section, but you will need to recompile Vivarium each time you update the config.
 
 In the longer term I would like to explore providing Vivarium as a library so that you can run Vivarium, and inject arbitrary event handlers, from any language with a FFI. However, this is not an immediate goal.
 
