@@ -149,8 +149,10 @@ void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface) {
             wlr_xdg_toplevel_set_activated(previous, false);
 #ifdef XWAYLAND
         } else if (wlr_surface_is_xwayland_surface(focused_surface)) {
-            struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(focused_surface);
-            wlr_xwayland_surface_activate(previous, false);
+            // TODO: Deactivating the previous xwayland surface appears wrong - it makes
+            // chromium popups disappear. Maybe we have some other logic issue.
+            /* struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(focused_surface); */
+            /* wlr_xwayland_surface_activate(previous, false); */
 #endif
         } else {
             // Not an error as this could be a layer surface
@@ -351,10 +353,11 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
     struct wlr_xwayland_surface *xwayland_surface = data;
 
     // Create a viv_view to track the xdg surface
-	struct viv_view *view = calloc(1, sizeof(struct viv_view));
+    struct viv_view *view = calloc(1, sizeof(struct viv_view));
     CHECK_ALLOCATION(view);
     viv_xwayland_view_init(view, xwayland_surface);
     viv_view_init(view, server);
+
 }
 
 static void server_xwayland_ready(struct  wl_listener *listener, void *data) {
@@ -686,6 +689,7 @@ void viv_check_data_consistency(struct viv_server *server) {
             // Check that output and workspace are linked correctly
             DEBUG_ASSERT(workspace == workspace->output->current_workspace);
         }
+
     }
 }
 #endif

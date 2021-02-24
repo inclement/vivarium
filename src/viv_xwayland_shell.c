@@ -4,11 +4,60 @@
 #include "viv_workspace.h"
 #include "viv_xwayland_shell.h"
 
+/// Return true if the view looks like it should be floating. This is a poor proxy for proper window type inspection.
+/// TODO: Do proper window type inspection.
+static bool guess_should_be_floating(struct viv_view *view) {
+    struct wlr_xwayland_surface_size_hints *size_hints = view->xwayland_surface->size_hints;
+
+    // TODO: Use the window_type to guess this, not just the size hints
+
+    return (view->xwayland_surface->parent != NULL ||
+            ((size_hints->min_width == size_hints->max_width) && (size_hints->min_height == size_hints->max_height)));
+}
+
 static void event_xwayland_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
     wlr_log(WLR_DEBUG, "xwayland surface mapped");
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
+
+    char view_name[200];
+    viv_view_get_string_identifier(view, view_name, 200);
+    struct wlr_xwayland_surface *surface = view->xwayland_surface;
+    struct wlr_xwayland_surface_size_hints *size_hints = surface->size_hints;
+    wlr_log(WLR_INFO,
+            "Mapping xwayland surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
+            "min width %d, min height %d, max width %d, max height %d, base width %d, base height %d, parent %p",
+            view_name,
+            surface->width,
+            surface->height,
+            size_hints->width,
+            size_hints->height,
+            size_hints->min_height,
+            size_hints->min_width,
+            size_hints->max_height,
+            size_hints->max_width,
+            size_hints->base_height,
+            size_hints->base_width,
+            surface->parent);
+
+    if (guess_should_be_floating(view)) {
+        // Assume this is a popup or something, and just give it the size it wants
+        // TODO: There is probably a better/proper way to do this based on actual window type parsing
+        view->is_floating = true;
+        view->is_static = true;
+
+        if (size_hints->min_width < 0 || size_hints->min_height < 0) {
+            viv_view_set_target_box(view,
+                                    surface->x, surface->y,
+                                    surface->width, surface->height);
+        } else {
+            viv_view_set_target_box(view,
+                                    surface->x, surface->y,
+                                    size_hints->min_width, size_hints->min_height);
+        }
+    }
+
 
     wl_list_remove(&view->workspace_link);
 

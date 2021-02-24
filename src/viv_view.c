@@ -219,7 +219,8 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     view->target_height = height;
 
     int border_width = output->server->config->border_width;
-    if (output->current_workspace->active_layout->no_borders) {
+    if (output->current_workspace->active_layout->no_borders ||
+        view->is_static) {
         border_width = 0u;
     }
 
