@@ -25,7 +25,7 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
     viv_view_get_string_identifier(view, view_name, 200);
     struct wlr_xwayland_surface *surface = view->xwayland_surface;
     struct wlr_xwayland_surface_size_hints *size_hints = surface->size_hints;
-    wlr_log(WLR_INFO,
+    wlr_log(WLR_DEBUG,
             "Mapping xwayland surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
             "min width %d, min height %d, max width %d, max height %d, base width %d, base height %d, parent %p",
             view_name,

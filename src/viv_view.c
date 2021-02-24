@@ -205,7 +205,8 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     int ox = output_layout_output->x;
     int oy = output_layout_output->y;
-    if (!output->current_workspace->active_layout->ignore_excluded_regions) {
+    if (!output->current_workspace->active_layout->ignore_excluded_regions &&
+        !view->is_floating) {
         ox += output->excluded_margin.left;
         oy += output->excluded_margin.top;
     }
