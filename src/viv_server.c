@@ -25,8 +25,11 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/util/log.h>
-#include <wlr/xwayland.h>
 #include <wordexp.h>
+
+#ifdef XWAYLAND
+#include <wlr/xwayland.h>
+#endif
 
 #include "viv_background.h"
 #include "viv_bar.h"
@@ -861,4 +864,15 @@ void viv_server_init(struct viv_server *server) {
 
     server->bar_pid = viv_parse_and_run_bar_config(server->config->bar.command, server->config->bar.update_signal_number);
 
+#ifdef XWAYLAND
+    wlr_xcursor_manager_set_cursor_image(
+            server->cursor_mgr, "left_ptr", server->cursor);
+    struct wlr_xcursor *xcursor = wlr_xcursor_manager_get_xcursor(server->cursor_mgr, "left_ptr", 1);
+    if (!xcursor) {ASSERT(false);}
+    struct wlr_xcursor_image *image = xcursor->images[0];
+    wlr_xwayland_set_cursor(server->xwayland_shell,
+                            image->buffer, image->width * 4, image->width,
+                            image->height, image->hotspot_x,
+                            image->hotspot_y);
+#endif  // XWAYLAND
 }
