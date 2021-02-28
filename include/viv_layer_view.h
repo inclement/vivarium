@@ -11,4 +11,8 @@ void viv_layer_view_init(struct viv_layer_view *view, struct viv_server *server,
 /// excluded regions appropriately.
 void viv_layers_arrange(struct viv_output *output);
 
+/// Test if any surfaces of the given layer view are at the given layout coordinates, including
+/// nested surfaces (e.g. popup windows, tooltips). If so, return the surface data.
+bool viv_layer_view_is_at(struct viv_layer_view *layer_view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
+
 #endif

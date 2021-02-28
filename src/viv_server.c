@@ -66,6 +66,22 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
     return NULL;
 }
 
+struct viv_layer_view *viv_server_layer_view_at(
+		struct viv_server *server, double lx, double ly,
+		struct wlr_surface **surface, double *sx, double *sy) {
+
+    if (wl_list_length(&server->active_output->layer_views)) {
+        struct viv_layer_view *layer_view;
+        wl_list_for_each(layer_view, &server->active_output->layer_views, output_link) {
+
+            if (viv_layer_view_is_at(layer_view, lx, ly, surface, sx, sy)) {
+                return layer_view;
+            }
+        }
+    }
+    return NULL;
+}
+
 /** Test if any views being handled by the compositor are present the
     at given layout coordinates lx,ly. This is at server level
     because it checks for against all views in the server.

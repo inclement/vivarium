@@ -241,3 +241,19 @@ void viv_layers_arrange(struct viv_output *output) {
         layer_view->y += oy;
     }
 }
+
+bool viv_layer_view_is_at(struct viv_layer_view *layer_view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy) {
+    double view_sx = lx - layer_view->x;
+    double view_sy = ly - layer_view->y;
+    double _sx, _sy;
+    struct wlr_surface *_surface = wlr_layer_surface_v1_surface_at(layer_view->layer_surface,
+                                                                  view_sx, view_sy, &_sx, &_sy);
+    if (_surface != NULL) {
+        *sx = _sx;
+        *sy = _sy;
+        *surface = _surface;
+        return true;
+    }
+
+    return false;
+}

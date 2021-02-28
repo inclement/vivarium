@@ -1,4 +1,5 @@
 #include "viv_cursor.h"
+#include "viv_layer_view.h"
 #include "viv_output.h"
 #include "viv_server.h"
 #include "viv_types.h"
@@ -83,30 +84,28 @@ static void process_cursor_resize_view(struct viv_server *server, uint32_t time)
     view->target_height = new_height;
 }
 
-/// Find the view under the pointer (if any) and pass the event data along
+/// Find the focusable surface under the pointer (if any) and pass the event data along
 static void process_cursor_pass_through_to_surface(struct viv_server *server, uint32_t time) {
 	double sx, sy;
 	struct wlr_seat *seat = server->seat;
 	struct wlr_surface *surface = NULL;
 
     // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
-	struct viv_view *view = viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy);
-	if (!view) {
-        if (wl_list_length(&server->active_output->layer_views)) {
-            struct viv_layer_view *layer_view = wl_container_of(
-                server->active_output->layer_views.next, layer_view, output_link);
-            surface = layer_view->layer_surface->surface;
-        }
+    struct viv_layer_view *layer_view;
+	struct viv_view *view;
 
-        // No view under the cursor => use the default image
-		wlr_xcursor_manager_set_cursor_image(
-				server->cursor_mgr, "left_ptr", server->cursor);
-	} else {
+    if ((view = viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy))) {
         // View under the cursor and not already active => focus it if appropriate
         struct viv_view *active_view = server->active_output->current_workspace->active_view;
         if ((view != active_view) && server->config->focus_follows_mouse) {
             viv_view_focus(view, surface);
         }
+    } else if ((layer_view = viv_server_layer_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy))) {
+        viv_surface_focus(server, surface);
+    } else {
+        // No focusable surface under the cursor => use the default image
+		wlr_xcursor_manager_set_cursor_image(
+				server->cursor_mgr, "left_ptr", server->cursor);
     }
 
     viv_cursor_reset_focus(server, time);
