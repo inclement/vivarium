@@ -11,8 +11,9 @@ static bool guess_should_be_floating(struct viv_view *view) {
 
     // TODO: Use the window_type to guess this, not just the size hints
 
-    return (view->xwayland_surface->parent != NULL ||
-            ((size_hints->min_width == size_hints->max_width) && (size_hints->min_height == size_hints->max_height)));
+    return (size_hints &&
+            (view->xwayland_surface->parent != NULL ||
+             ((size_hints->min_width == size_hints->max_width) && (size_hints->min_height == size_hints->max_height))));
 }
 
 static void event_xwayland_surface_map(struct wl_listener *listener, void *data) {
@@ -26,21 +27,23 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
     viv_view_get_string_identifier(view, view_name, view_name_len);
     struct wlr_xwayland_surface *surface = view->xwayland_surface;
     struct wlr_xwayland_surface_size_hints *size_hints = surface->size_hints;
-    wlr_log(WLR_DEBUG,
-            "Mapping xwayland surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
-            "min width %d, min height %d, max width %d, max height %d, base width %d, base height %d, parent %p",
-            view_name,
-            surface->width,
-            surface->height,
-            size_hints->width,
-            size_hints->height,
-            size_hints->min_height,
-            size_hints->min_width,
-            size_hints->max_height,
-            size_hints->max_width,
-            size_hints->base_height,
-            size_hints->base_width,
-            surface->parent);
+    if (size_hints) {
+        wlr_log(WLR_DEBUG,
+                "Mapping xwayland surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
+                "min width %d, min height %d, max width %d, max height %d, base width %d, base height %d, parent %p",
+                view_name,
+                surface->width,
+                surface->height,
+                size_hints->width,
+                size_hints->height,
+                size_hints->min_height,
+                size_hints->min_width,
+                size_hints->max_height,
+                size_hints->max_width,
+                size_hints->base_height,
+                size_hints->base_width,
+                surface->parent);
+    }
 
     if (guess_should_be_floating(view)) {
         // Assume this is a popup or something, and just give it the size it wants
