@@ -101,7 +101,10 @@ static void process_cursor_pass_through_to_surface(struct viv_server *server, ui
             viv_view_focus(view, surface);
         }
     } else if ((layer_view = viv_server_layer_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy))) {
-        viv_surface_focus(server, surface);
+        if (layer_view->layer_surface->current.keyboard_interactive) {
+            viv_surface_focus(server, surface);
+            server->active_output->current_workspace->active_view = NULL;
+        }
     } else {
         // No focusable surface under the cursor => use the default image
 		wlr_xcursor_manager_set_cursor_image(
