@@ -8,26 +8,34 @@
 
 void viv_workspace_focus_next_window(struct viv_workspace *workspace) {
     struct viv_view *active_view = workspace->active_view;
-    if (active_view == NULL) {
-        wlr_log(WLR_DEBUG, "Could not get next window, no active view");
-        return;
+    struct viv_view *next_view = NULL;
+    if (active_view != NULL) {
+        next_view = viv_view_next_in_workspace(active_view);
+    } else if (wl_list_length(&workspace->views) > 0) {
+        next_view = wl_container_of(workspace->views.next, next_view, workspace_link);
     }
 
-    struct viv_view *next_view = viv_view_next_in_workspace(workspace->active_view);
-
-    viv_view_focus(next_view, viv_view_get_toplevel_surface(next_view));
+    if (next_view) {
+        viv_view_focus(next_view, viv_view_get_toplevel_surface(next_view));
+    } else {
+        wlr_log(WLR_DEBUG, "Could not get next window, no active view");
+    }
 }
 
 void viv_workspace_focus_prev_window(struct viv_workspace *workspace) {
     struct viv_view *active_view = workspace->active_view;
-    if (active_view == NULL) {
-        wlr_log(WLR_DEBUG, "Could not get prev window, no active view");
-        return;
+    struct viv_view *prev_view = NULL;
+    if (active_view != NULL) {
+        prev_view = viv_view_prev_in_workspace(workspace->active_view);
+    } else if (wl_list_length(&workspace->views) > 0) {
+        prev_view = wl_container_of(workspace->views.prev, prev_view, workspace_link);
     }
 
-    struct viv_view *prev_view = viv_view_prev_in_workspace(workspace->active_view);
-
-    viv_view_focus(prev_view, viv_view_get_toplevel_surface(prev_view));
+    if (prev_view) {
+        viv_view_focus(prev_view, viv_view_get_toplevel_surface(prev_view));
+    } else {
+        wlr_log(WLR_DEBUG, "Could not get prev window, no active view");
+    }
 }
 
 void viv_workspace_shift_active_window_up(struct viv_workspace *workspace) {
