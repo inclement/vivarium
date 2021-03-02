@@ -82,6 +82,11 @@ void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *s
     wl_list_insert(&output->layer_views, &layer_view->output_link);
     layer_view->output = output;
 
+    // Immediately arrange the layers in order to send a configure to the new layer surface.  This
+    // is essential for bemenu-run to work, otherwise it tries to mmap without having a configured
+    // width/height yet.
+    // TODO: Reassess this - do we really need to do all this work right now?
+    viv_layers_arrange(output);
 }
 
 void viv_layers_arrange(struct viv_output *output) {
