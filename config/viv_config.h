@@ -51,7 +51,7 @@ static void example_user_layout(struct viv_workspace *workspace, uint32_t width,
     MACRO("5", 5, percent)                      \
     MACRO("6", 6, caret)                        \
     MACRO("7", 7, ampersand)                    \
-    MACRO("8", 8, multiply)                     \
+    MACRO("8", 8, asterisk)                     \
     MACRO("9", 9, parenleft)
 
 /// Macros used later to set up your workspaces
@@ -262,7 +262,7 @@ static struct viv_config the_config = {
 
     // Debug options, not useful outside development:
     .debug_mark_views_by_shell = false,  // mark xdg windows with a green rect, xwayland by a red rect
-    .debug_mark_active_output = true,  // draw a blue rectangle in the top left of the active output
+    .debug_mark_active_output = false,  // draw a blue rectangle in the top left of the active output
 };
 
 
