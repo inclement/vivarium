@@ -415,12 +415,14 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
 
 #ifdef DEBUG
     // Mark the currently-active output
-    struct wlr_box output_marker_box = {
-        .x = 0, .y = 0, .width = 10, .height = 10
-    };
-    float output_marker_colour[4] = {0.5, 0.5, 1, 0.5};
-    if (output == output->server->active_output) {
-        wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
+    if (output->server->config->debug_mark_active_output) {
+        struct wlr_box output_marker_box = {
+            .x = 0, .y = 0, .width = 10, .height = 10
+        };
+        float output_marker_colour[4] = {0.5, 0.5, 1, 0.5};
+        if (output == output->server->active_output) {
+            wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
+        }
     }
 #endif
 
