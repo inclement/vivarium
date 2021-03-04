@@ -8,6 +8,12 @@
 #include "viv_view.h"
 #include "viv_workspace.h"
 
+/// Return true if the view looks like it should be floating.
+// TODO: Make this more robust
+static bool guess_should_be_floating(struct viv_view *view) {
+    return (view->xdg_surface->toplevel->parent != NULL);
+}
+
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	/* Called when the surface is mapped, or ready to display on-screen. */
@@ -18,14 +24,23 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
     // If this view is actually a child of some parent, which is the
     // case for e.g. file dialogs, we should make it float instead of tiling
-    if (view->xdg_surface->toplevel->parent) {
+    if (guess_should_be_floating(view)) {
         view->is_floating = true;
 
         // TODO: we shouldn't use the minimum size, probably actually
         // want some indication of fractional pos and size relative to
         // workspace output, which is handled during layout
         struct wlr_xdg_toplevel_state *current = &view->xdg_surface->toplevel->current;
-        viv_view_set_target_box(view, 0, 0, current->min_width, current->min_height);
+        uint32_t x = 0;
+        uint32_t y = 0;
+        uint32_t width = current->min_width;
+        uint32_t height = current->min_height;
+        struct viv_output *output = view->workspace->output;
+        if (output != NULL) {
+            x += (uint32_t)(0.5 * output->wlr_output->width - 0.5 * width);
+            y += (uint32_t)(0.5 * output->wlr_output->height - 0.5 * height);
+        }
+        viv_view_set_target_box(view, x, y, width, height);
 
     }
 
