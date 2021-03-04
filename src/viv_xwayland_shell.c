@@ -51,15 +51,29 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
         view->is_floating = true;
         view->is_static = true;
 
-        if (size_hints->min_width < 0 || size_hints->min_height < 0) {
-            viv_view_set_target_box(view,
-                                    surface->x, surface->y,
-                                    surface->width, surface->height);
-        } else {
-            viv_view_set_target_box(view,
-                                    surface->x, surface->y,
-                                    size_hints->min_width, size_hints->min_height);
+        uint32_t x = surface->x;
+        uint32_t y = surface->y;
+        uint32_t width = surface->width;
+        uint32_t height = surface->height;
+
+        if (size_hints->min_width >= 0 && size_hints->min_height >= 0) {
+            width = size_hints->min_width;
+            height = size_hints->min_height;
         }
+
+        if (x == 0 && y == 0) {
+            // Guess that this is a new popup window that should be centered.  This obviously does
+            // the wrong thing in the case of a transient popup having 0,0 as the true position, but
+            // it's better than nothing for now.
+            // TODO: Make this nice by actually checking the window type
+            struct viv_output *output = view->workspace->output;
+            if (output != NULL) {
+                x += (uint32_t)(0.5 * output->wlr_output->width - 0.5 * width);
+                y += (uint32_t)(0.5 * output->wlr_output->height - 0.5 * height);
+            }
+        }
+
+        viv_view_set_target_box(view, x, y, width, height);
     }
 
 
