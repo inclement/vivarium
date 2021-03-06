@@ -72,6 +72,8 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
                 y += (uint32_t)(0.5 * output->wlr_output->height - 0.5 * height);
             }
         }
+        width += view->server->config->border_width * 2;
+        height += view->server->config->border_width * 2;
 
         viv_view_set_target_box(view, x, y, width, height);
     }
