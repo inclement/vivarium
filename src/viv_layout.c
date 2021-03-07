@@ -187,8 +187,64 @@ void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, uint32_t wi
  *  |      |          |      |
  *  |------|----------|------|
  */
-void viv_layout_do_central_column(struct viv_workspace *workspace) {
-    UNUSED(workspace);
+void viv_layout_do_central_column(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
+    uint32_t num_views = viv_workspace_num_tiled_views(workspace);
+    uint32_t counter = workspace->active_layout->counter;
+    float split_dist = (num_views == 0) ? 1.0 : workspace->active_layout->parameter;
+
+    uint32_t central_column_width = (uint32_t)(width * split_dist);
+    if (counter == 0) {
+        central_column_width = 0;
+    } else if (num_views <= counter) {
+        central_column_width = width;
+    }
+
+    uint32_t num_non_main_views = (counter > num_views) ? 0 : num_views - counter;
+    // Do allocation in this order so that if the number of views is
+    // odd, the extra one ends up in the right column
+    uint32_t num_right_views = num_non_main_views / 2;
+    uint32_t num_left_views = num_non_main_views - num_right_views;
+
+    uint32_t remaining_width = width - central_column_width;
+    uint32_t left_column_width = remaining_width / 2;
+    uint32_t right_column_width = remaining_width - left_column_width;
+    if (num_right_views == 0) {
+        central_column_width += right_column_width;
+        right_column_width = 0;
+    }
+
+    struct wl_array main_box, secondary_box;
+    wl_array_init(&main_box);
+    wl_array_init(&secondary_box);
+    distribute_views(&workspace->views, &main_box, &secondary_box, counter);
+
+    layout_views_in_column(&main_box, left_column_width, 0, central_column_width, height);
+
+
+    struct wl_array left_box, right_box;
+    wl_array_init(&left_box);
+    wl_array_init(&right_box);
+
+    struct viv_view **view_ptr;
+    uint32_t col_counter = 0;
+    wl_array_for_each(view_ptr, &secondary_box) {
+        struct viv_view *view = *view_ptr;
+        if (col_counter >= num_left_views) {
+            viv_wl_array_append_view(&right_box, view);
+        } else {
+            viv_wl_array_append_view(&left_box, view);
+        }
+        col_counter++;
+    }
+
+    layout_views_in_column(&left_box, 0, 0, left_column_width, height);
+    layout_views_in_column(&right_box, left_column_width + central_column_width, 0,
+                           right_column_width, height);
+
+    wl_array_release(&main_box);
+    wl_array_release(&secondary_box);
+    wl_array_release(&left_box);
+    wl_array_release(&right_box);
 }
 
 
@@ -203,8 +259,10 @@ void viv_layout_do_central_column(struct viv_workspace *workspace) {
  *          |   4    |
  *          |--------|
  */
-void viv_layout_do_indented_tabs(struct viv_workspace *workspace) {
+void viv_layout_do_indented_tabs(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
     UNUSED(workspace);
+    UNUSED(width);
+    UNUSED(height);
 }
 
 /**

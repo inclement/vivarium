@@ -177,6 +177,12 @@ struct viv_layout the_layouts[] = {
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
     },
     {
+        .name = "Central Column",
+        .layout_function = &viv_layout_do_central_column,
+        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
+        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+    },
+    {
         .name = "Columns",
         .layout_function = &viv_layout_do_columns,
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,

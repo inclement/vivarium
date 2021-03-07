@@ -50,4 +50,7 @@ union viv_mappable_payload {
     MACRO_FOR_EACH_MAPPABLE(GENERATE_UNION_ENTRY)
 };
 
+#undef GENERATE_DECLARATION
+#undef GENERATE_UNION_ENTRY
+
 # endif

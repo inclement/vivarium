@@ -3,12 +3,18 @@
 
 #include "viv_types.h"
 
-void viv_layout_do_split(struct viv_workspace *workspace, uint32_t width, uint32_t height);
 
-void viv_layout_do_columns(struct viv_workspace *workspace, uint32_t width, uint32_t height);
+#define MACRO_FOR_EACH_LAYOUT(MACRO)                   \
+    MACRO(split);                                      \
+    MACRO(columns);                                    \
+    MACRO(fullscreen);                                 \
+    MACRO(fibonacci_spiral);                           \
+    MACRO(central_column);                             \
 
-void viv_layout_do_fullscreen(struct viv_workspace *workspace, uint32_t width, uint32_t height);
+#define GENERATE_DECLARATION(LAYOUT_NAME) void viv_layout_do_ ## LAYOUT_NAME(struct viv_workspace *workspace, uint32_t width, uint32_t height);
 
-void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, uint32_t width, uint32_t height);
+MACRO_FOR_EACH_LAYOUT(GENERATE_DECLARATION);
+
+#undef GENERATE_DECLARATION
 
 #endif
