@@ -93,6 +93,14 @@ void viv_workspace_increment_divide(struct viv_workspace *workspace, float incre
     workspace->needs_layout = true;
 }
 
+void viv_workspace_increment_counter(struct viv_workspace *workspace, uint32_t increment) {
+    if (workspace->active_layout->counter >= increment || increment > 0) {
+        workspace->active_layout->counter += increment;
+    }
+
+    workspace->needs_layout = true;
+}
+
 void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspaces) {
     if (wl_list_length(workspaces) < 2) {
         wlr_log(WLR_DEBUG, "Not switching workspaces as only %d present\n", wl_list_length(workspaces));

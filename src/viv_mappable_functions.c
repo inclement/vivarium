@@ -49,6 +49,11 @@ void viv_mappable_increment_divide(struct viv_workspace *workspace, union viv_ma
     viv_workspace_increment_divide(workspace, payload.increment_divide.increment);
 }
 
+void viv_mappable_increment_counter(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable increment counter by %d\n", payload.increment_counter.increment);
+    viv_workspace_increment_counter(workspace, payload.increment_counter.increment);
+}
+
 void viv_mappable_terminate(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable terminate");

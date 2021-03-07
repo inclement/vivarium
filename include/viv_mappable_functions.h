@@ -23,6 +23,7 @@ union viv_mappable_payload;
     MACRO(do_exec, char executable[100]; char *args[100];)                   \
     MACRO(do_shell, char command[100];)                                      \
     MACRO(increment_divide, float increment; )                               \
+    MACRO(increment_counter, uint32_t increment; )                               \
     MACRO(terminate)                                                         \
     MACRO(next_window)                                                       \
     MACRO(prev_window)                                                       \

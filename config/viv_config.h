@@ -77,6 +77,8 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(META | WLR_MODIFIER_SHIFT, Return, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(META, l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(META, h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
+    KEYBIND_MAPPABLE(META, comma, increment_counter, .increment = +1),
+    KEYBIND_MAPPABLE(META, period, increment_counter, .increment = -1),
     KEYBIND_MAPPABLE(META, j, next_window),
     KEYBIND_MAPPABLE(META, k, prev_window),
     KEYBIND_MAPPABLE(META, J, shift_active_window_down),
