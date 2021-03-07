@@ -4,6 +4,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <wayland-server-core.h>
+#include <wayland-util.h>
 #include <wlr/backend.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_cursor.h>
@@ -24,18 +25,113 @@
 #include "viv_view.h"
 #include "viv_workspace.h"
 
+static void viv_wl_array_append_view(struct wl_array *array, struct viv_view *view) {
+    *(struct viv_view **)wl_array_add(array, sizeof(struct viv_view *)) = view;
+}
+
+static void distribute_views(struct wl_list *views, struct wl_array *main_box, struct wl_array *secondary_box, uint32_t main_box_count) {
+    struct viv_view *view;
+    uint32_t main_count = 0;
+    uint32_t secondary_count = 0;
+    wl_list_for_each(view, views, workspace_link) {
+        if (main_count < main_box_count) {
+            viv_wl_array_append_view(main_box, view);
+            main_count++;
+        } else {
+            viv_wl_array_append_view(secondary_box, view);
+            secondary_count++;
+        }
+    }
+}
+
+/// Layout the views in the given rectangle, one above the other, with heights as equal as possible.
+static void layout_views_in_column(struct wl_array *views, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    struct viv_view *view;
+    uint32_t num_views = views->size / sizeof(view);
+    if (!num_views) {
+        wlr_log(WLR_ERROR, "Asked to layout views in column, but view count was 0?");
+        return;
+    }
+
+    uint32_t view_height = (uint32_t)((float)height / (float)num_views);
+    uint32_t spare_pixels = height - num_views * view_height;
+    uint32_t spare_pixels_used = 0;
+
+    uint32_t cur_y = y;
+    struct viv_view **view_ptr;
+    wl_array_for_each(view_ptr, views) {
+        view = *view_ptr;
+        uint32_t target_height = view_height;
+        if (spare_pixels) {
+            spare_pixels--;
+            spare_pixels_used++;
+            target_height++;
+        }
+        wlr_log(WLR_INFO, "Setting target box x %d y %d width %d height %d (num views %d)", x, cur_y, width, target_height, num_views);
+        viv_view_set_target_box(view, x, cur_y, width, target_height);
+
+        cur_y += target_height;
+    }
+}
+
+/// Layout the views in the given rectangle, each next to the others, with widths as equal as possible.
+static void layout_views_in_row(struct wl_array *views, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    struct viv_view *view;
+    uint32_t num_views = views->size / sizeof(view);
+    if (!num_views) {
+        wlr_log(WLR_ERROR, "Asked to layout views in column, but view count was 0?");
+        return;
+    }
+
+    uint32_t view_width = (uint32_t)((float)width / (float)num_views);
+    uint32_t spare_pixels = width - num_views * view_width;
+    uint32_t spare_pixels_used = 0;
+
+    uint32_t cur_x = x;
+    struct viv_view **view_ptr;
+    wl_array_for_each(view_ptr, views) {
+        view = *view_ptr;
+        uint32_t target_width = view_width;
+        if (spare_pixels) {
+            spare_pixels--;
+            spare_pixels_used++;
+            target_width++;
+        }
+        viv_view_set_target_box(view, cur_x, y, target_width, height);
+
+        cur_x += target_width;
+    }
+}
+
+static void copy_views_wl_list_to_wl_array(struct wl_list *views_list, struct wl_array *views_array) {
+    struct viv_view *view;
+    wl_list_for_each(view, views_list, workspace_link) {
+        viv_wl_array_append_view(views_array, view);
+    }
+}
+
+void viv_layout_do_columns(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
+    struct wl_array views;
+    wl_array_init(&views);
+    copy_views_wl_list_to_wl_array(&workspace->views, &views);
+
+    layout_views_in_row(&views, 0, 0, width, height);
+}
+
+
 /**
- *  |--------------|----|----|
- *  |              | 4  |    |
- *  |              |----| 3  |
- *  |              | 5  |    |
- *  |     MAIN     |----|----|
+ *  |--------------|---------|
  *  |              |         |
  *  |              |    2    |
  *  |              |         |
- *  |--------------|---------|
+ *  |     MAIN     |----|----|
+ *  |              |    | 4  |
+ *  |              | 3  |----|
+ *  |              |    | 5  |
+ *  |--------------|----|----|
  */
 void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
+    UNUSED(layout_views_in_column);
     struct wl_list *views = &workspace->views;
 
     struct viv_view *view;
@@ -146,45 +242,28 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace, uint32_t width, u
  *  |--------------|---------|
  */
 void viv_layout_do_split(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
-    struct wl_list *views = &workspace->views;
-
-    struct viv_view *view;
-
     uint32_t num_views = viv_workspace_num_tiled_views(workspace);
-
-    float split_dist = workspace->active_layout->parameter;
-    if (num_views == 1) {
-        split_dist = 1.0;
-    }
+    uint32_t counter = workspace->active_layout->counter;
+    float split_dist = (num_views == 0) ? 1.0 : workspace->active_layout->parameter;
+    wlr_log(WLR_INFO, "num views %d, counter is %d", num_views, counter);
 
     uint32_t split_pixel = (uint32_t)(width * split_dist);
-
-    uint32_t side_bar_view_height = (uint32_t)(
-                                               (num_views > 1) ? ((float)height / ((float)num_views - 1)) : 100);
-    uint32_t spare_pixels = height - (num_views - 1) * side_bar_view_height;
-    uint32_t spare_pixels_used = 0;
-
-    uint32_t view_index = 0;
-    wl_list_for_each(view, views, workspace_link) {
-        if (view->is_floating) {
-            continue;
-        }
-
-        if (view_index == 0) {
-            viv_view_set_target_box(view, 0, 0, split_pixel, height);
-        } else {
-            uint32_t target_height = side_bar_view_height;
-            if (spare_pixels) {
-                spare_pixels--;
-                spare_pixels_used++;
-                target_height++;
-                (view->y) = view->y - spare_pixels_used;
-            }
-
-            viv_view_set_target_box(view, split_pixel, (view_index - 1) * side_bar_view_height + spare_pixels_used, width - split_pixel, target_height);
-        }
-
-        view_index++;
+    if (counter == 0) {
+        split_pixel = 0;
+    } else if (num_views <= counter) {
+        split_pixel = width;
     }
 
+    struct wl_array main_box, secondary_box;
+    wl_array_init(&main_box);
+    wl_array_init(&secondary_box);
+    distribute_views(&workspace->views, &main_box, &secondary_box, counter);
+
+    layout_views_in_column(&main_box, 0, 0, split_pixel, height);
+    if (num_views > counter) {
+        layout_views_in_column(&secondary_box, split_pixel, 0, width - split_pixel, height);
+    }
+
+    wl_array_release(&main_box);
+    wl_array_release(&secondary_box);
 }

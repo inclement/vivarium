@@ -176,6 +176,12 @@ struct viv_layout the_layouts[] = {
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
     },
+    {
+        .name = "Columns",
+        .layout_function = &viv_layout_do_columns,
+        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
+        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+    },
     // Example user-defined layout. You probably want to delete this from the config, but
     // this is how to make your own layout.
     {
