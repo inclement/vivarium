@@ -18,6 +18,35 @@ Core features include:
 
 Vivarium is unstable and unfinished...but usable!
 
+## Tiling model
+
+Vivarium lets you define any number of workspaces, each with some number of tiling layouts attached. New windows are automatically tiled according to the layout, or can be made floating to be placed anywhere you like.
+
+Example layouts include (left to right): split, fullscreen, central column, and recursive split:
+
+<p align="center">
+  <img src="media/layout_type_illustrations.png" alt="Illustrated Vivarium layouts">
+</p>
+
+Most layouts have a main panel with the largest window, then other windows are filled into some secondary space.
+
+Layouts have a "fill fraction" parameter, adjustable at runtime via hotkeys, which controls how much space is taken up by the main panel:
+
+<p align="center">
+  <img src="media/layout_split_dist_illustrations.png" alt="Illustrated Vivarium layouts with different fill fraction">
+</p>
+
+Layouts also have an integer "main count", also adjustable at runtim via hotkeys, which controls how many windows are stacked in the main panel. It can be zero, so that all windows occupy the secondary space:
+
+<p align="center">
+  <img src="media/layout_counter_illustrations.png" alt="Illustrated Vivarium layouts with different fill fraction">
+</p>
+
+In this model you will generally set up a small number of layouts, but expect to adjust these parameters at runtime according to your needs. For instance, if you find you need too many terminals to fit in a single stack next to a browser in the main panel, you might switch the main layout to place the main panel in a central column then make this narrower to give more space for terminals stacked on both sides.
+
+Layouts also let you configure options such as gap distance between windows (not shown above), window border display (e.g. disabled when fullscreen), and whether the layout leaves space for the desktop bar or ignores its normally-excluded region.
+
+
 ## Build instructions
 
 Get install dependencies. You need:
