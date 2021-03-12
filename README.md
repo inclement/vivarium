@@ -20,9 +20,9 @@ Vivarium is unstable and unfinished...but usable!
 
 ## Tiling model
 
-Vivarium lets you define any number of workspaces, each with some number of tiling layouts that you can switch between at runtime. New windows are automatically tiled according to the layout, or can be made floating to be placed anywhere you like.
+Vivarium lets you define any number of workspaces, each with some number of tiling layouts that you can switch between at runtime. New windows are automatically tiled according to the layout, or can be made floating to be placed anywhere you like. The order of windows within the layout is adjustable at runtime.
 
-You will generally set up a small number of layout, adjusting their parameters at runtime according to your needs. For instance, if you find you need too many terminals to fit in a single stack next to a browser window then you might switch the main layout one that allows multiple columns of windows. Or if you want to focus on the browser, you might switch to a fullscreen layout.
+You will generally set up a small number of layouts, updating their parameters according to your needs. For instance, if you find you need too many terminals to fit in a single stack next to a browser window then you might switch the layout to one that places windows in multiple columns. Or if you want to focus on the browser, you might switch to a fullscreen layout that displays only the active window.
 
 Example layouts include (left to right): split, fullscreen, central column, and recursive split:
 
