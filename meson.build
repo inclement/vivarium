@@ -51,3 +51,10 @@ includes = [
 subdir('include')
 subdir('protocols')
 subdir('src')
+
+# Make sure our default config file is also installed so users can copy it into place
+conf_data = configuration_data()
+configure_file(input : 'config/config.toml',
+               output : 'config.toml',
+               install_dir : join_paths(get_option('sysconfdir'), 'vivarium'),
+               configuration : conf_data)
