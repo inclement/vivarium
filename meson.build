@@ -33,7 +33,7 @@ cc = meson.get_compiler('c')
 # For wlroots, use the system version if the correct version is available
 wlroots_dep = dependency('wlroots', version : '>=0.12', fallback : ['wlroots', 'wlroots'])
 
-tomlc99_dep = dependency('toml', fallback : ['tomlc99', 'tomlc99_dep'])
+tomlc99_dep = dependency('toml', fallback : ['tomlc99', 'tomlc99_static_dep'])
 
 wayland_server_dep = dependency('wayland-server')
 wayland_client_dep = dependency('wayland-client')

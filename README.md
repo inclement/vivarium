@@ -74,6 +74,10 @@ Run Vivarium:
 
     ./build/src/vivarium
 
+Install Vivarium
+
+    sudo ninja -C build install
+
 Vivarium expects to be run from a TTY, but also supports embedding in an X session or existing Wayland session out of the box. Running the binary will Do The Right Thing.
 
 ## Configuration

@@ -39,4 +39,5 @@ executable(
   viv_sources,
   include_directories : includes,
   dependencies : viv_deps,
+  install : true,
 )
