@@ -56,6 +56,9 @@ Get install dependencies. You need:
 * wlroots
 * wayland
 * wayland-protocols
+* xcb
+
+Specific package dependencies for Ubuntu 20.04 can be found in [the Github CI file](.github/workflows/main.yml).
 
 Get Vivarium:
 
