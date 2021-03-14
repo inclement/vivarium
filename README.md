@@ -20,9 +20,9 @@ Vivarium is unstable and unfinished...but usable!
 
 ## Tiling model
 
-Vivarium lets you define any number of workspaces, each with some number of tiling layouts that you can switch between at runtime. New windows are automatically tiled according to the layout, or can be made floating to be placed anywhere you like. The order of windows within the layout is adjustable at runtime.
+Vivarium lets you define any number of workspaces, each with some number of tiling layouts that you can switch between at runtime. New windows are automatically tiled according to the layout, or can be made floating to be placed anywhere with any size you like. The order of windows within the layout is adjustable at runtime.
 
-You will generally set up a small number of layouts, updating their parameters according to your needs. For instance, if you find you need too many terminals to fit in a single stack next to a browser window then you might switch the layout to one that places windows in multiple columns. Or if you want to focus on the browser, you might switch to a fullscreen layout that displays only the active window.
+You will probably want to set up a small number of layouts, updating their parameters according to your needs. For instance, if you find you need too many terminals to fit in a single stack next to a browser window then you might switch the layout to one that places windows in multiple columns. Or if you want to focus on the browser, you might switch to a fullscreen layout that displays only the active window.
 
 Example layouts include (left to right): split, fullscreen, central column, and recursive split:
 
@@ -38,14 +38,14 @@ Layouts have a "fill fraction" parameter, adjustable at runtime via hotkeys, whi
   <img src="media/layout_split_dist_illustrations.png" alt="Illustrated Vivarium layouts with different fill fraction">
 </p>
 
-Layouts also have an integer main panel "count", adjustable at runtim via hotkeys, which controls how many windows are stacked in the main panel. It can be zero so that all windows occupy the secondary space:
+Layouts also have an integer main panel "count", adjustable at runtime via hotkeys, which controls how many windows are stacked in the main panel. It can be zero so that all windows occupy the secondary space:
 
 <p align="center">
   <img src="media/layout_counter_illustrations.png" alt="Illustrated Vivarium layouts with different main panel counts">
 </p>
 
 
-Layouts also let you configure options such as gap distance between windows, window border display, and whether the layout leaves space for the desktop bar or ignores its normally-excluded region.
+Other per-layout options include whether window borders are displayed, and whether the layout leaves space for programs like the desktop bar or draws windows over their normally-excluded region.
 
 
 ## Build instructions
@@ -74,7 +74,7 @@ Run Vivarium:
 
     ./build/src/vivarium
 
-Install Vivarium
+Install Vivarium:
 
     sudo ninja -C build install
 
@@ -119,8 +119,10 @@ If you'd like to maintain multiple different configs, copy the config directory 
 
 Vivarium can automatically start a bar program such as [Waybar](https://github.com/Alexays/Waybar). Only Waybar is currently tested, and only very basic IPC is currently possible, but this is enough to display the current workspace status.
 
-See `viv_config.h` for instructions, but in summary you'll need the following configuration:
-`
+See `viv_config.h` or the `config.toml` for instructions on starting the bar program.
+
+To have Waybar update when signalled by Vivarium, set it up as below (instructions are for `config.h`):
+
     // Choose a filename at which Vivarium will write a workspace status string
     .ipc_workspaces_filename = "/path/to/status/file",
 
@@ -162,9 +164,9 @@ It's also possible that there are bugs in Vivarium's window decoration configura
 
 > Why TOML for configuration? How can I configure dynamic behaviour like my own layouts?
 
-TOML is especially simple and easy to read (and also easy to write and parse!). In general a window manager configuration is something you'll set up once, then leave for a long time with occasional tweaks like changing your layouts or adjusting keybinds. Using a simple static configuration makes it clear how to tweak minor options even a long time after first writing it, without remembering (for instance) the more complicated syntax of a programming language you don't otherwise use much.
+TOML is especially simple and easy to read, and also easy to write and parse. It's intended to support the most common use case where the configuration is something you set up once, then leave for a long time with only occasional tweaks like changing your layouts or adjusting keybinds. The simple TOML syntax makes it easy to tweak minor options even a long time after first writing it, without remembering (for instance) the more complicated syntax of a programming language you don't otherwise use much. (Yes, this is something I found inconvenient about xmonad - I haven't written haskell for years!).
 
-This does have the disadvantage that dynamic configuration is not possible using the config.toml: for instance, you can't bind arbitrary functions to keypresses, only the predefined actions hardcoded in Vivarium. In these cases you can instead configure Vivarium via C code using the `viv_config.h` header described in the Configuration section, but you will need to recompile Vivarium each time you update the config.
+This has the disadvantage that dynamic configuration is not possible using the config.toml: for instance, you can't bind arbitrary functions to keypresses, only the predefined actions hardcoded in Vivarium. In these cases you can instead configure Vivarium via C code using the `viv_config.h` header described in the Configuration section, but you will need to recompile Vivarium each time you update the config.
 
 In the longer term I would like to explore providing Vivarium as a library so that you can run Vivarium, and inject arbitrary event handlers, from any language with a FFI. However, this is not an immediate goal.
 
@@ -183,3 +185,9 @@ Currently supported protocols (though all may be incomplete or buggy in places, 
 > Can you add $FEATURE?
 
 I'm not sure! At the time of writing Vivarium is a personal project whose design philosophy isn't fully determined. Suggestions and requests are welcome.
+
+> Something didn't work! What should I do?
+
+Please check if the issue has [already been reported](https://github.com/inclement/vivarium/issues).
+
+If not, [report a new issue](https://github.com/inclement/vivarium/issues/new).
