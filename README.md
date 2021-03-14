@@ -96,12 +96,14 @@ Configuration options include but are not limited to:
 
 ### config.toml
 
-Copy the default config so that Vivarium will find it:
+Copy the default config so that Vivarium will find it.
 
     mkdir -p $HOME/.config/vivarium
     cp config/config.toml $HOME/.config/vivarium
 
 The default config is extensively documented and includes all the Vivarium default bindings. See the documentation inside the file to see what other options you can set.
+
+If you installed Vivarium globally, the default config should be found in `/etc/vivarium/config.toml` or `/usr/local/etc/vivarium/config.toml`.
 
 ### viv_config.h
 
@@ -118,7 +120,7 @@ If you'd like to maintain multiple different configs, copy the config directory 
 Vivarium can automatically start a bar program such as [Waybar](https://github.com/Alexays/Waybar). Only Waybar is currently tested, and only very basic IPC is currently possible, but this is enough to display the current workspace status.
 
 See `viv_config.h` for instructions, but in summary you'll need the following configuration:
-
+`
     // Choose a filename at which Vivarium will write a workspace status string
     .ipc_workspaces_filename = "/path/to/status/file",
 

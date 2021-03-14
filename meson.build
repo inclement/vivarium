@@ -52,7 +52,8 @@ subdir('include')
 subdir('protocols')
 subdir('src')
 
-# Make sure our default config file is also installed so users can copy it into place
+# Make sure our default config file is also installed so users can copy it into place.
+# We don't actually need the meson config file declaration for this, but it's convenient.
 conf_data = configuration_data()
 configure_file(input : 'config/config.toml',
                output : 'config.toml',
