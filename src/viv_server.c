@@ -892,3 +892,13 @@ void viv_server_init(struct viv_server *server) {
                             image->hotspot_y);
 #endif  // XWAYLAND
 }
+
+void viv_server_deinit(struct viv_server *server) {
+    // Clean everything when shutting down
+#ifdef XWAYLAND
+    wlr_xwayland_destroy(server->xwayland_shell);
+#endif
+
+	wl_display_destroy_clients(server->wl_display);
+	wl_display_destroy(server->wl_display);
+}

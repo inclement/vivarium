@@ -6,7 +6,9 @@
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
+#ifdef XWAYLAND
 #include <wlr/xwayland.h>
+#endif
 #include <xkbcommon/xkbcommon.h>
 
 #include "viv_config_support.h"

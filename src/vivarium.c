@@ -26,7 +26,6 @@
 #include "viv_types.h"
 #include "viv_server.h"
 
-
 int main(int argc, char *argv[]) {
     UNUSED(argc);
     UNUSED(argv);
@@ -69,8 +68,7 @@ int main(int argc, char *argv[]) {
 			socket);
 	wl_display_run(server.wl_display);
 
-    // Clean everything when shutting down
-	wl_display_destroy_clients(server.wl_display);
-	wl_display_destroy(server.wl_display);
+    viv_server_deinit(&server);
+
 	return 0;
 }
