@@ -3,7 +3,14 @@
 
 #include "viv_types.h"
 
+/// Fully initialise the server, including loading config, setting up all Vivarium state
+/// (workspaces, layouts, keybinds...), and initialising wayland/wlroots state ready to
+/// run.
 void viv_server_init(struct viv_server *server);
+
+/// Deinitialise server-held state where necessary for a clean exit, including XWayland
+/// shell if necessary and wayland display
+void viv_server_deinit(struct viv_server *server);
 
 struct viv_view *viv_server_view_at(
 		struct viv_server *server, double lx, double ly,
