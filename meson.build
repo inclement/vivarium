@@ -26,7 +26,11 @@ if get_option('xwayland').enabled()
   ], language : 'c')
 endif
 
-
+if get_option('headless-test')
+  add_project_arguments([
+    '-DHEADLESS_TEST',
+    ], language : 'c')
+endif
 
 cc = meson.get_compiler('c')
 

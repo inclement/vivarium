@@ -49,3 +49,12 @@ jobs:
         run: |
           meson --reconfigure build -Dxwayland=enabled -Ddebug=true
           ninja -C build
+
+      - name: Build vivarium, debug=true xwayland=enabled headless-test=true
+        run: |
+          meson --reconfigure build -Dxwayland=enabled -Ddebug=true -Dheadless-test=true
+          ninja -C build
+
+      - name: Run vivarium (headless) and check for clean exit
+        run: |
+          ./build/src/vivarium

@@ -7,6 +7,9 @@
 #include <wayland-server-core.h>
 #include <libinput.h>
 #include <wlr/backend.h>
+#ifdef HEADLESS_TEST
+#include <wlr/backend/headless.h>
+#endif
 #include <wlr/backend/libinput.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
@@ -774,7 +777,12 @@ void viv_server_init(struct viv_server *server) {
 
     // Create a wlroots backend. This will automatically handle creating a suitable
     // backend for the environment, e.g. an X11 window if running under X.
+#ifdef HEADLESS_TEST
+    // Use a headless backend for CI testing without any actual outputs
+	server->backend = wlr_headless_backend_create(server->wl_display, NULL);
+#else
 	server->backend = wlr_backend_autocreate(server->wl_display, NULL);
+#endif
 
     // Init the default wlroots GLES2 renderer
 	server->renderer = wlr_backend_get_renderer(server->backend);

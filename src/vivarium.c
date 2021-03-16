@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
+#ifdef HEADLESS_TEST
+#include <wlr/backend/headless.h>
+#endif
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_compositor.h>
@@ -25,6 +28,16 @@
 #include "viv_toml_config.h"
 #include "viv_types.h"
 #include "viv_server.h"
+
+#ifdef HEADLESS_TEST
+/// Setup some headless devices before exiting, just to check we don't segfault or something.
+static void headless_test(struct viv_server *server) {
+    wlr_headless_add_output(server->backend, 1024, 768);
+    wlr_headless_add_output(server->backend, 1920, 1200);
+    wlr_headless_add_input_device(server->backend, WLR_INPUT_DEVICE_KEYBOARD);
+    wlr_headless_add_input_device(server->backend, WLR_INPUT_DEVICE_POINTER);
+}
+#endif
 
 int main(int argc, char *argv[]) {
     UNUSED(argc);
@@ -62,11 +75,16 @@ int main(int argc, char *argv[]) {
     setenv("QT_QPA_PLATFORM", "wayland", true);
     setenv("GDK_BACKEND", "wayland", true);  // NOTE: not a typo, it really is GDK not GTK
 
+#ifndef HEADLESS_TEST
     // Start the wayland eventloop. From here, all compositor activity comes via events it
     // sends us.
 	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s",
 			socket);
 	wl_display_run(server.wl_display);
+#else
+    // Don't run the compositor, just set up some headless outputs for CI testing
+    headless_test(&server);
+#endif
 
     viv_server_deinit(&server);
 
