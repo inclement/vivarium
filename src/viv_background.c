@@ -33,7 +33,10 @@ static void run_swaybg(char *colour, char *image, char *mode) {
 }
 
 void viv_parse_and_run_background_config(char *colour, char *image, char *mode) {
-    if (!strlen(colour) && !strlen(image) && !strlen(mode)) {
+    bool colour_valid = (colour != NULL) && strlen(colour);
+    bool image_valid = (image != NULL) && strlen(image);
+    bool mode_valid = (mode != NULL) && strlen(mode);
+    if (!colour_valid && !image_valid && !mode_valid) {
         // Nothing is configured so just don't run swaybg
         wlr_log(WLR_ERROR, "No background config, skipping");
         return;
