@@ -1,4 +1,4 @@
-name: Build Vivarium
+name: Build and run Vivarium
 
 on:
   push:
