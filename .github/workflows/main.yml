@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: Build Vivarium
+    name: Build and run Vivarium
     runs-on: ubuntu-20.04
 
     steps:
