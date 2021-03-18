@@ -234,8 +234,8 @@ static struct viv_config the_config = {
 
     // Background configuration. Applies to all outputs. Requires `swaybg` to be installed.
     .background = {
-        .colour = "#ff0000",  // note: this is overridden by .image if present
-        .image = "/home/sandy/sway_bg.jpg",
+        .colour = "#bbbbbb",  // note: this is overridden by .image if present
+        .image = "/path/to/your/background.png",
         .mode = "fill",  // options from swaybg: stretch, fit, fill, center, tile, solid_color
     },
 

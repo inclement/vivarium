@@ -1,4 +1,4 @@
-name: Build Vivarium
+name: Build and run Vivarium
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
            sudo apt-get update
-           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev
+           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev xwayland waybar swaybg
            python -m pip install --upgrade pip
            python -m pip install ninja
            python -m pip install meson
@@ -49,3 +49,15 @@ jobs:
         run: |
           meson --reconfigure build -Dxwayland=enabled -Ddebug=true
           ninja -C build
+
+      - name: Build vivarium, debug=true xwayland=enabled headless-test=true
+        run: |
+          meson --reconfigure build -Dxwayland=enabled -Ddebug=true -Dheadless-test=true
+          ninja -C build
+
+      - name: Run vivarium (headless) and check for clean exit
+        run: |
+          mkdir $XDG_RUNTIME_DIR
+          ./build/src/vivarium
+        env:
+            XDG_RUNTIME_DIR: xdg_runtime_dir
