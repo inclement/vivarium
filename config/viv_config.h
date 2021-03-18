@@ -233,11 +233,11 @@ static struct viv_config the_config = {
     .clear_colour = { 0.73, 0.73, 0.73, 1.0 },
 
     // Background configuration. Applies to all outputs. Requires `swaybg` to be installed.
-    /* .background = { */
-        /* .colour = "#bbbbbb",  // note: this is overridden by .image if present */
-        /* .image = "/path/to/your/background.png", */
-        /* .mode = "fill",  // options from swaybg: stretch, fit, fill, center, tile, solid_color */
-    /* }, */
+    .background = {
+        .colour = "#bbbbbb",  // note: this is overridden by .image if present
+        .image = "/path/to/your/background.png",
+        .mode = "fill",  // options from swaybg: stretch, fit, fill, center, tile, solid_color
+    },
 
     // Use the keybinds list configured above.
     .keybinds = the_keybinds,
@@ -268,7 +268,7 @@ static struct viv_config the_config = {
 
     // Status bar configuration.
     .bar = {
-        .command = "",  // will be run when Vivarium starts
+        .command = "waybar",  // will be run when Vivarium starts
         .update_signal_number = 1,  // if non-zero, Vivarium sends (SIGRTMIN + update_signal_number)
                                     // to the bar process each time the workspace config changes,
                                     // can be used by the bar process as an update trigger
