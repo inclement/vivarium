@@ -58,3 +58,5 @@ jobs:
       - name: Run vivarium (headless) and check for clean exit
         run: |
           ./build/src/vivarium
+        env:
+            XDG_RUNTIME_DIR: ./
