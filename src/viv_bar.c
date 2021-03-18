@@ -14,14 +14,14 @@ static pid_t run_bar(char *bar_command) {
 	if (pid == 0) {
         // TODO: We need to do more shenanigans to fork properly/safely, see e.g. sway's version
 
-        wlr_log(WLR_INFO, "Running swaybg");
+        wlr_log(WLR_INFO, "Running bar %s", bar_command);
 
         char *const cmd[] = {
             bar_command,
             NULL
         };
         execvp(cmd[0], cmd);
-        _exit(EXIT_FAILURE);
+        _exit(EXIT_SUCCESS);
     }
     return pid;
 }

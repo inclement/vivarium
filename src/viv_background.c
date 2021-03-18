@@ -28,7 +28,7 @@ static void run_swaybg(char *colour, char *image, char *mode) {
             NULL
         };
         execvp(cmd[0], cmd);
-        _exit(EXIT_FAILURE);
+        _exit(EXIT_SUCCESS);
     }
 }
 
