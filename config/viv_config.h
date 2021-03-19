@@ -253,10 +253,10 @@ static struct viv_config the_config = {
     // It is possible to set multiple toggling layouts via the normal xkb syntax (comma-separated)
 	.xkb_rules = {
         .rules = NULL,  // included for completion
-        .model = "pc104",
-        .layout = "widecolemak",
-        .variant = "widecolemak",
-        .options = "ctrl:nocaps",
+        .model = NULL,
+        .layout = "us",
+        .variant = NULL,
+        .options = NULL,
     },
 
     // Use the libinput configs list configured above.
