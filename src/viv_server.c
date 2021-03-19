@@ -512,6 +512,29 @@ static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&keyboard->link);
 }
 
+static struct xkb_keymap *load_keymap(struct xkb_context *context, struct xkb_rule_names *rules) {
+	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    const char *model_str = rules->model ? rules->model : "";
+    const char *layout_str = rules->layout ? rules->layout : "";
+    const char *variant_str = rules->variant ? rules->variant : "";
+    const char *options_str = rules->options ? rules->options : "";
+    if (!keymap) {
+        wlr_log(WLR_ERROR,
+                "Could not load keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\" - "
+                "using default keymap instead (probably qwerty)",
+                model_str, layout_str, variant_str, options_str);
+        struct xkb_rule_names default_rules = { 0 };
+        context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+        keymap = xkb_map_new_from_names(context, &default_rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    } else {
+        wlr_log(WLR_INFO, "Successfully loaded keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\"",
+                model_str, layout_str, variant_str, options_str);
+    }
+
+    return keymap;
+}
+
 /// Handle a new-keyboard event
 static void server_new_keyboard(struct viv_server *server,
 		struct wlr_input_device *device) {
@@ -521,6 +544,7 @@ static void server_new_keyboard(struct viv_server *server,
 	keyboard->server = server;
 	keyboard->device = device;
 
+	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
     struct xkb_rule_names rules = {
         .rules = server->config->xkb_rules.rules,
         .model = server->config->xkb_rules.model,
@@ -528,12 +552,10 @@ static void server_new_keyboard(struct viv_server *server,
         .variant = server->config->xkb_rules.variant,
         .options = server->config->xkb_rules.options,
     };
-	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	struct xkb_keymap *keymap = xkb_map_new_from_names(context, &rules,
-		XKB_KEYMAP_COMPILE_NO_FLAGS);
+    struct xkb_keymap *keymap = load_keymap(context, &rules);
 
-	wlr_keyboard_set_keymap(device->keyboard, keymap);
-	xkb_keymap_unref(keymap);
+    wlr_keyboard_set_keymap(device->keyboard, keymap);
+    xkb_keymap_unref(keymap);
 	xkb_context_unref(context);
 	wlr_keyboard_set_repeat_info(device->keyboard, 25, 600);
 
