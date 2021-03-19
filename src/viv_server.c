@@ -512,29 +512,13 @@ static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&keyboard->link);
 }
 
-/// Handle a new-keyboard event
-static void server_new_keyboard(struct viv_server *server,
-		struct wlr_input_device *device) {
-	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
-    CHECK_ALLOCATION(keyboard);
+static struct xkb_keymap *load_keymap(struct xkb_context *context, struct xkb_rule_names *rules) {
+	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
-	keyboard->server = server;
-	keyboard->device = device;
-
-    struct xkb_rule_names rules = {
-        .rules = server->config->xkb_rules.rules,
-        .model = server->config->xkb_rules.model,
-        .layout = server->config->xkb_rules.layout,
-        .variant = server->config->xkb_rules.variant,
-        .options = server->config->xkb_rules.options,
-    };
-	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-	struct xkb_keymap *keymap = xkb_map_new_from_names(context, &rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-
-    const char *model_str = rules.model ? rules.model : "";
-    const char *layout_str = rules.layout ? rules.layout : "";
-    const char *variant_str = rules.variant ? rules.variant : "";
-    const char *options_str = rules.options ? rules.options : "";
+    const char *model_str = rules->model ? rules->model : "";
+    const char *layout_str = rules->layout ? rules->layout : "";
+    const char *variant_str = rules->variant ? rules->variant : "";
+    const char *options_str = rules->options ? rules->options : "";
     if (!keymap) {
         wlr_log(WLR_ERROR,
                 "Could not load keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\" - "
@@ -547,6 +531,28 @@ static void server_new_keyboard(struct viv_server *server,
         wlr_log(WLR_INFO, "Successfully loaded keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\"",
                 model_str, layout_str, variant_str, options_str);
     }
+
+    return keymap;
+}
+
+/// Handle a new-keyboard event
+static void server_new_keyboard(struct viv_server *server,
+		struct wlr_input_device *device) {
+	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
+    CHECK_ALLOCATION(keyboard);
+
+	keyboard->server = server;
+	keyboard->device = device;
+
+	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    struct xkb_rule_names rules = {
+        .rules = server->config->xkb_rules.rules,
+        .model = server->config->xkb_rules.model,
+        .layout = server->config->xkb_rules.layout,
+        .variant = server->config->xkb_rules.variant,
+        .options = server->config->xkb_rules.options,
+    };
+    struct xkb_keymap *keymap = load_keymap(context, &rules);
 
     wlr_keyboard_set_keymap(device->keyboard, keymap);
     xkb_keymap_unref(keymap);
