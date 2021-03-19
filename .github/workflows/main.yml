@@ -57,7 +57,16 @@ jobs:
 
       - name: Run vivarium (headless) and check for clean exit
         run: |
-          mkdir $XDG_RUNTIME_DIR
+          mkdir -p $XDG_RUNTIME_DIR
+          ./build/src/vivarium
+        env:
+            XDG_RUNTIME_DIR: xdg_runtime_dir
+
+      - name: Run vivarium (headless) with config.toml and check for clean exit
+        run: |
+          mkdir -p $XDG_RUNTIME_DIR
+          mkdir -p ~/.config/vivarium
+          cp config/config.toml ~/.config/vivarium/
           ./build/src/vivarium
         env:
             XDG_RUNTIME_DIR: xdg_runtime_dir
