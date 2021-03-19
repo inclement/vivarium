@@ -75,16 +75,14 @@ int main(int argc, char *argv[]) {
     setenv("QT_QPA_PLATFORM", "wayland", true);
     setenv("GDK_BACKEND", "wayland", true);  // NOTE: not a typo, it really is GDK not GTK
 
-    return 0;
-
 #ifndef HEADLESS_TEST
     // Start the wayland eventloop. From here, all compositor activity comes via events it
     // sends us.
-	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s",
-			socket);
+	wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", socket);
 	wl_display_run(server.wl_display);
 #else
     // Don't run the compositor, just set up some headless outputs for CI testing
+	wlr_log(WLR_INFO, "Running headless Wayland compositor on WAYLAND_DISPLAY=%s", socket);
     headless_test(&server);
 #endif
 
