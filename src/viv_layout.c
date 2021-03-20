@@ -34,6 +34,9 @@ static void distribute_views(struct wl_list *views, struct wl_array *main_box, s
     uint32_t main_count = 0;
     uint32_t secondary_count = 0;
     wl_list_for_each(view, views, workspace_link) {
+        if (view->is_floating) {
+            continue;
+        }
         if (main_count < main_box_count) {
             viv_wl_array_append_view(main_box, view);
             main_count++;
@@ -106,6 +109,9 @@ static void layout_views_in_row(struct wl_array *views, uint32_t x, uint32_t y, 
 static void copy_views_wl_list_to_wl_array(struct wl_list *views_list, struct wl_array *views_array) {
     struct viv_view *view;
     wl_list_for_each(view, views_list, workspace_link) {
+        if (view->is_floating) {
+            continue;
+        }
         viv_wl_array_append_view(views_array, view);
     }
 }
