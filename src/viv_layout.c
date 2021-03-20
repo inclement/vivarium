@@ -110,7 +110,6 @@ static void copy_views_wl_list_to_wl_array(struct wl_list *views_list, struct wl
     struct viv_view *view;
     wl_list_for_each(view, views_list, workspace_link) {
         if (view->is_floating) {
-            wlr_log(WLR_ERROR, "Skipping floating view");
             continue;
         }
         viv_wl_array_append_view(views_array, view);
