@@ -170,14 +170,19 @@ static void parse_config_string_map(toml_table_t *root, char *section_name, char
     free(key.u.s);
 }
 
-static void parse_config_string_raw(toml_table_t *root, char *section_name, char *key_name, char **target) {
+static void parse_config_string_raw(toml_table_t *root, char *section_name, char *key_name, char **target, bool allow_missing) {
     toml_table_t *section = toml_table_in(root, section_name);
     toml_datum_t key = toml_string_in(section, key_name);
-    if (!key.ok) {
-        EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as string", section_name, key_name);
+    if (key.ok) {
+        *target = key.u.s;
+        wlr_log(WLR_DEBUG, "Parsed %s.%s = \"%s\" as string", section_name, key_name, *target);
+    } else {
+        if (allow_missing) {
+            wlr_log(WLR_DEBUG, "No key found for  %s.%s", section_name, key_name);
+        } else {
+            EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as string", section_name, key_name);
+        }
     }
-    *target = key.u.s;
-    wlr_log(WLR_DEBUG, "Parsed %s.%s = \"%s\" as string", section_name, key_name, *target);
 
     // TODO: save information about the fact that this is malloc'd, so that we know if we need to free it later
 }
@@ -495,21 +500,22 @@ void load_file_as_toml_config(FILE *fp, struct viv_config *config) {
     }
 
     // [background]
-    parse_config_string_raw(root, "background", "colour", &config->background.colour);
-    parse_config_string_raw(root, "background", "image", &config->background.image);
-    parse_config_string_raw(root, "background", "mode", &config->background.mode);
+    parse_config_string_raw(root, "background", "colour", &config->background.colour, true);
+    parse_config_string_raw(root, "background", "image", &config->background.image, true);
+    parse_config_string_raw(root, "background", "mode", &config->background.mode, true);
 
     // [xkb-config]
-    parse_config_string_raw(root, "xkb-config", "model", &config->xkb_rules.model);
-    parse_config_string_raw(root, "xkb-config", "layout", &config->xkb_rules.layout);
-    parse_config_string_raw(root, "xkb-config", "variant", &config->xkb_rules.variant);
-    parse_config_string_raw(root, "xkb-config", "options", &config->xkb_rules.options);
+    parse_config_string_raw(root, "xkb-config", "rules", &config->xkb_rules.rules, true);
+    parse_config_string_raw(root, "xkb-config", "model", &config->xkb_rules.model, true);
+    parse_config_string_raw(root, "xkb-config", "layout", &config->xkb_rules.layout, true);
+    parse_config_string_raw(root, "xkb-config", "variant", &config->xkb_rules.variant, true);
+    parse_config_string_raw(root, "xkb-config", "options", &config->xkb_rules.options, true);
 
     // [ipc]
-    parse_config_string_raw(root, "ipc", "workspaces-filename", &config->ipc_workspaces_filename);
+    parse_config_string_raw(root, "ipc", "workspaces-filename", &config->ipc_workspaces_filename, true);
 
     // [bar]
-    parse_config_string_raw(root, "bar", "command", &config->bar.command);
+    parse_config_string_raw(root, "bar", "command", &config->bar.command, true);
     parse_config_uint(root, "bar", "update-signal-number", &config->bar.update_signal_number);
 
     // [debug]

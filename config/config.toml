@@ -37,10 +37,10 @@ clear-colour = [0.73, 0.73, 0.73, 1.0]
 
 ### BACKGROUND ###
 # The background options are displayed using `swaybg`. Make sure you have this installed
-# if you want to use them!
+# if you want to use them.
 [background]
 colour = "#ff0000"
-image = "/home/sandy/sway_bg.jpg"
+image = "/path/to/your/background.png"
 mode = "fill"
 
 ### XKB-CONFIG ###
@@ -48,9 +48,9 @@ mode = "fill"
 # run from a shell.
 [xkb-config]
 model = "pc104"
-layout = "widecolemak"
-variant = "widecolemak"
-options = "ctrl:nocaps"
+layout = "us"
+variant = "basic"
+# options = "ctrl:nocaps"
 
 ### BAR ###
 # Options for configuring a bar program. The desktop bar (if any) is often used to display
