@@ -65,7 +65,7 @@ update-signal-number = 1
 # The filename to which Vivarium will write workspace state information whenever something changes.
 # Programs can watch this file to display the workspace status.
 # This is a hacky solution that will be deprecated at some point.
-workspaces-filename = "/home/sandy/.viv_workspace_state.txt"
+# workspaces-filename = "/path/to/some/file.txt"
 
 ### DEBUG ###
 # Vivarium debug options included for completion. You will want to leave these false under

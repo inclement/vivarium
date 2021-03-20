@@ -264,7 +264,7 @@ static struct viv_config the_config = {
 
     // Filename at which to write a workspace status string each time the workspace state changes.
     // This exists for basic inter-process communication e.g. with waybar, see below
-    .ipc_workspaces_filename = "/home/sandy/.viv_workspace_state.txt",
+    .ipc_workspaces_filename = NULL,
 
     // Status bar configuration.
     .bar = {
