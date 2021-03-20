@@ -178,7 +178,8 @@ static void parse_config_string_raw(toml_table_t *root, char *section_name, char
         wlr_log(WLR_DEBUG, "Parsed %s.%s = \"%s\" as string", section_name, key_name, *target);
     } else {
         if (allow_missing) {
-            wlr_log(WLR_DEBUG, "No key found for  %s.%s", section_name, key_name);
+            char *default_value = (*target) ? (*target) : "NULL";
+            wlr_log(WLR_DEBUG, "No key found for  %s.%s, using default \"%s\"", section_name, key_name, default_value);
         } else {
             EXIT_WITH_FORMATTED_MESSAGE("Config error reading %s.%s as string", section_name, key_name);
         }
