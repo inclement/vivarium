@@ -4,9 +4,49 @@
 #include "viv_workspace.h"
 #include "viv_xwayland_shell.h"
 
+/* /// See documentation at https://specifications.freedesktop.org/wm-spec/1.4/ar01s05.html */
+/* static const char *window_type_atom_strings[] = { */
+/*     "_NET_WM_WINDOW_TYPE_DESKTOP", */
+/*     "_NET_WM_WINDOW_TYPE_DOCK", */
+/*     "_NET_WM_WINDOW_TYPE_TOOLBAR", */
+/*     "_NET_WM_WINDOW_TYPE_MENU", */
+/*     "_NET_WM_WINDOW_TYPE_UTILITY", */
+/*     "_NET_WM_WINDOW_TYPE_SPLASH", */
+/*     "_NET_WM_WINDOW_TYPE_DIALOG", */
+/*     "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", */
+/*     "_NET_WM_WINDOW_TYPE_POPUP_MENU", */
+/*     "_NET_WM_WINDOW_TYPE_TOOLTIP", */
+/*     "_NET_WM_WINDOW_TYPE_NOTIFICATION", */
+/*     "_NET_WM_WINDOW_TYPE_COMBO", */
+/*     "_NET_WM_WINDOW_TYPE_DND", */
+/*     "_NET_WM_WINDOW_TYPE_NORMAL", */
+/* }; */
+
+/* enum window_type_atom { */
+/*     NET_WM_WINDOW_TYPE_DESKTOP, */
+/*     NET_WM_WINDOW_TYPE_DOCK, */
+/*     NET_WM_WINDOW_TYPE_TOOLBAR, */
+/*     NET_WM_WINDOW_TYPE_MENU, */
+/*     NET_WM_WINDOW_TYPE_UTILITY, */
+/*     NET_WM_WINDOW_TYPE_SPLASH, */
+/*     NET_WM_WINDOW_TYPE_DIALOG, */
+/*     NET_WM_WINDOW_TYPE_DROPDOWN_MENU, */
+/*     NET_WM_WINDOW_TYPE_POPUP_MENU, */
+/*     NET_WM_WINDOW_TYPE_TOOLTIP, */
+/*     NET_WM_WINDOW_TYPE_NOTIFICATION, */
+/*     NET_WM_WINDOW_TYPE_COMBO, */
+/*     NET_WM_WINDOW_TYPE_DND, */
+/*     NET_WM_WINDOW_TYPE_NORMAL, */
+/*     WINDOW_TYPE_ATOM_MAX, */
+/* }; */
+
+/* static uint32_t num_atoms = sizeof(window_type_atom_strings) / sizeof(char *); */
+
+
 /// Return true if the view looks like it should be floating. This is a poor proxy for proper window type inspection.
 /// TODO: Do proper window type inspection.
 static bool guess_should_be_floating(struct viv_view *view) {
+
     struct wlr_xwayland_surface_size_hints *size_hints = view->xwayland_surface->size_hints;
 
     // TODO: Use the window_type to guess this, not just the size hints
