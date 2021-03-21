@@ -10,7 +10,7 @@ config_test_sources = [
 config_test = executable(
   'config-test',
   config_test_sources,
-  include_directories : includes,
+  include_directories : includes + ['./'],
   dependencies : viv_deps + test_deps,
 )
 
