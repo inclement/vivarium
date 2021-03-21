@@ -39,6 +39,8 @@ wlroots_dep = dependency('wlroots', version : '0.12.0', fallback : ['wlroots', '
 
 tomlc99_dep = dependency('toml', fallback : ['tomlc99', 'tomlc99_static_dep'])
 
+fff_dep = dependency('fff', fallback : ['fff', 'fff'])
+
 wayland_server_dep = dependency('wayland-server')
 wayland_client_dep = dependency('wayland-client')
 wayland_protocols_dep = dependency('wayland-protocols')
