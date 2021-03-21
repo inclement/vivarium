@@ -21,6 +21,8 @@ static char *default_config_path = "../config/config.toml";
 void setUp() {
     RESET_LAYOUT_FAKES();
     RESET_MAPPABLE_FUNCTION_FAKES();
+
+    FFF_RESET_HISTORY();
 }
 
 void tearDown() {
