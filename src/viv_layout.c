@@ -23,7 +23,6 @@
 
 #include "viv_types.h"
 #include "viv_view.h"
-#include "viv_workspace.h"
 
 static void viv_wl_array_append_view(struct wl_array *array, struct viv_view *view) {
     *(struct viv_view **)wl_array_add(array, sizeof(struct viv_view *)) = view;

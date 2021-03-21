@@ -39,7 +39,7 @@ clear-colour = [0.73, 0.73, 0.73, 1.0]
 # The background options are displayed using `swaybg`. Make sure you have this installed
 # if you want to use them.
 [background]
-colour = "#ff0000"
+colour = "#bbbbbb"
 image = "/path/to/your/background.png"
 mode = "fill"
 
@@ -47,9 +47,9 @@ mode = "fill"
 # These all accept standard xkb syntax and options, e.g. as you would pass to `setxkbmap`
 # run from a shell.
 [xkb-config]
-model = "pc104"
-layout = "us"
-variant = "basic"
+# model = "pc104"
+# layout = "us"
+# variant = "basic"
 # options = "ctrl:nocaps"
 
 ### BAR ###
@@ -98,7 +98,7 @@ name = "Fullscreen"
 layout = "fullscreen"
 
 [[layout]]
-name = "Fullscreen no borders"
+name = "Fullscreen No Borders"
 layout = "fullscreen"
 ignore-excluded-regions = true
 show-borders = false
@@ -143,6 +143,16 @@ action = "increment_divide"
 increment = -0.05
 
 [[keybind]]
+keysym = "comma"
+action = "increment_counter"
+increment = 1
+
+[[keybind]]
+keysym = "period"
+action = "increment_counter"
+increment = -1
+
+[[keybind]]
 keysym = "j"
 action = "next_window"
 
@@ -167,7 +177,7 @@ keysym = "e"
 action = "right_output"
 
 [[keybind]]
-keysym = "q"
+keysym = "w"
 action = "left_output"
 
 [[keybind]]
@@ -179,17 +189,12 @@ keysym = "E"
 action = "shift_active_window_to_right_output"
 
 [[keybind]]
-keysym = "Q"
+keysym = "W"
 action = "shift_active_window_to_left_output"
 
 [[keybind]]
 keysym = "C"
 action = "close_window"
-
-[[keybind]]
-keysym = "o"
-action = "do_exec"
-executable = "bemenu-run"
 
 [[keybind]]
 keysym = "Return"
@@ -198,6 +203,11 @@ action = "make_window_main"
 [[keybind]]
 keysym = "R"
 action = "reload_config"
+
+[[keybind]]
+keysym = "o"
+action = "do_exec"
+executable = "bemenu-run"
 
 [[keybind]]
 modifiers = []
