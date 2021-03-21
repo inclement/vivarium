@@ -82,7 +82,7 @@ Vivarium expects to be run from a TTY, but also supports embedding in an X sessi
 
 ## Configuration
 
-Vivarium supports a static configuration using using `config.toml`, or a build-time configuration using `viv_config.h`, or both! The static configuration is intended to be convenient for most users, but the build-time header can be used to inject your own code for e.g. custom layouts or keypress events.
+Vivarium comes with a default config that you can override by creating your own `config.toml`. You can also adjust the default config at compile time using `viv_config.h`, which is necessary if you want to inject your own code for e.g. custom layouts or adding keypress actions that aren't already provided by Vivarium.
 
 Configuration options include but are not limited to:
 
@@ -96,6 +96,8 @@ Configuration options include but are not limited to:
 
 ### config.toml
 
+**Use this if:** you've installed Vivarium and want to override its defaults with your own config.
+
 Copy the default config so that Vivarium will find it.
 
     mkdir -p $HOME/.config/vivarium
@@ -103,9 +105,11 @@ Copy the default config so that Vivarium will find it.
 
 The default config is extensively documented and includes all the Vivarium default bindings. See the documentation inside the file to see what other options you can set.
 
-If you installed Vivarium globally, the default config should be found in `/etc/vivarium/config.toml` or `/usr/local/etc/vivarium/config.toml`.
+If you installed Vivarium globally, the default config should instead be found in `/etc/vivarium/config.toml` or `/usr/local/etc/vivarium/config.toml`.
 
 ### viv_config.h
+
+**Use this if:** you want to adjust Vivarium's compiled-in default config or write your own C code for layouts or keybinds.
 
 Vivarium automatically uses the configuration struct defined in `viv_config.h`. Edit that file before compiling to update the configuration.
 
