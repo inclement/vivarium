@@ -108,8 +108,9 @@ static void layout_views_in_row(struct wl_array *views, uint32_t x, uint32_t y, 
     }
 }
 
-void viv_layout_do_columns(struct viv_workspace *workspace, struct wl_array *views, uint32_t width, uint32_t height) {
-    UNUSED(workspace);
+void viv_layout_do_columns(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height) {
+    UNUSED(float_param);
+    UNUSED(counter_param);
     layout_views_in_row(views, 0, 0, width, height);
 }
 
@@ -125,10 +126,9 @@ void viv_layout_do_columns(struct viv_workspace *workspace, struct wl_array *vie
  *  |              |    | 5  |
  *  |--------------|----|----|
  */
-void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, struct wl_array *views, uint32_t width, uint32_t height) {
+void viv_layout_do_fibonacci_spiral(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height) {
+    UNUSED(counter_param);
     uint32_t num_views = viv_wl_array_num_views(views);
-
-    float frac = workspace->active_layout->parameter;
 
     uint32_t x = 0;
     uint32_t y = 0;
@@ -142,7 +142,7 @@ void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, struct wl_a
         bool is_last_view = (view_index == num_views - 1);
         if (view_index % 2 == 0) {
 
-            uint32_t cur_width = (uint32_t)(frac * available_width);
+            uint32_t cur_width = (uint32_t)(float_param * available_width);
             if (is_last_view) {
                 cur_width = available_width;
             }
@@ -152,7 +152,7 @@ void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, struct wl_a
             x += cur_width;
             available_width -= cur_width;
         } else {
-            uint32_t cur_height = (uint32_t)(frac * available_height);
+            uint32_t cur_height = (uint32_t)(float_param * available_height);
 
             if (is_last_view) {
                 cur_height = available_height;
@@ -179,19 +179,18 @@ void viv_layout_do_fibonacci_spiral(struct viv_workspace *workspace, struct wl_a
  *  |      |          |      |
  *  |------|----------|------|
  */
-void viv_layout_do_central_column(struct viv_workspace *workspace, struct wl_array *views, uint32_t width, uint32_t height) {
+void viv_layout_do_central_column(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height) {
     uint32_t num_views = viv_wl_array_num_views(views);
-    uint32_t counter = workspace->active_layout->counter;
-    float split_dist = (num_views == 0) ? 1.0 : workspace->active_layout->parameter;
+    float split_dist = (num_views == 0) ? 1.0 : float_param;
 
     uint32_t central_column_width = (uint32_t)(width * split_dist);
-    if (counter == 0) {
+    if (counter_param == 0) {
         central_column_width = 0;
-    } else if (num_views <= counter) {
+    } else if (num_views <= counter_param) {
         central_column_width = width;
     }
 
-    uint32_t num_non_main_views = (counter > num_views) ? 0 : num_views - counter;
+    uint32_t num_non_main_views = (counter_param > num_views) ? 0 : num_views - counter_param;
     // Do allocation in this order so that if the number of views is
     // odd, the extra one ends up in the right column
     uint32_t num_right_views = num_non_main_views / 2;
@@ -208,7 +207,7 @@ void viv_layout_do_central_column(struct viv_workspace *workspace, struct wl_arr
     struct wl_array main_box, secondary_box;
     wl_array_init(&main_box);
     wl_array_init(&secondary_box);
-    distribute_views(views, &main_box, &secondary_box, counter);
+    distribute_views(views, &main_box, &secondary_box, counter_param);
 
     layout_views_in_column(&main_box, left_column_width, 0, central_column_width, height);
 
@@ -218,15 +217,15 @@ void viv_layout_do_central_column(struct viv_workspace *workspace, struct wl_arr
     wl_array_init(&right_box);
 
     struct viv_view **view_ptr;
-    uint32_t col_counter = 0;
+    uint32_t col_counter_param = 0;
     wl_array_for_each(view_ptr, &secondary_box) {
         struct viv_view *view = *view_ptr;
-        if (col_counter >= num_left_views) {
+        if (col_counter_param >= num_left_views) {
             viv_wl_array_append_view(&right_box, view);
         } else {
             viv_wl_array_append_view(&left_box, view);
         }
-        col_counter++;
+        col_counter_param++;
     }
 
     layout_views_in_column(&left_box, 0, 0, left_column_width, height);
@@ -251,9 +250,10 @@ void viv_layout_do_central_column(struct viv_workspace *workspace, struct wl_arr
  *          |   4    |
  *          |--------|
  */
-void viv_layout_do_indented_tabs(struct viv_workspace *workspace, struct wl_array *views, uint32_t width, uint32_t height) {
-    UNUSED(workspace);
+void viv_layout_do_indented_tabs(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height) {
     UNUSED(views);
+    UNUSED(float_param);
+    UNUSED(counter_param);
     UNUSED(width);
     UNUSED(height);
 }
@@ -269,8 +269,9 @@ void viv_layout_do_indented_tabs(struct viv_workspace *workspace, struct wl_arra
  *  |                        |
  *  |------------------------|
  */
-void viv_layout_do_fullscreen(struct viv_workspace *workspace, struct wl_array *views, uint32_t width, uint32_t height) {
-    UNUSED(workspace);
+void viv_layout_do_fullscreen(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height) {
+    UNUSED(float_param);
+    UNUSED(counter_param);
     struct viv_view **view_ptr;
     wl_array_for_each(view_ptr, views) {
         struct viv_view *view = *view_ptr;
@@ -289,25 +290,24 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace, struct wl_array *
  *  |              |    5    |
  *  |--------------|---------|
  */
-void viv_layout_do_split(struct viv_workspace *workspace, struct wl_array *views, uint32_t width, uint32_t height) {
+void viv_layout_do_split(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height) {
     uint32_t num_views = viv_wl_array_num_views(views);
-    uint32_t counter = workspace->active_layout->counter;
-    float split_dist = (num_views == 0) ? 1.0 : workspace->active_layout->parameter;
+    float split_dist = (num_views == 0) ? 1.0 : float_param;
 
     uint32_t split_pixel = (uint32_t)(width * split_dist);
-    if (counter == 0) {
+    if (counter_param == 0) {
         split_pixel = 0;
-    } else if (num_views <= counter) {
+    } else if (num_views <= counter_param) {
         split_pixel = width;
     }
 
     struct wl_array main_box, secondary_box;
     wl_array_init(&main_box);
     wl_array_init(&secondary_box);
-    distribute_views(views, &main_box, &secondary_box, counter);
+    distribute_views(views, &main_box, &secondary_box, counter_param);
 
     layout_views_in_column(&main_box, 0, 0, split_pixel, height);
-    if (num_views > counter) {
+    if (num_views > counter_param) {
         layout_views_in_column(&secondary_box, split_pixel, 0, width - split_pixel, height);
     }
 
@@ -327,5 +327,8 @@ void viv_layout_apply(struct viv_workspace *workspace, uint32_t width, uint32_t 
         viv_wl_array_append_view(&views_array, view);
     }
 
-    workspace->active_layout->layout_function(workspace, &views_array, width, height);
+    float float_param = workspace->active_layout->parameter;
+    uint32_t counter_param = workspace->active_layout->counter;
+
+    workspace->active_layout->layout_function(&views_array, float_param, counter_param, width, height);
 }

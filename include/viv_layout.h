@@ -13,7 +13,7 @@
     MACRO(fibonacci_spiral);                           \
     MACRO(central_column);                             \
 
-#define GENERATE_DECLARATION(LAYOUT_NAME) void viv_layout_do_ ## LAYOUT_NAME(struct viv_workspace *workspace, struct wl_array *views, uint32_t width, uint32_t height);
+#define GENERATE_DECLARATION(LAYOUT_NAME) void viv_layout_do_ ## LAYOUT_NAME(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height);
 
 MACRO_FOR_EACH_LAYOUT(GENERATE_DECLARATION);
 
