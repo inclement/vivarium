@@ -40,11 +40,9 @@ static void distribute_views(struct wl_array *views, struct wl_array *main_box, 
     wl_array_for_each(view_ptr, views) {
         struct viv_view *view = *view_ptr;
         if (main_count < main_box_count) {
-            wlr_log(WLR_INFO, "Adding %p to main box", view);
             viv_wl_array_append_view(main_box, view);
             main_count++;
         } else {
-            wlr_log(WLR_INFO, "Adding %p to secondary box", view);
             viv_wl_array_append_view(secondary_box, view);
             secondary_count++;
         }
@@ -276,7 +274,6 @@ void viv_layout_do_fullscreen(struct viv_workspace *workspace, struct wl_array *
     struct viv_view **view_ptr;
     wl_array_for_each(view_ptr, views) {
         struct viv_view *view = *view_ptr;
-        wlr_log(WLR_INFO, "Laying out view %p", view);
         viv_view_set_target_box(view, 0, 0, width, height);
     }
 }
@@ -296,7 +293,6 @@ void viv_layout_do_split(struct viv_workspace *workspace, struct wl_array *views
     uint32_t num_views = viv_wl_array_num_views(views);
     uint32_t counter = workspace->active_layout->counter;
     float split_dist = (num_views == 0) ? 1.0 : workspace->active_layout->parameter;
-    wlr_log(WLR_INFO, "num views %d, counter is %d", num_views, counter);
 
     uint32_t split_pixel = (uint32_t)(width * split_dist);
     if (counter == 0) {
@@ -323,17 +319,13 @@ void viv_layout_apply(struct viv_workspace *workspace, uint32_t width, uint32_t 
     struct wl_array views_array;
     wl_array_init(&views_array);
     struct viv_view *view;
-    wlr_log(WLR_ERROR, "start");
     wl_list_for_each(view, &workspace->views, workspace_link) {
         // Pull out only the non-floating views to be laid out
         if (view->is_floating) {
             continue;
         }
-        wlr_log(WLR_ERROR, "Adding view %p", view);
         viv_wl_array_append_view(&views_array, view);
     }
-
-    wlr_log(WLR_ERROR, "workspace num views %d, array num views %d", wl_list_length(&workspace->views), viv_wl_array_num_views(&views_array));
 
     workspace->active_layout->layout_function(workspace, &views_array, width, height);
 }
