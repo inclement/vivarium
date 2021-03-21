@@ -39,7 +39,7 @@ clear-colour = [0.73, 0.73, 0.73, 1.0]
 # The background options are displayed using `swaybg`. Make sure you have this installed
 # if you want to use them.
 [background]
-colour = "#ff0000"
+colour = "#bbbbbb"
 image = "/path/to/your/background.png"
 mode = "fill"
 
@@ -47,9 +47,9 @@ mode = "fill"
 # These all accept standard xkb syntax and options, e.g. as you would pass to `setxkbmap`
 # run from a shell.
 [xkb-config]
-model = "pc104"
-layout = "us"
-variant = "basic"
+# model = "pc104"
+# layout = "us"
+# variant = "basic"
 # options = "ctrl:nocaps"
 
 ### BAR ###

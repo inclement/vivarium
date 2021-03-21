@@ -4,7 +4,8 @@ test_deps = [
 ]
 
 config_test_sources = [
-  'config_test.c'
+  'test_config.c',
+  '../src/viv_toml_config.c',
 ]
 
 config_test = executable(
