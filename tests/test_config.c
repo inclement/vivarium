@@ -34,45 +34,53 @@ void test_config_load(void) {
 
 /// The config.toml content matches the compiled-in defaults - this is important so that a
 /// user merely copying the config into place doesn't change Vivarium's behaviour.
-void test_config_toml_matches_defaults(void) {
+#define TEST_ASSERT_CONFIG_EQUAL(KEY) TEST_ASSERT_EQUAL_MESSAGE(default_config.KEY, load_config.KEY, "Mismatching key = " #KEY)
+#define TEST_ASSERT_CONFIG_EQUAL_STRING(KEY) TEST_ASSERT_EQUAL_STRING_MESSAGE(default_config.KEY, load_config.KEY, "Mismatching key = " #KEY)
+#define TEST_ASSERT_CONFIG_EQUAL_FLOAT(KEY) TEST_ASSERT_EQUAL_FLOAT_MESSAGE(default_config.KEY, load_config.KEY, "Mismatching key = " #KEY)
+#define TEST_ASSERT_CONFIG_EQUAL_FLOAT_ARRAY(KEY, LEN) TEST_ASSERT_EQUAL_FLOAT_ARRAY_MESSAGE(default_config.KEY, load_config.KEY, LEN, "Mismatching key = " #KEY)
+void test_config_toml_static_options_match_defaults(void) {
     struct viv_config load_config = { 0 };
     viv_toml_config_load(default_config_path, &load_config, true);
-
     struct viv_config default_config = the_config;
 
-    TEST_ASSERT_EQUAL(default_config.global_meta_key, load_config.global_meta_key);
-    TEST_ASSERT_EQUAL(default_config.focus_follows_mouse, load_config.focus_follows_mouse);
-    TEST_ASSERT_EQUAL(default_config.win_move_cursor_button, load_config.win_move_cursor_button);
-    TEST_ASSERT_EQUAL(default_config.win_resize_cursor_button, load_config.win_resize_cursor_button);
+    TEST_ASSERT_CONFIG_EQUAL(global_meta_key);
+    TEST_ASSERT_CONFIG_EQUAL(focus_follows_mouse);
+    TEST_ASSERT_CONFIG_EQUAL(win_move_cursor_button);
+    TEST_ASSERT_CONFIG_EQUAL(win_resize_cursor_button);
 
-    TEST_ASSERT_EQUAL(default_config.border_width, load_config.border_width);
+    TEST_ASSERT_CONFIG_EQUAL(border_width);
 
-    TEST_ASSERT_EQUAL_FLOAT_ARRAY(default_config.active_border_colour, load_config.active_border_colour, RGBA_NUM_VALUES);
-    TEST_ASSERT_EQUAL_FLOAT_ARRAY(default_config.inactive_border_colour, load_config.inactive_border_colour, RGBA_NUM_VALUES);
+    TEST_ASSERT_CONFIG_EQUAL_FLOAT_ARRAY(active_border_colour, RGBA_NUM_VALUES);
+    TEST_ASSERT_CONFIG_EQUAL_FLOAT_ARRAY(inactive_border_colour, RGBA_NUM_VALUES);
 
-    TEST_ASSERT_EQUAL(default_config.gap_width, load_config.gap_width);
+    TEST_ASSERT_CONFIG_EQUAL(gap_width);
 
-    TEST_ASSERT_EQUAL_FLOAT_ARRAY(default_config.clear_colour, load_config.clear_colour, RGBA_NUM_VALUES);
+    TEST_ASSERT_CONFIG_EQUAL_FLOAT_ARRAY(clear_colour, RGBA_NUM_VALUES);
 
-    TEST_ASSERT_EQUAL_STRING(default_config.background.colour, load_config.background.colour);
-    TEST_ASSERT_EQUAL_STRING(default_config.background.image, load_config.background.image);
-    TEST_ASSERT_EQUAL_STRING(default_config.background.mode, load_config.background.mode);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(background.colour);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(background.image);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(background.mode);
 
-    TEST_ASSERT_EQUAL_STRING(default_config.xkb_rules.rules, load_config.xkb_rules.rules);
-    TEST_ASSERT_EQUAL_STRING(default_config.xkb_rules.model, load_config.xkb_rules.model);
-    TEST_ASSERT_EQUAL_STRING(default_config.xkb_rules.layout, load_config.xkb_rules.layout);
-    TEST_ASSERT_EQUAL_STRING(default_config.xkb_rules.variant, load_config.xkb_rules.variant);
-    TEST_ASSERT_EQUAL_STRING(default_config.xkb_rules.options, load_config.xkb_rules.options);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(xkb_rules.rules);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(xkb_rules.model);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(xkb_rules.layout);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(xkb_rules.variant);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(xkb_rules.options);
 
-    TEST_ASSERT_EQUAL_STRING(default_config.ipc_workspaces_filename, load_config.ipc_workspaces_filename);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(ipc_workspaces_filename);
 
-    TEST_ASSERT_EQUAL_STRING(default_config.bar.command, load_config.bar.command);
-    TEST_ASSERT_EQUAL(default_config.bar.update_signal_number, load_config.bar.update_signal_number);
+    TEST_ASSERT_CONFIG_EQUAL_STRING(bar.command);
+    TEST_ASSERT_CONFIG_EQUAL(bar.update_signal_number);
 
-    TEST_ASSERT_EQUAL(default_config.debug_mark_views_by_shell, load_config.debug_mark_views_by_shell);
-    TEST_ASSERT_EQUAL(default_config.debug_mark_active_output, load_config.debug_mark_active_output);
+    TEST_ASSERT_CONFIG_EQUAL(debug_mark_views_by_shell);
+    TEST_ASSERT_CONFIG_EQUAL(debug_mark_active_output);
+}
 
-    // Workspace names
+void test_config_toml_workspaces_match_defaults(void) {
+    struct viv_config load_config = { 0 };
+    viv_toml_config_load(default_config_path, &load_config, true);
+    struct viv_config default_config = the_config;
+
     for (size_t i = 0; i < MAX_LEN_STATIC_LISTS; i++) {
         char *default_name = default_config.workspaces[i];
         char *load_name = load_config.workspaces[i];
@@ -84,8 +92,13 @@ void test_config_toml_matches_defaults(void) {
         TEST_ASSERT_EQUAL_STRING(default_name, load_name);
 
     }
+}
 
-    // Keybinds
+void test_config_toml_keybinds_match_defaults(void) {
+    struct viv_config load_config = { 0 };
+    viv_toml_config_load(default_config_path, &load_config, true);
+    struct viv_config default_config = the_config;
+
     for (size_t i = 0; i < MAX_LEN_STATIC_LISTS; i++) {
         struct viv_keybind default_keybind = default_config.keybinds[i];
         struct viv_keybind load_keybind = load_config.keybinds[i];
@@ -104,8 +117,13 @@ void test_config_toml_matches_defaults(void) {
             break;
         }
     }
+}
 
-    // Libinput configs
+void test_config_toml_libinput_configs_match_defaults(void) {
+    struct viv_config load_config = { 0 };
+    viv_toml_config_load(default_config_path, &load_config, true);
+    struct viv_config default_config = the_config;
+
     for (size_t i = 0; i < MAX_LEN_STATIC_LISTS; i++) {
         struct viv_libinput_config default_li_config = default_config.libinput_configs[i];
         struct viv_libinput_config load_li_config = load_config.libinput_configs[i];
@@ -121,8 +139,13 @@ void test_config_toml_matches_defaults(void) {
             break;
         }
     }
+}
 
-    // Layouts
+void test_config_toml_layouts_match_defaults(void) {
+    struct viv_config load_config = { 0 };
+    viv_toml_config_load(default_config_path, &load_config, true);
+    struct viv_config default_config = the_config;
+
     for (size_t i = 0; i < MAX_LEN_STATIC_LISTS; i++) {
         struct viv_layout default_layout = default_config.layouts[i];
         struct viv_layout load_layout = load_config.layouts[i];
@@ -150,6 +173,10 @@ int main(int argc, char *argv[]) {
 
     UNITY_BEGIN();
     RUN_TEST(test_config_load);
-    RUN_TEST(test_config_toml_matches_defaults);
+    RUN_TEST(test_config_toml_static_options_match_defaults);
+    RUN_TEST(test_config_toml_workspaces_match_defaults);
+    RUN_TEST(test_config_toml_keybinds_match_defaults);
+    RUN_TEST(test_config_toml_libinput_configs_match_defaults);
+    RUN_TEST(test_config_toml_layouts_match_defaults);
     return UNITY_END();
 }
