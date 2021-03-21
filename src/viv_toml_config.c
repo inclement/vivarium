@@ -249,6 +249,15 @@ static void parse_mappable_arguments(toml_table_t *table, char *action, union vi
         payload->increment_divide.increment = increment_double.u.d;
         wlr_log(WLR_DEBUG, "Parsed argument \"%s\" = %f for action \"%s\"",
                 "increment", increment_double.u.d, action);
+    } else if (strcmp(action, "increment_counter") == 0) {
+        toml_datum_t increment_int = toml_int_in(table, "increment");
+        if (!increment_int.ok) {
+            EXIT_WITH_FORMATTED_MESSAGE("Config error parsing [[keybind]] for action %s: missing \"increment\" key",
+                                        action);
+        }
+        payload->increment_divide.increment = increment_int.u.d;
+        wlr_log(WLR_DEBUG, "Parsed argument \"%s\" = %f for action \"%s\"",
+                "increment", increment_int.u.d, action);
     } else if (strcmp(action, "shift_active_window_to_workspace") == 0) {
         toml_datum_t workspace_name_string = toml_string_in(table, "workspace_name");
         if (!workspace_name_string.ok) {
@@ -495,7 +504,7 @@ void load_file_as_toml_config(FILE *fp, struct viv_config *config) {
                                     toml_array_kind(workspace_names));
     }
     uint32_t our_array_nelem = toml_array_nelem(workspace_names);
-    for (size_t i = 0; i < our_array_nelem - 1; i++) {
+    for (size_t i = 0; i < our_array_nelem; i++) {
         toml_datum_t name = toml_string_at(workspace_names, i);
         strncpy((char *)&config->workspaces[i], name.u.s, MAX_WORKSPACE_NAME_LENGTH);
         wlr_log(WLR_DEBUG, "Parsed workspace name \"%s\"", config->workspaces[i]);

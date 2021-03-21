@@ -94,12 +94,12 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(META, Return, make_window_main),
     KEYBIND_MAPPABLE(META, R, reload_config),
     KEYBIND_MAPPABLE(META, o, do_exec, .executable = "bemenu-run"),
-    /// How to bind your own function rather than an existing command:
-    KEYBIND_USER_FUNCTION(META, F, &example_user_function),
     /// How to run any shell command:
     KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioMute, do_shell, .command = "pactl set-sink-mute 0 toggle"),
     KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioLowerVolume, do_shell, .command = "amixer -q sset Master 3%-"),
     KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioRaiseVolume, do_shell, .command = "amixer -q sset Master 3%+"),
+    /// How to bind your own function rather than an existing command:
+    KEYBIND_USER_FUNCTION(META, F, &example_user_function),
     /// Autogenerate keybindings to switch to and/or send windows to each workspace:
     FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
     FOR_EACH_WORKSPACE(BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE)
@@ -172,24 +172,6 @@ struct viv_layout the_layouts[] = {
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
         .ignore_excluded_regions = true,
         .no_borders = true,
-    },
-    {
-        .name = "Spiral",
-        .layout_function = &viv_layout_do_fibonacci_spiral,
-        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
-        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
-    },
-    {
-        .name = "Central Column",
-        .layout_function = &viv_layout_do_central_column,
-        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
-        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
-    },
-    {
-        .name = "Columns",
-        .layout_function = &viv_layout_do_columns,
-        .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
-        .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
     },
     // Example user-defined layout. You probably want to delete this from the config, but
     // this is how to make your own layout.
