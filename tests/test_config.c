@@ -16,6 +16,8 @@ FAKE_VOID_FUNC(viv_view_set_target_box, struct viv_view *, uint32_t, uint32_t, u
 static char *default_config_path = "../config/config.toml";
 
 void setUp() {
+    RESET_LAYOUT_FAKES();
+    RESET_MAPPABLE_FUNCTION_FAKES();
 }
 
 void tearDown() {
@@ -66,13 +68,14 @@ void test_config_toml_matches_defaults(void) {
 
     TEST_ASSERT_EQUAL(default_config.debug_mark_views_by_shell, load_config.debug_mark_views_by_shell);
     TEST_ASSERT_EQUAL(default_config.debug_mark_active_output, load_config.debug_mark_active_output);
+
+    // Keybinds
+
 }
 
 int main(int argc, char *argv[]) {
     UNUSED(argc);
     UNUSED(argv);
-
-    UNUSED(the_config);
 
     UNITY_BEGIN();
     RUN_TEST(test_config_load);
