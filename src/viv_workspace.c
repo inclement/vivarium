@@ -2,6 +2,7 @@
 #include <wlr/util/log.h>
 
 #include "viv_cursor.h"
+#include "viv_layout.h"
 #include "viv_types.h"
 #include "viv_view.h"
 #include "viv_wl_list_utils.h"
@@ -196,7 +197,7 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
         height -= (output->excluded_margin.top - output->excluded_margin.bottom);
     }
 
-    workspace->active_layout->layout_function(workspace, width, height);
+    viv_layout_apply(workspace, width, height);
 
     workspace->needs_layout = false;
     workspace->output->needs_layout = false;

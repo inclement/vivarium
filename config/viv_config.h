@@ -25,14 +25,15 @@ static void example_user_function(struct viv_workspace *workspace) {
 
 /// This example defines a custom tiling layout from scratch: each view takes up a fraction of the
 /// remaining horizontal space. This is just an example, not a useful layout.
-static void example_user_layout(struct viv_workspace *workspace, uint32_t width, uint32_t height) {
-    struct viv_view *view;
-    float frac = workspace->active_layout->parameter;  // parameter can be modified at runtime
+static void example_user_layout(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height) {
+    UNUSED(counter_param);
     uint32_t available_width = width;
     uint32_t x = 0;
     uint32_t y = 0;
-    wl_list_for_each(view, &workspace->views, workspace_link) {
-        uint32_t current_width = available_width * frac;
+    struct viv_view **view_ptr;
+    wl_array_for_each(view_ptr, views) {
+        struct viv_view *view = *view_ptr;
+        uint32_t current_width = available_width * float_param;
         viv_view_set_target_box(view, x, y, current_width, height);
         x += current_width;
         available_width -= current_width;

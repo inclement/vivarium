@@ -124,7 +124,7 @@ struct viv_output {
 
 struct viv_layout {
     char name[100];
-    void (*layout_function)(struct viv_workspace *workspace, uint32_t width, uint32_t height);  /// Function that applies the layout
+    void (*layout_function)(struct wl_array *views, float float_param, uint32_t counter_param, uint32_t width, uint32_t height);  /// Function that applies the layout
 
     float parameter;  /// A float between 0-1 which the user may configure at runtime
     uint32_t counter;  /// User-configurable uint which the user may configure at runtime, effectively unbounded
