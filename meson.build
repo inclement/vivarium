@@ -39,7 +39,9 @@ wlroots_dep = dependency('wlroots', version : '0.12.0', fallback : ['wlroots', '
 
 tomlc99_dep = dependency('toml', fallback : ['tomlc99', 'tomlc99_static_dep'])
 
+# Unit testing deps
 fff_dep = dependency('fff', fallback : ['fff', 'fff'])
+unity_dep = dependency('unity', fallback : ['unity', 'unity_dep'])
 
 wayland_server_dep = dependency('wayland-server')
 wayland_client_dep = dependency('wayland-client')

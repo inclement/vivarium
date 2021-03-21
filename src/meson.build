@@ -32,7 +32,6 @@ viv_deps = [
     xdg_shell_protocol_dep,
     layer_shell_protocol_dep,
     tomlc99_dep,
-    fff_dep,
 ]
 
 executable(
