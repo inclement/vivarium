@@ -70,3 +70,7 @@ jobs:
           ./build/src/vivarium
         env:
             XDG_RUNTIME_DIR: xdg_runtime_dir
+
+      - name: Run tests
+        run: |
+             meson test -C build

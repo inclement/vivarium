@@ -11,6 +11,6 @@ cc = meson.get_compiler('c')
 
 include_dir = include_directories('.')
 
-fff = declare_dependency(
+fff_dep = declare_dependency(
   include_directories: [include_dir],
 )

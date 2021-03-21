@@ -40,7 +40,7 @@ wlroots_dep = dependency('wlroots', version : '0.12.0', fallback : ['wlroots', '
 tomlc99_dep = dependency('toml', fallback : ['tomlc99', 'tomlc99_static_dep'])
 
 # Unit testing deps
-fff_dep = dependency('fff', fallback : ['fff', 'fff'])
+fff_dep = dependency('fff', fallback : ['fff', 'fff_dep'])
 unity_dep = dependency('unity', fallback : ['unity', 'unity_dep'])
 
 wayland_server_dep = dependency('wayland-server')
@@ -59,6 +59,7 @@ includes = [
 subdir('include')
 subdir('protocols')
 subdir('src')
+subdir('tests')
 
 # Make sure our default config file is also installed so users can copy it into place.
 # We don't actually need the meson config file declaration for this, but it's convenient.
