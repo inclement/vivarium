@@ -3,16 +3,19 @@ test_deps = [
   unity_dep,
 ]
 
-config_test_sources = [
-  'test_config.c',
-  '../src/viv_toml_config.c',
-]
-
-config_test = executable(
-  'config-test',
-  config_test_sources,
+test_config = executable(
+  'test-config',
+  ['test_config.c', '../src/viv_toml_config.c'],
   include_directories : includes + ['./'],
   dependencies : viv_deps + test_deps,
 )
 
-test('config test', config_test)
+test_layouts = executable(
+  'test-layouts',
+  ['test_layouts.c', '../src/viv_layout.c'],
+  include_directories : includes + ['./'],
+  dependencies : viv_deps + test_deps,
+)
+
+test('Test config', test_config)
+test('Test layouts', test_layouts)

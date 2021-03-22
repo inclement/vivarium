@@ -19,6 +19,7 @@ FAKE_VOID_FUNC(viv_view_set_target_box, struct viv_view *, uint32_t, uint32_t, u
 static char *default_config_path = "../config/config.toml";
 
 void setUp() {
+    RESET_FAKE(viv_view_set_target_box);
     RESET_LAYOUT_FAKES();
     RESET_MAPPABLE_FUNCTION_FAKES();
 }
