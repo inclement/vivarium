@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "viv_layout.h"
+#include "viv_mappable_functions.h"
+
 #define LAST_OPTION {0, 0, 0, 0}
 
 #define MACRO_FOR_EACH_OPTION(MACRO)            \
@@ -22,7 +25,30 @@ static void handle_help(void) {
     );
 }
 
+#define PRINT_LAYOUT_HELP(LAYOUT_NAME, HELP, DIAGRAM)   \
+    printf("  " #LAYOUT_NAME ": " HELP "\n" DIAGRAM "\n\n\n");
+
 static void handle_list_config_options(void) {
+    printf(
+        "# Layouts\n"
+        "\n"
+        "To use a layout, add it to the layout list in your config.toml:\n"
+        "  [[layout]]\n"
+        "  name = \"Split\"\n"
+        "  layout = \"split\"  # layout name selected from list below\n"
+        "\n"
+        );
+    printf("Available layout names:\n\n");
+    MACRO_FOR_EACH_LAYOUT(PRINT_LAYOUT_HELP);
+
+    printf(
+        "# Actions\n"
+        "\n"
+        "To use an action in a keybind, add it to the keybind list in your config.toml:\n"
+        "  [[keybind]]\n"
+        "  keysym = \"Q\"\n"
+        "  action = \"terminate\"  # action name selected from the list below\n"
+        );
 }
 
 #define GENERATE_OPTION_HANDLER_LOOKUP(CLI_NAME, FUNC_NAME, HAS_ARG, FLAG, VAL) \
