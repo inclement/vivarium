@@ -15,7 +15,7 @@
 #define GENERATE_OPTION_STRUCT(CLI_NAME, FUNC_NAME, HAS_ARG, FLAG, VAL)  \
     {CLI_NAME, HAS_ARG, FLAG, VAL},
 
-static void handle_help(void) {
+static bool handle_help(void) {
     printf(
         "Usage: vivarium [-h] [-v]\n"
         "\n"
@@ -23,6 +23,8 @@ static void handle_help(void) {
         "--list-config-options    List available layouts and keybinds\n"
         "\n"
     );
+
+    return true;
 }
 
 #define PRINT_LAYOUT_HELP(LAYOUT_NAME, HELP, DIAGRAM)   \
@@ -31,7 +33,7 @@ static void handle_help(void) {
 #define PRINT_MAPPABLE_HELP(FUNCTION_NAME, DOC, ...)    \
     printf("  " #FUNCTION_NAME ": " DOC "\n");
 
-static void handle_list_config_options(void) {
+static bool handle_list_config_options(void) {
     printf(
         "# Layouts\n"
         "\n"
@@ -52,14 +54,19 @@ static void handle_list_config_options(void) {
         "  keysym = \"Q\"\n"
         "  action = \"terminate\"  # action name selected from the list below\n"
         "\n"
+        "Available keybinds:\n"
+        "\n"
         );
     MACRO_FOR_EACH_MAPPABLE(PRINT_MAPPABLE_HELP);
+    printf("\n");
+
+    return true;
 }
 
 #define GENERATE_OPTION_HANDLER_LOOKUP(CLI_NAME, FUNC_NAME, HAS_ARG, FLAG, VAL) \
     &handle_ ## FUNC_NAME,
 
-static void (*option_handlers[])(void) = {
+static bool (*option_handlers[])(void) = {
     MACRO_FOR_EACH_OPTION(GENERATE_OPTION_HANDLER_LOOKUP)
 };
 
@@ -76,16 +83,21 @@ void viv_cli_parse_args(int argc, char *argv[]) {
             break;
         }
 
+        bool should_exit = false;
         switch (option) {
         case 0:  // indicates a long option
-            (*option_handlers[option_index])();
+            should_exit = (*option_handlers[option_index])();
             break;
         case 'h':
-            handle_help();
+            should_exit = handle_help();
             break;
         default:
             break;
         }
+
+        if (should_exit) {
+            // This option terminates vivarium
+            exit(0);
+        }
     }
-    exit(0);
 }
