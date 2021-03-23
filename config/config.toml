@@ -79,7 +79,6 @@ mark-active-output = false
 
 ### LAYOUTS ###
 # Configure any number of layouts. Each workspace gets an independent copy of each layout.
-# Run `vivarium -h` to get a list of available layouts.
 # The following options are available for each layout:
 # - name : The layout name to display in bar programs and logs, can be anything
 #          Defaults to matching the `layout` option.
@@ -88,6 +87,8 @@ mark-active-output = false
 # - show-borders : If true, draw borders around windows. Defaults to true.
 # - ignore-excluded-regions : If true, tile windows across the full workspace regardless of
 #                             space reserved for bars, system tray etc.
+#
+# Run `vivarium --list-config-options` to get a list of available layouts.
 
 [[layout]]
 name = "Tall"
@@ -116,6 +117,8 @@ show-borders = false
 #                        See action documentation for available arguments.
 #
 # To find the keysym or keycode of a given key, use tools like `wev` or `xev`.
+#
+# Run `vivarium --list-config-options` to get a list of available keybind actions
 
 [[keybind]]
 keysym = "Q"
