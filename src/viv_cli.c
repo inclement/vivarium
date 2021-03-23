@@ -17,7 +17,7 @@
 
 static bool handle_help(void) {
     printf(
-        "Usage: vivarium [-h] [-v]\n"
+        "Usage: vivarium [-h] [--list-config-options]\n"
         "\n"
         "-h, --help               Show help message and quit\n"
         "--list-config-options    List available layouts and keybinds\n"
