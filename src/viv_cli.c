@@ -28,6 +28,9 @@ static void handle_help(void) {
 #define PRINT_LAYOUT_HELP(LAYOUT_NAME, HELP, DIAGRAM)   \
     printf("  " #LAYOUT_NAME ": " HELP "\n" DIAGRAM "\n\n\n");
 
+#define PRINT_MAPPABLE_HELP(FUNCTION_NAME, DOC, ...)    \
+    printf("  " #FUNCTION_NAME ": " DOC "\n");
+
 static void handle_list_config_options(void) {
     printf(
         "# Layouts\n"
@@ -48,7 +51,9 @@ static void handle_list_config_options(void) {
         "  [[keybind]]\n"
         "  keysym = \"Q\"\n"
         "  action = \"terminate\"  # action name selected from the list below\n"
+        "\n"
         );
+    MACRO_FOR_EACH_MAPPABLE(PRINT_MAPPABLE_HELP);
 }
 
 #define GENERATE_OPTION_HANDLER_LOOKUP(CLI_NAME, FUNC_NAME, HAS_ARG, FLAG, VAL) \
