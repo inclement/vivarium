@@ -1,4 +1,3 @@
-#include <getopt.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,6 +24,7 @@
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "viv_cli.h"
 #include "viv_toml_config.h"
 #include "viv_types.h"
 #include "viv_server.h"
@@ -42,6 +42,8 @@ static void headless_test(struct viv_server *server) {
 int main(int argc, char *argv[]) {
     UNUSED(argc);
     UNUSED(argv);
+
+    viv_cli_parse_args(argc, argv);
 
 	wlr_log_init(WLR_DEBUG, NULL);
 

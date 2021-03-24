@@ -51,7 +51,7 @@ struct string_map_pair {
         *TARGET = the_array;                                            \
     } while (false);
 
-#define CHECK_MAPPABLE_ACTION_STRING(FUNCTION_NAME, ...)                \
+#define CHECK_MAPPABLE_ACTION_STRING(FUNCTION_NAME, DOC, ...)            \
     if (strcmp(action, #FUNCTION_NAME) == 0) {                          \
         *mappable = &viv_mappable_ ## FUNCTION_NAME;                    \
         result = true;                                                  \

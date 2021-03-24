@@ -60,12 +60,12 @@ void do_test(void (layout_func)(struct wl_array *views, float float_param, uint3
     do_test(viv_layout_do_ ## LAYOUT_NAME, NUM_VIEWS, FLOAT_PARAM, COUNTER_PARAM, WIDTH, HEIGHT); \
 
 #define GENERATE_TEST_CASE_NAME(LAYOUT_NAME) test_layout_ ## LAYOUT_NAME ## _with_various_params
-#define GENERATE_TEST_CASE(LAYOUT_NAME) \
+#define GENERATE_TEST_CASE(LAYOUT_NAME, _1, _2)                            \
     void GENERATE_TEST_CASE_NAME(LAYOUT_NAME)(void) {                   \
         MACRO_FOR_EACH_TEST_CASE(DO_TEST, LAYOUT_NAME);                             \
     }                                                           \
 
-#define GENERATE_TEST_RUN(LAYOUT_NAME) RUN_TEST(GENERATE_TEST_CASE_NAME(LAYOUT_NAME));
+#define GENERATE_TEST_RUN(LAYOUT_NAME, _1, _2) RUN_TEST(GENERATE_TEST_CASE_NAME(LAYOUT_NAME));
 
 MACRO_FOR_EACH_LAYOUT(GENERATE_TEST_CASE)
 
