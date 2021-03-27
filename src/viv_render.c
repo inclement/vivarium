@@ -198,7 +198,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
-    if (!view->workspace->active_layout->no_borders) {
+    if (view->is_floating || !view->workspace->active_layout->no_borders) {
         render_borders(view, output, is_active);
     }
 
@@ -271,7 +271,7 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
-    if (!view->workspace->active_layout->no_borders &&
+    if (view->is_floating && !view->workspace->active_layout->no_borders &&
         !view->is_static) {
         render_borders(view, output, is_active);
     }
