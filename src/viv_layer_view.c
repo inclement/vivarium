@@ -262,3 +262,12 @@ bool viv_layer_view_is_at(struct viv_layer_view *layer_view, double lx, double l
 
     return false;
 }
+
+
+bool viv_layer_view_layer_in(struct viv_layer_view *layer_view, uint32_t layers) {
+    enum zwlr_layer_shell_v1_layer layer = layer_view->layer_surface->current.layer;
+    if (layers & (1 << layer)) {
+        return true;
+    }
+    return false;
+}

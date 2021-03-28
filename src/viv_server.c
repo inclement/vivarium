@@ -71,13 +71,15 @@ struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *s
 
 struct viv_layer_view *viv_server_layer_view_at(
 		struct viv_server *server, double lx, double ly,
-		struct wlr_surface **surface, double *sx, double *sy) {
+		struct wlr_surface **surface, double *sx, double *sy,
+        uint32_t layers) {
 
     if (wl_list_length(&server->active_output->layer_views)) {
         struct viv_layer_view *layer_view;
         wl_list_for_each(layer_view, &server->active_output->layer_views, output_link) {
 
-            if (viv_layer_view_is_at(layer_view, lx, ly, surface, sx, sy)) {
+            if (viv_layer_view_layer_in(layer_view, layers) &&
+                viv_layer_view_is_at(layer_view, lx, ly, surface, sx, sy)) {
                 return layer_view;
             }
         }
