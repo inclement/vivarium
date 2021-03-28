@@ -84,6 +84,10 @@ static void process_cursor_resize_view(struct viv_server *server, uint32_t time)
     view->target_height = new_height;
 }
 
+static bool layer_view_wants_keyboard_focus(struct viv_layer_view *layer_view) {
+    return (layer_view->layer_surface->current.keyboard_interactive);
+}
+
 /// Find the focusable surface under the pointer (if any) and pass the event data along
 static void process_cursor_pass_through_to_surface(struct viv_server *server, uint32_t time) {
 	double sx, sy;
@@ -92,18 +96,27 @@ static void process_cursor_pass_through_to_surface(struct viv_server *server, ui
 
     // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
     struct viv_layer_view *layer_view;
-	struct viv_view *view;
+	struct viv_view *view = NULL;
 
-    if ((view = viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy))) {
+    // Find the uppermost view or layer view under the cursor
+    if ((layer_view = viv_server_layer_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy, VIV_LAYER_MASK_OVERLAY))) {
+    } else if ((layer_view = viv_server_layer_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy, VIV_LAYER_MASK_TOP))) {
+    } else if ((view = viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy))) {
+    } else if ((layer_view = viv_server_layer_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy, VIV_LAYER_MASK_BOTTOM))) {
+    } else if ((layer_view = viv_server_layer_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy, VIV_LAYER_MASK_BACKGROUND))) {
+    }
+
+    // Act appropriately on whatever view type was found
+    if (layer_view) {
+        if (layer_view_wants_keyboard_focus(layer_view)) {
+            viv_surface_focus(server, surface);
+            server->active_output->current_workspace->active_view = NULL;
+        }
+    } else if (view) {
         // View under the cursor and not already active => focus it if appropriate
         struct viv_view *active_view = server->active_output->current_workspace->active_view;
         if ((view != active_view) && server->config->focus_follows_mouse) {
             viv_view_focus(view, surface);
-        }
-    } else if ((layer_view = viv_server_layer_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy))) {
-        if (layer_view->layer_surface->current.keyboard_interactive) {
-            viv_surface_focus(server, surface);
-            server->active_output->current_workspace->active_view = NULL;
         }
     } else {
         // No focusable surface under the cursor => use the default image
@@ -153,11 +166,27 @@ void viv_cursor_process_cursor_motion(struct viv_server *server, uint32_t time) 
 
 }
 
+/// Check for a layer view or normal view at the cursor pos, in each layer (including the
+/// view layer) until one is found, or returns NULL if none is found.
+static struct wlr_surface *uppermost_surface_at_cursor(struct viv_server *server, double *sx, double *sy) {
+
+    double cursor_x = server->cursor->x;
+    double cursor_y = server->cursor->y;
+    struct wlr_surface *surface = NULL;
+    if ((viv_server_layer_view_at(server, cursor_x, cursor_y, &surface, sx, sy, VIV_LAYER_MASK_OVERLAY))) {
+    } else if ((viv_server_layer_view_at(server, cursor_x, cursor_y, &surface, sx, sy, VIV_LAYER_MASK_TOP))) {
+    } else if ((viv_server_view_at(server, cursor_x, cursor_y, &surface, sx, sy))) {
+    } else if ((viv_server_layer_view_at(server, cursor_x, cursor_y, &surface, sx, sy, VIV_LAYER_MASK_BOTTOM))) {
+    } else if ((viv_server_layer_view_at(server, cursor_x, cursor_y, &surface, sx, sy, VIV_LAYER_MASK_BACKGROUND))) {
+    }
+
+    return surface;
+}
+
 void viv_cursor_reset_focus(struct viv_server *server, uint32_t time) {
     struct wlr_seat *seat = server->seat;
-	struct wlr_surface *surface = NULL;
 	double sx, sy;
-	viv_server_view_at(server, server->cursor->x, server->cursor->y, &surface, &sx, &sy);
+	struct wlr_surface *surface = uppermost_surface_at_cursor(server, &sx, &sy);
 
 	if (surface) {
 		bool focus_changed = seat->pointer_state.focused_surface != surface;
