@@ -74,8 +74,8 @@ struct viv_keybind the_keybinds[] = {
     // Note the META key is defined above
     // The first argument is a bitmask, so you can require any set of modifiers from wlr_keyboard.h
     KEYBIND_MAPPABLE(META, Q, terminate),
-    KEYBIND_MAPPABLE(META | WLR_MODIFIER_SHIFT, Return, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(META, T, do_exec, .executable = CONFIG_TERMINAL),
+    KEYBIND_MAPPABLE(META | WLR_MODIFIER_SHIFT, Return, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(META, l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(META, h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(META, comma, increment_counter, .increment = +1),
