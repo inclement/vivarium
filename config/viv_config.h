@@ -164,6 +164,7 @@ struct viv_layout the_layouts[] = {
         .layout_function = &viv_layout_do_fullscreen,
         .parameter = CONFIG_LAYOUT_PARAMETER_DEFAULT,
         .counter = CONFIG_LAYOUT_COUNTER_DEFAULT,
+        .no_borders = true,
     },
     {
         .name = "Fullscreen No Borders",

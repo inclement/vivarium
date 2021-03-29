@@ -97,6 +97,7 @@ layout = "split"
 [[layout]]
 name = "Fullscreen"
 layout = "fullscreen"
+show-borders = false
 
 [[layout]]
 name = "Fullscreen No Borders"
