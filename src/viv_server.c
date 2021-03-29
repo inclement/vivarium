@@ -445,7 +445,7 @@ static bool handle_server_keybinding(struct viv_server *server, xkb_keysym_t sym
 }
 
 /// Look up a key press in the configured keybindings, and run the bound function if found
-static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym, uint32_t modifiers) {
+static bool handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_keysym_t sym, uint32_t modifiers) {
     struct viv_output *output = server->active_output;
 
     struct viv_workspace *workspace = output->current_workspace;
@@ -462,11 +462,27 @@ static bool handle_keybinding(struct viv_server *server, xkb_keysym_t sym, uint3
             break;
         }
 
-        bool all_modifiers_pressed = ((modifiers & keybind.modifiers) == keybind.modifiers);
+        bool all_modifiers_pressed = false;
 
-        if (keybind.key == sym && all_modifiers_pressed) {
-            wlr_log(WLR_INFO, "Found key: sym %d, modifiers %d, binding %p",
-                    sym, keybind.modifiers, keybind.binding);
+        bool correct_key_pressed = false;
+        switch (keybind.type) {
+        case VIV_KEYBIND_TYPE_KEYCODE:
+            // For keycodes, we have to care about all modifiers equally
+            all_modifiers_pressed = (keybind.modifiers == modifiers);
+            correct_key_pressed = (keybind.keycode == keycode);
+            break;
+        case VIV_KEYBIND_TYPE_KEYSYM:
+            // For keysyms shift being pressed has already uppercased the keysym, so ignore shift in the modifiers
+            all_modifiers_pressed = ((keybind.modifiers | WLR_MODIFIER_SHIFT) == (modifiers | WLR_MODIFIER_SHIFT));
+            correct_key_pressed = (keybind.key == sym);
+            break;
+        default:
+            UNREACHABLE();
+        }
+
+        if (all_modifiers_pressed && correct_key_pressed) {
+            wlr_log(WLR_INFO, "Found keybind: type %d, keycode %d, sym %d, modifiers %d, pressed modifiers %d, binding %p",
+                    keybind.type, keycode, sym, keybind.modifiers, modifiers, keybind.binding);
             keybind.binding(workspace, keybind.payload);
             return true;
         }
@@ -495,8 +511,8 @@ static void server_keyboard_handle_key(
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
 	if (event->state == WLR_KEY_PRESSED) {
 		for (int i = 0; i < nsyms; i++) {
-            wlr_log(WLR_DEBUG, "Key %d pressed", syms[i]);
-			handled = handle_keybinding(server, syms[i], modifiers);
+            wlr_log(WLR_DEBUG, "Keysym %d pressed, keycode %d", syms[i], keycode);
+			handled = handle_keybinding(server, keycode, syms[i], modifiers);
 		}
 	}
 

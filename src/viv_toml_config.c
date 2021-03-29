@@ -334,6 +334,7 @@ static void parse_keybind_table(toml_table_t *keybind_table, struct viv_keybind 
                                     keysym.u.s);
     }
 
+    keybind->type = VIV_KEYBIND_TYPE_KEYSYM;
     keybind->key = key;
     keybind->modifiers = modifiers_bitfield;
 
