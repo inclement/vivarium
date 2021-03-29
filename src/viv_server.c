@@ -472,8 +472,14 @@ static bool handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_k
             correct_key_pressed = (keybind.keycode == keycode);
             break;
         case VIV_KEYBIND_TYPE_KEYSYM:
-            // For keysyms shift being pressed has already uppercased the keysym, so ignore shift in the modifiers
-            all_modifiers_pressed = ((keybind.modifiers | WLR_MODIFIER_SHIFT) == (modifiers | WLR_MODIFIER_SHIFT));
+            if (keybind.modifiers & WLR_MODIFIER_SHIFT) {
+                // If shift is explicitly listed in the keybind, require it to be present
+                all_modifiers_pressed = (keybind.modifiers == modifiers);
+            } else {
+                // If shift wasn't explicitly listed in the keybind, assume it's allowable
+                // as for most keys pressing shift has also changed the keysym
+                all_modifiers_pressed = ((keybind.modifiers | WLR_MODIFIER_SHIFT) == (modifiers | WLR_MODIFIER_SHIFT));
+            }
             correct_key_pressed = (keybind.key == sym);
             break;
         default:
