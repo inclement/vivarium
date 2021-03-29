@@ -7,8 +7,17 @@
 #include "viv_types.h"
 #include "viv_mappable_functions.h"
 
+enum viv_keybind_type {
+    VIV_KEYBIND_TYPE_KEYSYM,
+    VIV_KEYBIND_TYPE_KEYCODE,
+};
+
 struct viv_keybind {
-    xkb_keysym_t key;
+    enum viv_keybind_type type;
+    union {
+        xkb_keysym_t key;
+        uint32_t keycode;
+    };
     uint32_t modifiers;
     void (*binding)(struct viv_workspace *workspace, union viv_mappable_payload payload);
     union viv_mappable_payload payload;

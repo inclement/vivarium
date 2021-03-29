@@ -20,6 +20,7 @@
 
 #define KEYBIND_MAPPABLE(MODIFIERS, KEY, BINDING, ...)   \
     {                                           \
+        .type = VIV_KEYBIND_TYPE_KEYSYM,        \
         .key = XKB_KEY_ ## KEY,                 \
         .modifiers = (MODIFIERS),               \
         .binding = &viv_mappable_ ## BINDING,   \
@@ -28,6 +29,7 @@
 
 #define KEYBIND_USER_FUNCTION(MODIFIERS, KEY, BINDING)           \
     {                                                            \
+        .type = VIV_KEYBIND_TYPE_KEYSYM,                         \
         .key = XKB_KEY_ ## KEY,                                  \
         .modifiers = (MODIFIERS),                                \
         .binding = &viv_mappable_user_function,                  \

@@ -11,11 +11,11 @@ focus-follows-mouse = true
 # workspaces by name, or to move windows between them.
 workspace-names = ["main", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-# Create some keybindings to switch to workspaces:
+# Autogenerate keybinds to switch to workspaces, specifically:
 # - Bind meta-$N to switch to workspace number N, for each number key $N,
 # - Bind meta-shift-$N to move the active window to workspace number N, for each number key $N
 # You can also/alternatively create these bindings via custom [[keybind]]s below.
-# Set this to false to disable automatic keybind generation.
+# Set this to false to disable automatic keybind generation and leave the keybinds all to you.
 bind-workspaces-to-numbers = true
 
 # Cursor button used to drag windows around (also making them floating) when meta is held
