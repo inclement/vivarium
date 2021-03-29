@@ -75,7 +75,6 @@ struct viv_keybind the_keybinds[] = {
     // The first argument is a bitmask, so you can require any set of modifiers from wlr_keyboard.h
     KEYBIND_MAPPABLE(META, Q, terminate),
     KEYBIND_MAPPABLE(META, T, do_exec, .executable = CONFIG_TERMINAL),
-    KEYBIND_MAPPABLE(META | WLR_MODIFIER_SHIFT, Return, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(META, l, increment_divide, .increment = CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(META, h, increment_divide, .increment = -CONFIG_SPACER_INCREMENT),
     KEYBIND_MAPPABLE(META, comma, increment_counter, .increment = +1),
@@ -92,6 +91,7 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(META, W, shift_active_window_to_left_output),
     KEYBIND_MAPPABLE(META, C, close_window),
     KEYBIND_MAPPABLE(META, Return, make_window_main),
+    KEYBIND_MAPPABLE(META | WLR_MODIFIER_SHIFT, Return, do_exec, .executable = CONFIG_TERMINAL),
     KEYBIND_MAPPABLE(META, R, reload_config),
     KEYBIND_MAPPABLE(META, o, do_exec, .executable = "bemenu-run"),
     /// How to run any shell command:
