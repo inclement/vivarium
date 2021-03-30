@@ -13,13 +13,6 @@ static const char *window_type_atom_strings[] = {
     MACRO_FOR_EACH_ATOM_NAME(AS_STR)
 };
 
-#define TEST(ATOM_NAME) \
-    if (window_type == window_type_atoms[ATOM_NAME]) { \
-        wlr_log(WLR_INFO, "New window has atom %s", window_type_atom_strings[ATOM_NAME]); \
-    } else { \
-        wlr_log(WLR_INFO, "Window type %d, atom %d, name %s, no match", window_type, window_type_atoms[ATOM_NAME], window_type_atom_strings[ATOM_NAME]); \
-    }
-
 #ifdef DEBUG
 static void log_window_type_strings(struct wlr_xwayland_surface *surface) {
     xcb_connection_t *xcb_connection = xcb_connect(NULL, NULL);
