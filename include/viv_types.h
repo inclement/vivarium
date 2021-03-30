@@ -6,12 +6,14 @@
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
-#ifdef XWAYLAND
-#include <wlr/xwayland.h>
-#endif
 #include <xkbcommon/xkbcommon.h>
 
 #include "viv_config_support.h"
+
+#ifdef XWAYLAND
+#include <wlr/xwayland.h>
+#include "viv_xwayland_types.h"
+#endif
 
 enum viv_cursor_mode {
 	VIV_CURSOR_PASSTHROUGH,  /// Pass through cursor data to views
@@ -40,6 +42,7 @@ struct viv_server {
 
 #ifdef XWAYLAND
     struct wlr_xwayland *xwayland_shell;
+    xcb_atom_t window_type_atoms[WINDOW_TYPE_ATOM_MAX];
     struct wl_listener new_xwayland_surface;
     struct wl_listener xwayland_ready;
 #endif

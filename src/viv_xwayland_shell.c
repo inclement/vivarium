@@ -1,59 +1,117 @@
+#include <xcb/xcb.h>
 
 #include "viv_types.h"
 #include "viv_view.h"
 #include "viv_workspace.h"
 #include "viv_xwayland_shell.h"
+#include "viv_xwayland_types.h"
 
-/* /// See documentation at https://specifications.freedesktop.org/wm-spec/1.4/ar01s05.html */
-/* static const char *window_type_atom_strings[] = { */
-/*     "_NET_WM_WINDOW_TYPE_DESKTOP", */
-/*     "_NET_WM_WINDOW_TYPE_DOCK", */
-/*     "_NET_WM_WINDOW_TYPE_TOOLBAR", */
-/*     "_NET_WM_WINDOW_TYPE_MENU", */
-/*     "_NET_WM_WINDOW_TYPE_UTILITY", */
-/*     "_NET_WM_WINDOW_TYPE_SPLASH", */
-/*     "_NET_WM_WINDOW_TYPE_DIALOG", */
-/*     "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", */
-/*     "_NET_WM_WINDOW_TYPE_POPUP_MENU", */
-/*     "_NET_WM_WINDOW_TYPE_TOOLTIP", */
-/*     "_NET_WM_WINDOW_TYPE_NOTIFICATION", */
-/*     "_NET_WM_WINDOW_TYPE_COMBO", */
-/*     "_NET_WM_WINDOW_TYPE_DND", */
-/*     "_NET_WM_WINDOW_TYPE_NORMAL", */
-/* }; */
 
-/* enum window_type_atom { */
-/*     NET_WM_WINDOW_TYPE_DESKTOP, */
-/*     NET_WM_WINDOW_TYPE_DOCK, */
-/*     NET_WM_WINDOW_TYPE_TOOLBAR, */
-/*     NET_WM_WINDOW_TYPE_MENU, */
-/*     NET_WM_WINDOW_TYPE_UTILITY, */
-/*     NET_WM_WINDOW_TYPE_SPLASH, */
-/*     NET_WM_WINDOW_TYPE_DIALOG, */
-/*     NET_WM_WINDOW_TYPE_DROPDOWN_MENU, */
-/*     NET_WM_WINDOW_TYPE_POPUP_MENU, */
-/*     NET_WM_WINDOW_TYPE_TOOLTIP, */
-/*     NET_WM_WINDOW_TYPE_NOTIFICATION, */
-/*     NET_WM_WINDOW_TYPE_COMBO, */
-/*     NET_WM_WINDOW_TYPE_DND, */
-/*     NET_WM_WINDOW_TYPE_NORMAL, */
-/*     WINDOW_TYPE_ATOM_MAX, */
-/* }; */
+#define AS_STR(ATOM) #ATOM,
 
-/* static uint32_t num_atoms = sizeof(window_type_atom_strings) / sizeof(char *); */
+static const char *window_type_atom_strings[] = {
+    MACRO_FOR_EACH_ATOM_NAME(AS_STR)
+};
 
+#define TEST(ATOM_NAME) \
+    if (window_type == window_type_atoms[ATOM_NAME]) { \
+        wlr_log(WLR_INFO, "New window has atom %s", window_type_atom_strings[ATOM_NAME]); \
+    } else { \
+        wlr_log(WLR_INFO, "Window type %d, atom %d, name %s, no match", window_type, window_type_atoms[ATOM_NAME], window_type_atom_strings[ATOM_NAME]); \
+    }
+
+#ifdef DEBUG
+static void log_window_type_strings(struct wlr_xwayland_surface *surface) {
+    xcb_connection_t *xcb_connection = xcb_connect(NULL, NULL);
+    int error = xcb_connection_has_error(xcb_connection);
+    if (error) {
+        wlr_log(WLR_ERROR, "Could not connect to XCB, error %d", error);
+        // No point actually crashing, this will just mean we can't identify window types later
+        return;
+    }
+
+    // This is standard xcb interaction: get cookies for each request then get the
+    // replies, to let xcb assemble the results asynchronously
+    xcb_get_atom_name_cookie_t cookies[WINDOW_TYPE_ATOM_MAX];
+    for (size_t i = 0; i < surface->window_type_len; i++) {
+        cookies[i] = xcb_get_atom_name(xcb_connection, surface->window_type[i]);
+    }
+
+    for (size_t i = 0; i < surface->window_type_len; i++) {
+        xcb_generic_error_t *error = NULL;
+        xcb_get_atom_name_reply_t *reply = xcb_get_atom_name_reply(xcb_connection, cookies[i], &error);
+        if (reply != NULL && error == NULL) {
+            wlr_log(WLR_INFO, "New X11 window with title \"%s\" has window type %s",
+                    surface->title, xcb_get_atom_name_name(reply));
+        }
+        free(reply);
+
+        if (error != NULL) {
+            wlr_log(WLR_ERROR, "Failed to lookup atom %d, X11 error code %d",
+                    surface->window_type[i], error->error_code);
+            free(error);
+            break;
+        }
+    }
+
+	xcb_disconnect(xcb_connection);
+}
+#endif
 
 /// Return true if the view looks like it should be floating. This is a poor proxy for proper window type inspection.
 /// TODO: Do proper window type inspection.
 static bool guess_should_be_floating(struct viv_view *view) {
 
+    struct wlr_xwayland_surface *surface = view->xwayland_surface;
     struct wlr_xwayland_surface_size_hints *size_hints = view->xwayland_surface->size_hints;
 
-    // TODO: Use the window_type to guess this, not just the size hints
+    xcb_atom_t *window_type_atoms = view->server->window_type_atoms;
 
+    // If the window is marked as a type that is fundamentally floating, obey that
+    for (size_t i = 0; i < surface->window_type_len; i++) {
+        xcb_atom_t window_type = surface->window_type[i];
+        if ((window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_DIALOG]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_UTILITY]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_TOOLBAR]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_POPUP_MENU]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_DROPDOWN_MENU]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_TOOLTIP]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_NOTIFICATION]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_COMBO]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_SPLASH])) {
+            return true;
+        }
+    }
+
+    // Guess whether the window wants to be floating based on its parent (if any) and size hints
     return (size_hints &&
             (view->xwayland_surface->parent != NULL ||
              ((size_hints->min_width == size_hints->max_width) && (size_hints->min_height == size_hints->max_height))));
+}
+
+/// Use the X11 window properties to work out if it's a view to be managed or something like a dialog
+static bool guess_should_have_no_borders(struct viv_view *view) {
+    struct wlr_xwayland_surface *surface = view->xwayland_surface;
+
+    xcb_atom_t *window_type_atoms = view->server->window_type_atoms;
+
+    // If the view is marked as a type that doesn't merit borders (i.e. dialog etc.), obey that
+    for (size_t i = 0; i < surface->window_type_len; i++) {
+        xcb_atom_t window_type = surface->window_type[i];
+        if ((window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_POPUP_MENU]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_DROPDOWN_MENU]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_TOOLTIP]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_NOTIFICATION]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_COMBO]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_SPLASH])) {
+            return true;
+        }
+    }
+
+    // If the view has a parent, assume this means it's a right click menu or something.
+    // TODO: This might be wrong - if it is, probably the correct solution is to rely
+    // solely on window type instead
+    return view->xwayland_surface->parent != NULL;
 }
 
 static void event_xwayland_surface_map(struct wl_listener *listener, void *data) {
@@ -85,11 +143,18 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
                 surface->parent);
     }
 
+#ifdef DEBUG
+    log_window_type_strings(surface);
+#endif
+
     if (guess_should_be_floating(view)) {
         // Assume this is a popup or something, and just give it the size it wants
         // TODO: There is probably a better/proper way to do this based on actual window type parsing
         view->is_floating = true;
-        view->is_static = true;
+
+        if (guess_should_have_no_borders(view)) {
+            view->is_static = true;
+        }
 
         uint32_t x = surface->x;
         uint32_t y = surface->y;
@@ -264,4 +329,39 @@ void viv_xwayland_view_init(struct viv_view *view, struct wlr_xwayland_surface *
 	wl_signal_add(&xwayland_surface->events.unmap, &view->unmap);
 	view->destroy.notify = event_xwayland_surface_destroy;
 	wl_signal_add(&xwayland_surface->events.destroy, &view->destroy);
+}
+
+void viv_xwayland_lookup_atoms(struct viv_server *server) {
+    xcb_connection_t *xcb_connection = xcb_connect(NULL, NULL);
+    int error = xcb_connection_has_error(xcb_connection);
+    if (error) {
+        wlr_log(WLR_ERROR, "Could not connect to XCB, error %d", error);
+        // No point actually crashing, this will just mean we can't identify window types later
+        return;
+    }
+
+    // This is standard xcb interaction: get cookies for each request then get the
+    // replies, to let xcb assemble the results asynchronously
+    xcb_intern_atom_cookie_t cookies[WINDOW_TYPE_ATOM_MAX];
+    for (size_t i = 0; i < WINDOW_TYPE_ATOM_MAX; i++) {
+        const char *atom_str = window_type_atom_strings[i];
+        cookies[i] = xcb_intern_atom(xcb_connection, false, strlen(atom_str), atom_str);
+    }
+
+    for (size_t i = 0; i < WINDOW_TYPE_ATOM_MAX; i++) {
+        xcb_generic_error_t *error = NULL;
+        xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(xcb_connection, cookies[i], &error);
+        if (reply != NULL && error == NULL) {
+            server->window_type_atoms[i] = reply->atom;
+        }
+        free(reply);
+
+        if (error != NULL) {
+            wlr_log(WLR_ERROR, "Failed to lookup atom name %s, X11 error code %d",
+                    window_type_atom_strings[i], error->error_code);
+            free(error);
+            break;
+        }
+    }
+	xcb_disconnect(xcb_connection);
 }

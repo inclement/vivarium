@@ -384,11 +384,14 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
 
 }
 
-static void server_xwayland_ready(struct  wl_listener *listener, void *data) {
+static void server_xwayland_ready(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	struct viv_server *server = wl_container_of(listener, server, xwayland_ready);
     wlr_xwayland_set_seat(server->xwayland_shell, server->seat);
     wlr_log(WLR_INFO, "XWayland is ready");
+
+    // Get the xcb_atom_t for all the X properties we care about, for later lookup
+    viv_xwayland_lookup_atoms(server);
 }
 #endif
 
