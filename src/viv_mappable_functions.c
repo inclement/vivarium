@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <wayland-server-core.h>
+#include <wayland-util.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/util/log.h>
 
@@ -99,6 +100,8 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
         return;
     }
 
+    viv_view_damage(view);
+
     bool any_not_floating = false;
     struct viv_view *non_floating_view;
     wl_list_for_each(non_floating_view, &workspace->views, workspace_link) {
@@ -118,6 +121,8 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
         // Move to the end of the views (as all are floating)
         wl_list_insert(workspace->views.prev, &view->workspace_link);
     }
+
+    viv_workspace_mark_for_relayout(workspace);
 }
 
 void viv_mappable_next_layout(struct viv_workspace *workspace, union viv_mappable_payload payload) {
@@ -240,4 +245,19 @@ void viv_mappable_reload_config(struct viv_workspace *workspace, union viv_mappa
     UNUSED(payload);
     struct viv_server *server = workspace->server;
     viv_server_reload_config(server);
+}
+
+void viv_mappable_debug_damage_all(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    struct viv_server *server = workspace->server;
+
+    struct viv_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        viv_output_damage(output);
+    }
+}
+
+void viv_mappable_debug_swap_buffers(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    wlr_output_commit(workspace->output->wlr_output);
 }

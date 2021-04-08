@@ -23,4 +23,10 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 /// Apply the layout function of the current workspace, but only if the output or current
 /// workspace need layouting
 void viv_output_do_layout_if_necessary(struct viv_output *output);
+
+/// Mark the whole output as damaged
+void viv_output_damage(struct viv_output *output);
+
+/// Mark that whatever workspace is active will need its layout function applying
+void viv_output_mark_for_relayout(struct viv_output *output);
 #endif

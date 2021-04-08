@@ -1,4 +1,5 @@
 #include <wayland-server-core.h>
+#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 
 #include "viv_output.h"
@@ -111,7 +112,7 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
     if (other_output != NULL) {
         other_output->current_workspace = output->current_workspace;
         other_output->current_workspace->output = other_output;
-        other_output->needs_layout = true;
+        viv_output_mark_for_relayout(other_output);
     } else {
         output->current_workspace->output = NULL;
     }
@@ -124,7 +125,7 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
 
     output->current_workspace = workspace;
     output->current_workspace->output = output;
-    output->needs_layout = true;
+    viv_output_mark_for_relayout(output);
 }
 
 void viv_output_init(struct viv_output *output, struct viv_server *server, struct wlr_output *wlr_output) {
@@ -138,9 +139,11 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
     output->excluded_margin.left = 0;
     output->excluded_margin.right = 0;
 
+    output->damage = wlr_output_damage_create(output->wlr_output);
+
 	/* Sets up a listener for the frame notify event. */
 	output->frame.notify = output_frame;
-	wl_signal_add(&wlr_output->events.frame, &output->frame);
+	wl_signal_add(&output->damage->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
     wlr_log(WLR_INFO, "New output width width %d, height %d", wlr_output->width, wlr_output->height);
 
@@ -164,4 +167,12 @@ void viv_output_do_layout_if_necessary(struct viv_output *output) {
 
     viv_layers_arrange(output);
     viv_workspace_do_layout(workspace);
+}
+
+void viv_output_damage(struct viv_output *output) {
+    wlr_output_damage_add_whole(output->damage);
+}
+
+void viv_output_mark_for_relayout(struct viv_output *output) {
+    viv_output_damage(output);
 }

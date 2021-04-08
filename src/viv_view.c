@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_surface.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -47,7 +48,7 @@ struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view) {
 void viv_view_ensure_floating(struct viv_view *view) {
     if (!view->is_floating) {
         // Trigger a relayout only if tiling state is changing
-        view->workspace->needs_layout = true;
+        viv_workspace_mark_for_relayout(view->workspace);
     }
     view->is_floating = true;
 
@@ -58,7 +59,7 @@ void viv_view_ensure_floating(struct viv_view *view) {
 void viv_view_ensure_tiled(struct viv_view *view) {
     if (view->is_floating) {
         // Trigger a relayout only if tiling state is changing
-        view->workspace->needs_layout = true;
+        viv_workspace_mark_for_relayout(view->workspace);
     }
     view->is_floating = false;
 
@@ -94,8 +95,8 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
         viv_view_focus(next_view, view->xdg_surface->surface);
     }
 
-    cur_workspace->needs_layout = true;
-    workspace->needs_layout = true;
+    viv_workspace_mark_for_relayout(cur_workspace);
+    viv_workspace_mark_for_relayout(workspace);
 
     cur_workspace->active_view = next_view;
     if (workspace->active_view == NULL) {
@@ -143,6 +144,26 @@ void viv_view_get_string_identifier(struct viv_view *view, char *buffer, size_t 
 
 bool viv_view_oversized(struct viv_view *view) {
     return view->implementation->oversized(view);
+}
+
+void viv_view_damage(struct viv_view *view) {
+    struct viv_output *output;
+
+    struct wlr_box geo_box = {
+        .x = view->target_x - 10,
+        .y = view->target_y - 10,
+        .width = view->target_width + 20,
+        .height = view->target_height + 20,
+    };
+    /* viv_view_get_geometry(view, &geo_box); */
+    // TODO: Subtract layout pos
+
+    /* geo_box.x = view->x; */
+    /* geo_box.y = view->y; */
+
+    wl_list_for_each(output, &view->server->outputs, link) {
+        wlr_output_damage_add_box(output->damage, &geo_box);
+    }
 }
 
 void viv_view_make_active(struct viv_view *view) {
