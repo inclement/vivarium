@@ -229,14 +229,12 @@ void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mo
 	} else {
         struct wlr_box geo_box;
         viv_view_get_geometry(view, &geo_box);
-        double border_x = (view->x + geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
-        double border_y = (view->y + geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
+        double border_x = (geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
+        double border_y = (geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
         server->grab_state.x = server->cursor->x - border_x;
         server->grab_state.y = server->cursor->y - border_y;
 
         server->grab_state.geobox = geo_box;
-        server->grab_state.geobox.x += view->x;
-        server->grab_state.geobox.y += view->y;
 
         server->grab_state.resize_edges = edges;
 	}
@@ -414,7 +412,7 @@ static void server_new_layer_surface(struct wl_listener *listener, void *data) {
     viv_layer_view_init(layer_view, server, layer_surface);
 
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
-    output->needs_layout = true;
+    viv_output_mark_for_relayout(output);
 
     wlr_log(WLR_INFO, "New layer surface props: layer %d, anchor %d, exclusive %d, margin (%d, %d, %d, %d), desired size (%d, %d), actual size (%d, %d)", state->layer, state->anchor, state->exclusive_zone, state->margin.top, state->margin.right, state->margin.bottom, state->margin.left, state->desired_width, state->desired_height, state->actual_width, state->actual_height);
 }
@@ -798,7 +796,7 @@ void viv_server_reload_config(struct viv_server *server) {
 
     struct viv_output *output;
     wl_list_for_each(output, &server->outputs, link) {
-        output->needs_layout = true;
+        viv_output_mark_for_relayout(output);
     }
 
     // TODO: Reset workspaces and layouts according to new config

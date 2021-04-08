@@ -50,6 +50,7 @@ wayland_protocols_dep = dependency('wayland-protocols')
 xkbcommon_dep = dependency('xkbcommon')
 libinput_dep = dependency('libinput')
 xcb_dep = dependency('xcb', required: get_option('xwayland'))
+pixman_dep = dependency('pixman-1')
 
 includes = [
   include_directories('include'),

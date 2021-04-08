@@ -1,3 +1,5 @@
+#include <pixman-1/pixman.h>
+#include <wlr/types/wlr_output_damage.h>
 #include <xcb/xcb.h>
 
 #include "viv_types.h"
@@ -107,6 +109,24 @@ static bool guess_should_have_no_borders(struct viv_view *view) {
     return view->xwayland_surface->parent != NULL;
 }
 
+static void handle_xwayland_surface_commit(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct viv_view *view = wl_container_of(listener, view, surface_commit);
+    struct wlr_surface *surface = view->xwayland_surface->surface;
+
+    pixman_region32_t damage;
+    pixman_region32_init(&damage);
+    wlr_surface_get_effective_damage(surface, &damage);
+
+    pixman_region32_translate(&damage, view->x, view->y);
+
+    struct viv_output *viv_output = wl_container_of(view->server->outputs.next, viv_output, link);
+    struct wlr_output_damage *output_damage = viv_output->damage;
+    wlr_output_damage_add(output_damage, &damage);
+
+    pixman_region32_fini(&damage);
+}
+
 static void event_xwayland_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
     wlr_log(WLR_DEBUG, "xwayland surface mapped");
@@ -180,6 +200,9 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
     wl_list_remove(&view->workspace_link);
 
     viv_workspace_add_view(view->workspace, view);
+
+    view->surface_commit.notify = handle_xwayland_surface_commit;
+    wl_signal_add(&view->xwayland_surface->surface->events.commit, &view->surface_commit);
 }
 
 static void event_xwayland_surface_unmap(struct wl_listener *listener, void *data) {
@@ -197,8 +220,9 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
     wl_list_insert(&view->server->unmapped_views, &view->workspace_link);
 
     struct viv_workspace *workspace = view->workspace;
-    workspace->needs_layout = true;
+    viv_workspace_mark_for_relayout(workspace);
 }
+
 
 static void event_xwayland_surface_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -217,8 +241,8 @@ static void implementation_set_pos(struct viv_view *view, uint32_t x, uint32_t y
 }
 
 static void implementation_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
-    geo_box->x = 0;
-    geo_box->y = 0;
+    geo_box->x = view->x;
+    geo_box->y = view->y;
     geo_box->width = view->xwayland_surface->width;
     geo_box->height = view->xwayland_surface->height;
 }

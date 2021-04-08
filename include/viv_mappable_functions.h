@@ -42,6 +42,8 @@ union viv_mappable_payload;
     MACRO(make_window_main, "Move active window to first position in current layout") \
     MACRO(reload_config, "Reload the config.toml (warning: may have weird results, restart vivarium if possible)") \
     MACRO(user_function, "Run a C function. Args: function (pointer (*function)(struct viv_workspace *workspace))", void (*function)(struct viv_workspace *workspace);) \
+    MACRO(debug_damage_all, "Mark all outputs as damaged to force a full redraw") \
+    MACRO(debug_swap_buffers, "Swap buffers") \
 
 // Declare each mappable function and generate a payload struct to pass as its argument
 MACRO_FOR_EACH_MAPPABLE(GENERATE_DECLARATION)

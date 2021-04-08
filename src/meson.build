@@ -34,6 +34,7 @@ viv_deps = [
     layer_shell_protocol_dep,
     tomlc99_dep,
     xcb_dep,
+    pixman_dep,
 ]
 
 executable(

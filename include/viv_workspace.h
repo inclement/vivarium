@@ -42,5 +42,12 @@ uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace);
 /// link will be reused without checking.
 void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *view);
 
+/// Mark all views in the workspace as damaged
+void viv_workspace_damage_views(struct viv_workspace *workspace);
+
+/// Mark that the workspace needs a layout - this works by damaging it
+/// then, after the next draw, actually applying the new layout
+// TODO: Should we just layout straight away now?
+void viv_workspace_mark_for_relayout(struct viv_workspace *workspace);
 
 #endif

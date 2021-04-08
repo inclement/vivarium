@@ -40,6 +40,8 @@ struct viv_server {
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;
 
+    struct wl_listener surface_commit;
+
 #ifdef XWAYLAND
     struct wlr_xwayland *xwayland_shell;
     xcb_atom_t window_type_atoms[WINDOW_TYPE_ATOM_MAX];
@@ -113,6 +115,8 @@ struct viv_output {
 	struct wlr_output *wlr_output;
 	struct wl_listener frame;
 
+    struct wlr_output_damage *damage;
+
     bool needs_layout;
     struct viv_workspace *current_workspace;
 
@@ -147,6 +151,7 @@ struct viv_layer_view {
     struct wl_listener unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
+    struct wl_listener surface_commit;
     bool mapped;
 
     struct wl_list output_link;
@@ -173,6 +178,24 @@ struct viv_view_implementation {
     void (*close)(struct viv_view *view);
     bool (*is_at)(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
     bool (*oversized)(struct viv_view *view);
+};
+
+struct viv_xdg_popup {
+    struct viv_view *view;
+    struct wlr_xdg_popup *wlr_popup;
+
+    struct wl_listener surface_commit;
+    struct wl_listener surface_unmap;
+    struct wl_listener destroy;
+};
+
+struct viv_layer_popup {
+    struct viv_view *view;
+    struct wlr_xdg_popup *wlr_popup;
+
+    struct wl_listener surface_commit;
+    struct wl_listener surface_unmap;
+    struct wl_listener destroy;
 };
 
 struct viv_view {
@@ -204,6 +227,7 @@ struct viv_view {
 
     // Surface bindings
     struct wl_listener surface_commit;
+    struct wl_listener new_xdg_popup;
 
     // Target positions, where the layout is trying to place the view
     int target_x, target_y;
@@ -290,6 +314,8 @@ struct viv_config {
 
     bool debug_mark_views_by_shell;
     bool debug_mark_active_output;
+    bool debug_mark_frame_draws;
+    bool debug_no_damage_tracking;
 };
 
 

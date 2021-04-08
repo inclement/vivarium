@@ -12,10 +12,14 @@
 
 static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
     UNUSED(time);
-    int old_x = server->grab_state.view->x;
-    int old_y = server->grab_state.view->y;
 
     struct viv_view *view = server->grab_state.view;
+
+    int old_x = view->x; //server->grab_state.view->x;
+    int old_y = view->y; //server->grab_state.view->y;
+
+    // Damage before moving
+    viv_view_damage(view);
 
 	/* Move the grabbed view to the new position. */
 	view->x = server->cursor->x - server->grab_state.x;
@@ -31,6 +35,9 @@ static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
     if (output_at_point != view->workspace->output) {
         viv_view_shift_to_workspace(view, output_at_point->current_workspace);
     }
+
+    // Damage after moving
+    viv_view_damage(view);
 }
 
 static void process_cursor_resize_view(struct viv_server *server, uint32_t time) {
@@ -39,6 +46,9 @@ static void process_cursor_resize_view(struct viv_server *server, uint32_t time)
     // tinywl, we should wait for a buffer at the new size before
     // committing movement
 	struct viv_view *view = server->grab_state.view;
+
+    viv_view_damage(view);
+
 	double border_x = server->cursor->x - server->grab_state.x;
 	double border_y = server->cursor->y - server->grab_state.y;
 	int new_left = server->grab_state.geobox.x;
@@ -69,10 +79,8 @@ static void process_cursor_resize_view(struct viv_server *server, uint32_t time)
 		}
 	}
 
-	struct wlr_box geo_box;
-    viv_view_get_geometry(view, &geo_box);
-	view->x = new_left - geo_box.x;
-	view->y = new_top - geo_box.y;
+	view->x = new_left;
+	view->y = new_top;
 
 	int new_width = new_right - new_left;
 	int new_height = new_bottom - new_top;
@@ -82,6 +90,8 @@ static void process_cursor_resize_view(struct viv_server *server, uint32_t time)
     view->target_y = new_top;
     view->target_width = new_width;
     view->target_height = new_height;
+
+    viv_view_damage(view);
 }
 
 static bool layer_view_wants_keyboard_focus(struct viv_layer_view *layer_view) {
