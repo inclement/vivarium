@@ -266,7 +266,7 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 	struct viv_view *view = viv_server_view_at(server,
 			server->cursor->x, server->cursor->y, &surface, &sx, &sy);
 
-	if (event->state == WLR_BUTTON_RELEASED) {
+	if (event->state == WLR_BUTTON_RELEASED || !view) {
         // End any ongoing grab event
 		server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 	} else {
