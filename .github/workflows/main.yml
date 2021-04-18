@@ -23,10 +23,20 @@ jobs:
       - name: Install dependencies
         run: |
            sudo apt-get update
-           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev xwayland waybar swaybg
+           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev xwayland waybar swaybg graphviz libxcb-icccm4 libxcb-ewmh-dev libxcb-ewmh2 libxcb-icccm4-dev
            python -m pip install --upgrade pip
            python -m pip install ninja
            python -m pip install meson
+
+      - name: Install wayland-server
+        run: |
+          # The ubuntu-20.04 Wayland Server version is lower than 1.19, so we must install wayland ourselves
+          git clone --depth 1 --branch 1.19.0 https://github.com/wayland-project/wayland.git
+          cd wayland
+          meson build -Ddocumentation=false
+          sudo python -m pip install ninja
+          sudo ninja -C build install
+          cd ..
 
       - name: Checkout vivarium
         uses: actions/checkout@v2
