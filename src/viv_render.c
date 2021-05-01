@@ -420,15 +420,26 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
         wlr_output_rollback(output->wlr_output);
         return;
     }
+
+    if (output->server->config->damage_tracking_mode == VIV_DAMAGE_TRACKING_FRAME) {
+        // If in "draw whole frame" mode, damage the full output to ensure it gets drawn
+        int width, height;
+        wlr_output_transformed_resolution(output->wlr_output, &width, &height);
+        pixman_region32_union_rect(&damage, &damage, 0, 0, width, height);
+    }
+
 	/* The "effective" resolution can change if you rotate your outputs. */
 	int width, height;
 	wlr_output_effective_resolution(output->wlr_output, &width, &height);
 	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
 	wlr_renderer_begin(renderer, width, height);
 
-    /* wlr_renderer_clear(renderer, (float[]){1.0, 0.0, 0.0, 1.0}); */
+    if (output->server->config->debug_draw_only_damaged_regions) {
+        // Clear the output with a solid colour, so that it is easy to
+        // see what rendering has taken place this frame.
+        wlr_renderer_clear(renderer, (float[]){1.0, 0.1, 0.1, 1.0});
+    }
 
-	/* wlr_renderer_clear(renderer, (float[]){0.1, 0.1, 0.1, 1.0}); */
     int num_rects;
     pixman_box32_t *rects = pixman_region32_rectangles(&damage, &num_rects);
     for (int i = 0; i < num_rects; i++) {
@@ -524,46 +535,18 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
     }
 
     // Indicate when a frame is drawn
-    static bool even = true;
-    even = !even;
-    if (even) {
+    output->frame_draw_count++;
+    if (output->server->config->debug_mark_frame_draws) {
+        uint8_t draw_stage = output->frame_draw_count % 3;
+        // Note 3 colours are used so that things that take 2 frames very quickly can be seen
+        float output_marker_colour[4] = {0.0, 0.0, 0.0, 1.0};
+        output_marker_colour[draw_stage] = 1.0;
         struct wlr_box output_marker_box = {
             .x = 30, .y = 0, .width = 10, .height = 10
         };
-        float output_marker_colour[4] = {1.0, 0.0, 0.0, 1.0};
         wlr_render_rect(renderer ,&output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
-    } else {
-        struct wlr_box output_marker_box = {
-            .x = 30, .y = 0, .width = 10, .height = 10
-        };
-        float output_marker_colour[4] = {0.0, 1.0, 0.0, 1.0};
-        wlr_render_rect(renderer, &output_marker_box, output_marker_colour, output->wlr_output->transform_matrix);
     }
 
-    /* // Mark damaged regions */
-    /* float damage_colour[] = {1.0, 0.0, 1.0, 0.05}; */
-    /* for (int i = 0; i < num_rects; i++) { */
-    /*     pixman_box32_t rect = rects[i]; */
-    /*     struct wlr_box box = { */
-    /*         .x = rect.x1, */
-    /*         .y = rect.y1, */
-    /*         .width = rect.x2 - rect.x1, */
-    /*         .height = rect.y2 - rect.y1, */
-    /*     }; */
-    /*     wlr_render_rect(renderer, &box, damage_colour, output->wlr_output->transform_matrix); */
-    /* } */
-
-    /* // Mark damaged regions */
-    /* for (int i = 0; i < num_rects; i++) { */
-    /*     pixman_box32_t rect = rects[i]; */
-    /*     struct wlr_box box = { */
-    /*         .x = rect.x1, */
-    /*         .y = rect.y1, */
-    /*         .width = rect.x2 - rect.x1, */
-    /*         .height = rect.y2 - rect.y1, */
-    /*     }; */
-    /*     render_rect_borders(renderer, output->server, output, box.x, box.y, box.width, box.height); */
-    /* } */
     UNUSED(render_rect_borders);
 #endif
 
@@ -591,10 +574,9 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
     // Swap the buffers
 	wlr_output_commit(output->wlr_output);
 
-#ifdef DEBUG
     struct viv_server *server = output->server;
-    if (server->config->debug_no_damage_tracking) {
+    if (server->config->damage_tracking_mode == VIV_DAMAGE_TRACKING_NONE) {
+        // Damage the full output so that it will be drawn again next frame
         viv_output_damage(output);
     }
-#endif
 }

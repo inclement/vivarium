@@ -92,6 +92,13 @@ static struct string_map_pair scroll_method_map[] = {
     NULL_STRING_MAP_PAIR,
 };
 
+static struct string_map_pair damage_tracking_mode_map[] = {
+    {"none", VIV_DAMAGE_TRACKING_NONE},
+    {"frame", VIV_DAMAGE_TRACKING_FRAME},
+    {"full", VIV_DAMAGE_TRACKING_FULL},
+    NULL_STRING_MAP_PAIR,
+};
+
 static bool is_null_string_map_pair(struct string_map_pair *row) {
     return (strlen(row->key) == 0);
 }
@@ -602,6 +609,10 @@ void load_file_as_toml_config(FILE *fp, struct viv_config *config) {
     // [debug]
     parse_config_bool(root, "debug", "mark-views-by-shell", &config->debug_mark_views_by_shell);
     parse_config_bool(root, "debug", "mark-active-output", &config->debug_mark_active_output);
+    parse_config_bool(root, "debug", "draw-only-damaged-regions", &config->debug_draw_only_damaged_regions);
+    parse_config_bool(root, "debug", "mark-frame-draws", &config->debug_mark_frame_draws);
+    parse_config_string_map(root, "debug", "damage-tracking-mode", damage_tracking_mode_map,
+                            &config->damage_tracking_mode);
 
     // [[keybind]] list
     PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "keybind", struct viv_keybind, parse_keybind_table, TERMINATE_KEYBINDS_LIST(), &config->keybinds);
@@ -632,7 +643,7 @@ void viv_toml_config_load(char *path, struct viv_config *config, bool user_path)
             EXIT_WITH_FORMATTED_MESSAGE("Could not open user-specified config at \"%s\"", path);
         } else {
             // We didn't find the config in a default location, that's fine
-            wlr_log(WLR_INFO, "Config not found at path \"%s\", skipping config load", path);
+            wlr_log(WLR_INFO, "Config not found at default path \"%s\", skipping config load", path);
         }
     } else
     {

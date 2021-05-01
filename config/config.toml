@@ -67,16 +67,6 @@ update-signal-number = 1
 # This is a hacky solution that will be deprecated at some point.
 # workspaces-filename = "/path/to/some/file.txt"
 
-### DEBUG ###
-# Vivarium debug options included for completion. You will want to leave these false under
-# normal operation.
-[debug]
-# Draw a graphical indicator of what shell (XDG, XWayland, Layer) is providing each window surface.
-mark-views-by-shell = false
-
-# Draw a graphical indicator of what shell (i.e. normally what monitor) is currently active.
-mark-active-output = false
-
 ### LAYOUTS ###
 # Configure any number of layouts. Each workspace gets an independent copy of each layout.
 # The following options are available for each layout:
@@ -251,3 +241,23 @@ scroll-button = 8
 middle-emulation = true
 left-handed = false
 natural-scroll = false
+
+### DEBUG ###
+# Vivarium debug options included for completion. You will want to leave these with their
+# default values under normal operation.
+[debug]
+# Draw a graphical indicator of what shell (XDG, XWayland, Layer) is providing each window surface.
+mark-views-by-shell = false
+
+# Draw a graphical indicator of what shell (i.e. normally what monitor) is currently active.
+mark-active-output = false
+
+# Damage tracking: "none" to draw every frame, "frame" to draw only damaged frames, "full"
+# to draw only damaged regions of damaged frames
+damage-tracking-mode = "frame"
+
+# Draw only damaged regions each frame, leaving the rest of the frame red.
+draw-only-damaged-regions = false
+
+# Draw a small square that cycles through red/green/blue each time a frame is drawn
+mark-frame-draws = false

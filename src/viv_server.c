@@ -781,18 +781,20 @@ static char *get_default_config_path(void) {
     return NULL;
 }
 
-void load_toml_config(struct viv_config *config) {
+void load_toml_config(struct viv_config *config, char *user_path) {
     char *config_search_path = get_default_config_path();
-    if (config_search_path) {
+    if (user_path) {
+        viv_toml_config_load(user_path, config, true);
+    } else if (config_search_path) {
         wlr_log(WLR_DEBUG, "Resolved that default config path is \"%s\"", config_search_path);
         viv_toml_config_load(config_search_path, config, false);
     } else {
-        EXIT_WITH_MESSAGE("Could not locate default config path for some reason - is $HOME not defined?");
+        EXIT_WITH_MESSAGE("Could not construct config path for some reason - is $HOME not defined?");
     }
 }
 
 void viv_server_reload_config(struct viv_server *server) {
-    load_toml_config(server->config);
+    load_toml_config(server->config, server->user_provided_config_filen);
 
     struct viv_output *output;
     wl_list_for_each(output, &server->outputs, link) {
@@ -812,7 +814,7 @@ void viv_server_init(struct viv_server *server) {
     // Always start with the config from build-time header
     struct viv_config *config = &the_config;
     // Load other config options from config.toml if possible
-    load_toml_config(config);
+    load_toml_config(config, server->user_provided_config_filen);
     // Use the config, in whatever state it's ended up in
     server->config = config;
 

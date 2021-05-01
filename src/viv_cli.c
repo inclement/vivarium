@@ -3,24 +3,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "viv_cli.h"
 #include "viv_layout.h"
 #include "viv_mappable_functions.h"
+#include "viv_types.h"
+
+#define ALL_OPTIONS_CONSUMED (-1)
+#define OPTION_PARSE_FAILURE '?'
 
 #define LAST_OPTION {0, 0, 0, 0}
 
 #define MACRO_FOR_EACH_OPTION(MACRO)            \
-    MACRO("help", help, optional_argument, 0, 'h')                       \
-    MACRO("list-config-options", list_config_options, optional_argument, 0, 0) \
+    MACRO("help", help, no_argument, 0, 'h')                       \
+    MACRO("list-config-options", list_config_options, no_argument, 0, 0) \
+    MACRO("config", set_config_path, required_argument, 0, 0) \
 
 #define GENERATE_OPTION_STRUCT(CLI_NAME, FUNC_NAME, HAS_ARG, FLAG, VAL)  \
     {CLI_NAME, HAS_ARG, FLAG, VAL},
 
-static bool handle_help(void) {
+static bool handle_help(struct viv_args *args) {
+    UNUSED(args);
     printf(
-        "Usage: vivarium [-h] [--list-config-options]\n"
+        "Usage: vivarium [-h] [--list-config-options] [--config]\n"
         "\n"
         "-h, --help               Show help message and quit\n"
         "--list-config-options    List available layouts and keybinds\n"
+        "--config                 Path to config file to load, overrides normal config\n"
         "\n"
     );
 
@@ -33,7 +41,8 @@ static bool handle_help(void) {
 #define PRINT_MAPPABLE_HELP(FUNCTION_NAME, DOC, ...)    \
     printf("  " #FUNCTION_NAME ": " DOC "\n");
 
-static bool handle_list_config_options(void) {
+static bool handle_list_config_options(struct viv_args *args) {
+    UNUSED(args);
     printf(
         "# Layouts\n"
         "\n"
@@ -63,36 +72,48 @@ static bool handle_list_config_options(void) {
     return true;
 }
 
+static bool handle_set_config_path(struct viv_args *args) {
+    args->config_filen = optarg;
+    return false;
+}
+
 #define GENERATE_OPTION_HANDLER_LOOKUP(CLI_NAME, FUNC_NAME, HAS_ARG, FLAG, VAL) \
     &handle_ ## FUNC_NAME,
 
-static bool (*option_handlers[])(void) = {
+static bool (*option_handlers[])(struct viv_args *args) = {
     MACRO_FOR_EACH_OPTION(GENERATE_OPTION_HANDLER_LOOKUP)
 };
 
-void viv_cli_parse_args(int argc, char *argv[]) {
-    int option;
+struct viv_args viv_cli_parse_args(int argc, char *argv[]) {
+    int option_result;
+
+    struct viv_args parsed_args = { 0 };
+
     while (true) {
         int option_index = 0;
         static struct option long_options[] = {
             MACRO_FOR_EACH_OPTION(GENERATE_OPTION_STRUCT)
             LAST_OPTION,
         };
-        option = getopt_long(argc, argv, "h", long_options, &option_index);
-        if (option == -1) {
+        option_result = getopt_long(argc, argv, "h", long_options, &option_index);
+
+        if (option_result == ALL_OPTIONS_CONSUMED) {
             break;
         }
 
         bool should_exit = false;
-        switch (option) {
+        switch (option_result) {
         case 0:  // indicates a long option
-            should_exit = (*option_handlers[option_index])();
+            should_exit = (*option_handlers[option_index])(&parsed_args);
             break;
         case 'h':
-            should_exit = handle_help();
+            should_exit = handle_help(&parsed_args);
+            break;
+        case OPTION_PARSE_FAILURE:
+            should_exit = true;
             break;
         default:
-            break;
+            UNREACHABLE();
         }
 
         if (should_exit) {
@@ -100,4 +121,6 @@ void viv_cli_parse_args(int argc, char *argv[]) {
             exit(0);
         }
     }
+
+    return parsed_args;
 }

@@ -15,6 +15,12 @@
 #include "viv_xwayland_types.h"
 #endif
 
+enum viv_damage_tracking_mode {
+    VIV_DAMAGE_TRACKING_NONE,  // every frame is fully re-rendered
+    VIV_DAMAGE_TRACKING_FRAME,   // any damage triggers a full frame render
+    VIV_DAMAGE_TRACKING_FULL,  // only damaged regions are rendered
+};
+
 enum viv_cursor_mode {
 	VIV_CURSOR_PASSTHROUGH,  /// Pass through cursor data to views
 	VIV_CURSOR_MOVE,  /// A view is being moved
@@ -30,6 +36,7 @@ enum cursor_buttons {
 struct viv_output;  // Forward declare for use by viv_server
 
 struct viv_server {
+    char *user_provided_config_filen;
     struct viv_config *config;
 
 	struct wl_display *wl_display;
@@ -119,6 +126,8 @@ struct viv_output {
 
     bool needs_layout;
     struct viv_workspace *current_workspace;
+
+    uint32_t frame_draw_count;  // only used by debug options
 
     struct wl_list layer_views;
     struct {
@@ -312,10 +321,12 @@ struct viv_config {
 
     struct viv_libinput_config *libinput_configs;
 
+    enum viv_damage_tracking_mode damage_tracking_mode;
+
     bool debug_mark_views_by_shell;
     bool debug_mark_active_output;
     bool debug_mark_frame_draws;
-    bool debug_no_damage_tracking;
+    bool debug_draw_only_damaged_regions;
 };
 
 

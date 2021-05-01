@@ -43,13 +43,14 @@ int main(int argc, char *argv[]) {
     UNUSED(argc);
     UNUSED(argv);
 
-    viv_cli_parse_args(argc, argv);
+    struct viv_args parsed_args = viv_cli_parse_args(argc, argv);
 
 	wlr_log_init(WLR_DEBUG, NULL);
 
     // Initialise our vivarium server. This sets up all the event bindings so that inputs,
     // outputs and window events can be handles.
 	struct viv_server server = { .config = NULL };
+    server.user_provided_config_filen = parsed_args.config_filen;
     viv_server_init(&server);
 
 	// Add a Unix socket to the Wayland display.

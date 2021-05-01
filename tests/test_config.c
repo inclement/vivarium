@@ -77,6 +77,10 @@ void test_config_toml_static_options_match_defaults(void) {
 
     TEST_ASSERT_CONFIG_EQUAL(debug_mark_views_by_shell);
     TEST_ASSERT_CONFIG_EQUAL(debug_mark_active_output);
+    TEST_ASSERT_CONFIG_EQUAL(debug_draw_only_damaged_regions);
+    TEST_ASSERT_CONFIG_EQUAL(debug_mark_frame_draws);
+
+    TEST_ASSERT_CONFIG_EQUAL(damage_tracking_mode);
 }
 
 void test_config_toml_workspaces_match_defaults(void) {
