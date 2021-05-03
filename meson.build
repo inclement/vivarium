@@ -52,6 +52,8 @@ libinput_dep = dependency('libinput')
 xcb_dep = dependency('xcb', required: get_option('xwayland'))
 pixman_dep = dependency('pixman-1')
 
+math_dep = cc.find_library('m')
+
 includes = [
   include_directories('include'),
   include_directories('protocols'),

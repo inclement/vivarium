@@ -9,6 +9,7 @@
 
 #include "viv_view.h"
 
+#include "viv_output.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_wl_list_utils.h"
@@ -146,23 +147,28 @@ bool viv_view_oversized(struct viv_view *view) {
     return view->implementation->oversized(view);
 }
 
+/* /// Return the view bounding box in coordinates relative to the given output */
+/* static struct wlr_box viv_view_output_coords(struct viv_view *view, struct viv_output *output) { */
+/*     double lx, ly; */
+/*     wlr_output_layout_output_coords(view->server->output_layout, output->wlr_output, &lx, &ly); */
+
+/*     struct wlr_box geo_box = { */
+/*         .x = view->target_x - lx, */
+/*         .y = view->target_y - ly, */
+/*         .width = view->target_width, */
+/*         .height = view->target_height, */
+/*     }; */
+
+/*     return geo_box; */
+/* } */
+
 void viv_view_damage(struct viv_view *view) {
     struct viv_output *output;
-
-    struct wlr_box geo_box = {
-        .x = view->target_x - 10,
-        .y = view->target_y - 10,
-        .width = view->target_width + 20,
-        .height = view->target_height + 20,
-    };
-    /* viv_view_get_geometry(view, &geo_box); */
-    // TODO: Subtract layout pos
-
-    /* geo_box.x = view->x; */
-    /* geo_box.y = view->y; */
-
     wl_list_for_each(output, &view->server->outputs, link) {
-        wlr_output_damage_add_box(output->damage, &geo_box);
+        struct wlr_box geo_box;
+        viv_view_get_geometry(view, &geo_box);
+        /* wlr_output_damage_add_box(output->damage, &geo_box); */
+        viv_output_damage_layout_coords_box(output, &geo_box);
     }
 }
 

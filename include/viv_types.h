@@ -47,8 +47,6 @@ struct viv_server {
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;
 
-    struct wl_listener surface_commit;
-
 #ifdef XWAYLAND
     struct wlr_xwayland *xwayland_shell;
     xcb_atom_t window_type_atoms[WINDOW_TYPE_ATOM_MAX];
@@ -165,7 +163,7 @@ struct viv_layer_view {
 
     struct wl_list output_link;
 
-    uint32_t x, y;
+    int x, y;
 };
 
 enum viv_view_type {
@@ -190,17 +188,11 @@ struct viv_view_implementation {
 };
 
 struct viv_xdg_popup {
-    struct viv_view *view;
     struct wlr_xdg_popup *wlr_popup;
+    struct viv_server *server;
 
-    struct wl_listener surface_commit;
-    struct wl_listener surface_unmap;
-    struct wl_listener destroy;
-};
-
-struct viv_layer_popup {
-    struct viv_view *view;
-    struct wlr_xdg_popup *wlr_popup;
+    int *lx;  // pointer to x of parent view/layer-view in layout coords
+    int *ly;  // pointer to y of parent view/layer-view in layout coords
 
     struct wl_listener surface_commit;
     struct wl_listener surface_unmap;
@@ -326,7 +318,7 @@ struct viv_config {
     bool debug_mark_views_by_shell;
     bool debug_mark_active_output;
     bool debug_mark_frame_draws;
-    bool debug_draw_only_damaged_regions;
+    bool debug_mark_undamaged_regions;
 };
 
 

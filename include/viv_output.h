@@ -27,6 +27,12 @@ void viv_output_do_layout_if_necessary(struct viv_output *output);
 /// Mark the whole output as damaged
 void viv_output_damage(struct viv_output *output);
 
+/// Damage the given box, expected to be unscaled and in output-layout coordinates
+void viv_output_damage_layout_coords_box(struct viv_output *output, struct wlr_box *box);
+
+/// Damage the given region, expected to be unscaled an in output-layout coordinates
+void viv_output_damage_layout_coords_region(struct viv_output *output, pixman_region32_t *damage);
+
 /// Mark that whatever workspace is active will need its layout function applying
 void viv_output_mark_for_relayout(struct viv_output *output);
 #endif

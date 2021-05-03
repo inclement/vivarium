@@ -256,8 +256,8 @@ mark-active-output = false
 # to draw only damaged regions of damaged frames
 damage-tracking-mode = "frame"
 
-# Draw only damaged regions each frame, leaving the rest of the frame red.
-draw-only-damaged-regions = false
+# Draw the background red before drawing damaged regions, so only damaged regions are rendered
+mark-undamaged-regions = false
 
 # Draw a small square that cycles through red/green/blue each time a frame is drawn
 mark-frame-draws = false
