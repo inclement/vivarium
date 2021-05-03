@@ -110,6 +110,8 @@ struct viv_args viv_cli_parse_args(int argc, char *argv[]) {
             should_exit = handle_help(&parsed_args);
             break;
         case OPTION_PARSE_FAILURE:
+            // In this case getopt_long has already printed an error message so we don't
+            // need to add anything
             should_exit = true;
             break;
         default:

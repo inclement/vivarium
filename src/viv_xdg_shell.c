@@ -4,11 +4,13 @@
 #include <wlr/types/wlr_output_damage.h>
 
 #include "viv_config_support.h"
+#include "viv_damage.h"
 #include "viv_xdg_shell.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
 #include "viv_workspace.h"
+#include "viv_xdg_popup.h"
 
 /// Return true if the view looks like it should be floating.
 // TODO: Make this more robust
@@ -21,19 +23,9 @@ static void handle_xdg_surface_commit(struct wl_listener *listener, void *data) 
     struct viv_view *view = wl_container_of(listener, view, surface_commit);
     struct wlr_surface *surface = view->xdg_surface->surface;
 
-    pixman_region32_t damage;
-    pixman_region32_init(&damage);
-    wlr_surface_get_effective_damage(surface, &damage);
-
-    pixman_region32_translate(&damage, view->x, view->y);
-
-    struct viv_output *viv_output = wl_container_of(view->server->outputs.next, viv_output, link);
-    struct wlr_output_damage *output_damage = viv_output->damage;
-    wlr_output_damage_add(output_damage, &damage);
+    viv_damage_surface(view->server, surface, view->x, view->y);
 
     wlr_log(WLR_DEBUG, "view %s commit", view->xdg_surface->toplevel->app_id);
-
-    pixman_region32_fini(&damage);
 }
 
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
@@ -258,68 +250,15 @@ static struct viv_view_implementation xdg_view_implementation = {
     .oversized = &implementation_oversized,
 };
 
-static void handle_popup_surface_commit(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_xdg_popup *popup = wl_container_of(listener, popup, surface_commit);
-    struct viv_view *view = popup->view;
-    struct wlr_surface *surface = popup->wlr_popup->base->surface;
-
-    pixman_region32_t damage;
-    pixman_region32_init(&damage);
-    wlr_surface_get_effective_damage(surface, &damage);
-
-    pixman_region32_translate(&damage, view->x + popup->wlr_popup->geometry.x, view->y + popup->wlr_popup->geometry.y);
-
-    struct viv_output *viv_output = wl_container_of(view->server->outputs.next, viv_output, link);
-    struct wlr_output_damage *output_damage = viv_output->damage;
-    wlr_output_damage_add(output_damage, &damage);
-
-    wlr_log(WLR_DEBUG, "popup for view %s commit", view->xdg_surface->toplevel->app_id);
-
-    pixman_region32_fini(&damage);
-}
-
-static void handle_popup_surface_unmap(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_xdg_popup *popup = wl_container_of(listener, popup, surface_unmap);
-    struct viv_view *view = popup->view;
-
-    struct wlr_box geo_box = {
-        .x = view->x + popup->wlr_popup->geometry.x,
-        .y = view->y + popup->wlr_popup->geometry.y,
-        .width = popup->wlr_popup->geometry.width,
-        .height = popup->wlr_popup->geometry.height,
-    };
-
-    struct viv_output *output;
-    wl_list_for_each(output, &view->server->outputs, link) {
-        wlr_output_damage_add_box(output->damage, &geo_box);
-    }
-}
-
-static void handle_popup_surface_destroy(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_xdg_popup *popup = wl_container_of(listener, popup, destroy);
-    wlr_log(WLR_INFO, "Popup being destroyed");
-    free(popup);
-}
-
 static void handle_xdg_surface_new_popup(struct wl_listener *listener, void *data) {
     struct viv_view *view = wl_container_of(listener, view, new_xdg_popup);
 	struct wlr_xdg_popup *wlr_popup = data;
 
     struct viv_xdg_popup *popup = calloc(1, sizeof(struct viv_xdg_popup));
-    popup->view = view;
-    popup->wlr_popup = wlr_popup;
-
-    popup->surface_commit.notify = handle_popup_surface_commit;
-    wl_signal_add(&wlr_popup->base->surface->events.commit, &popup->surface_commit);
-
-    popup->surface_unmap.notify = handle_popup_surface_unmap;
-    wl_signal_add(&wlr_popup->base->events.unmap, &popup->surface_unmap);
-
-    popup->destroy.notify = handle_popup_surface_destroy;
-    wl_signal_add(&wlr_popup->base->surface->events.destroy, &popup->destroy);
+    viv_xdg_popup_init(popup, wlr_popup);
+    popup->server = view->server;
+    popup->lx = &view->x;
+    popup->ly = &view->y;
 }
 
 void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surface) {

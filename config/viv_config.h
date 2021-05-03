@@ -252,8 +252,6 @@ static struct viv_config the_config = {
     // This exists for basic inter-process communication e.g. with waybar, see below
     .ipc_workspaces_filename = NULL,
 
-    .damage_tracking_mode = VIV_DAMAGE_TRACKING_FRAME,
-
     // Status bar configuration.
     .bar = {
         .command = "waybar",  // will be run when Vivarium starts
@@ -262,10 +260,15 @@ static struct viv_config the_config = {
                                     // can be used by the bar process as an update trigger
     },
 
+    // The damage tracking mode: NONE to fully render every frame, FRAME to render only
+    // frames with any damage, FULL to render only damaged regions of damaged frames.
+    // Note: the default is currently FRAME because FULL damage tracking may still be buggy
+    .damage_tracking_mode = VIV_DAMAGE_TRACKING_FRAME,
+
     // Debug options, not useful outside development:
     .debug_mark_views_by_shell = false,  // mark xdg windows with a green rect, xwayland by a red rect
     .debug_mark_active_output = false,  // draw a blue rectangle in the top left of the active output
-    .debug_draw_only_damaged_regions = false,  // draw only damaged regions leaving rest of output red
+    .debug_mark_undamaged_regions = false,  // draw only damaged regions leaving rest of output red
     .debug_mark_frame_draws = false,  // draw a small square that cycles through red/green/blue on frame draw
 };
 

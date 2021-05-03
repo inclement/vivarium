@@ -2,6 +2,7 @@
 #include <wlr/types/wlr_output_damage.h>
 #include <xcb/xcb.h>
 
+#include "viv_damage.h"
 #include "viv_types.h"
 #include "viv_view.h"
 #include "viv_workspace.h"
@@ -114,17 +115,7 @@ static void handle_xwayland_surface_commit(struct wl_listener *listener, void *d
     struct viv_view *view = wl_container_of(listener, view, surface_commit);
     struct wlr_surface *surface = view->xwayland_surface->surface;
 
-    pixman_region32_t damage;
-    pixman_region32_init(&damage);
-    wlr_surface_get_effective_damage(surface, &damage);
-
-    pixman_region32_translate(&damage, view->x, view->y);
-
-    struct viv_output *viv_output = wl_container_of(view->server->outputs.next, viv_output, link);
-    struct wlr_output_damage *output_damage = viv_output->damage;
-    wlr_output_damage_add(output_damage, &damage);
-
-    pixman_region32_fini(&damage);
+    viv_damage_surface(view->server, surface, view->x, view->y);
 }
 
 static void event_xwayland_surface_map(struct wl_listener *listener, void *data) {

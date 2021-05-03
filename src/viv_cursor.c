@@ -15,8 +15,8 @@ static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
 
     struct viv_view *view = server->grab_state.view;
 
-    int old_x = view->x; //server->grab_state.view->x;
-    int old_y = view->y; //server->grab_state.view->y;
+    int old_x = view->x;
+    int old_y = view->y;
 
     // Damage before moving
     viv_view_damage(view);

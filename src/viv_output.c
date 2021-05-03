@@ -1,3 +1,4 @@
+#include <math.h>
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -171,6 +172,37 @@ void viv_output_do_layout_if_necessary(struct viv_output *output) {
 
 void viv_output_damage(struct viv_output *output) {
     wlr_output_damage_add_whole(output->damage);
+}
+
+void viv_output_damage_layout_coords_box(struct viv_output *output, struct wlr_box *box) {
+    struct wlr_box scaled_box;
+    memcpy(&scaled_box, box, sizeof(struct wlr_box));
+
+    double lx = 0, ly = 0;
+    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
+
+    scaled_box.x -= lx;
+    scaled_box.y -= ly;
+
+    float scale = output->wlr_output->scale;
+
+    // TODO: Can we just round these rather than floor/ceil? Need to think through how
+    // scaling actually works out on different outputs
+    scaled_box.x = floor(box->x * scale);
+    scaled_box.y = floor(box->y * scale);
+    scaled_box.width = ceil((box->x + box->width) * scale) - floor(box->x * scale);
+    scaled_box.height = ceil((box->y + box->height) * scale) - floor(box->y * scale);
+
+    wlr_output_damage_add_box(output->damage, &scaled_box);
+}
+
+void viv_output_damage_layout_coords_region(struct viv_output *output, pixman_region32_t *damage) {
+    double lx = 0, ly = 0;
+    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
+
+    pixman_region32_translate(damage, -lx, -ly);
+
+    wlr_output_damage_add(output->damage, damage);
 }
 
 void viv_output_mark_for_relayout(struct viv_output *output) {

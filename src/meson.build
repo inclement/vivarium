@@ -4,6 +4,7 @@ viv_sources = [
   'viv_bar.c',
   'viv_cli.c',
   'viv_cursor.c',
+  'viv_damage.c',
   'viv_input.c',
   'viv_ipc.c',
   'viv_layout.c',
@@ -16,6 +17,7 @@ viv_sources = [
   'viv_view.c',
   'viv_wl_list_utils.c',
   'viv_workspace.c',
+  'viv_xdg_popup.c',
   'viv_xdg_shell.c',
 ]
 
@@ -35,6 +37,7 @@ viv_deps = [
     tomlc99_dep,
     xcb_dep,
     pixman_dep,
+    math_dep,
 ]
 
 executable(

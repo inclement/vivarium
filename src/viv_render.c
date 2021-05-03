@@ -157,11 +157,40 @@ static void render_rect_borders(struct wlr_renderer *renderer, struct viv_server
 
 }
 
-/// Render the given view's borders, on the given output. The border will be the active
-/// colour if is_active is true, or otherwise the inactive colour.
-static void render_borders(struct viv_view *view, struct viv_output *output, bool is_active) {
+static void render_rect(struct wlr_box *box, struct viv_output *output, pixman_region32_t *damage, float colour[static 4]) {
+    UNUSED(damage);
+    struct wlr_output *wlr_output = output->wlr_output;
 	struct wlr_renderer *renderer = output->server->renderer;
 
+    // TODO: Need to translate box to output coords - -= output->lx etc.
+
+    pixman_region32_t box_region_damage;
+    pixman_region32_init(&box_region_damage);
+    pixman_region32_union_rect(&box_region_damage, &box_region_damage, box->x, box->y, box->width, box->height);
+    pixman_region32_intersect(&box_region_damage, &box_region_damage, damage);
+
+    if (pixman_region32_not_empty(&box_region_damage)) {
+        int num_rects;
+        pixman_box32_t *rects = pixman_region32_rectangles(&box_region_damage, &num_rects);
+        for (int i = 0; i < num_rects; i++) {
+            pixman_box32_t rect = rects[i];
+            struct wlr_box rect_box = {
+                .x = rect.x1,
+                .y = rect.y1,
+                .width = rect.x2 - rect.x1,
+                .height = rect.y2 - rect.y1,
+            };
+            wlr_renderer_scissor(renderer, &rect_box);
+            wlr_render_rect(renderer, box, colour, wlr_output->transform_matrix);
+        }
+    }
+
+    pixman_region32_fini(&box_region_damage);
+}
+
+/// Render the given view's borders, on the given output. The border will be the active
+/// colour if is_active is true, or otherwise the inactive colour.
+static void render_borders(struct viv_view *view, struct viv_output *output, pixman_region32_t *output_damage, bool is_active) {
     struct viv_server *server = output->server;
     int gap_width = server->config->gap_width;
 
@@ -186,28 +215,28 @@ static void render_borders(struct viv_view *view, struct viv_output *output, boo
     box.y = y;
     box.width = width;
     box.height = line_width;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+    render_rect(&box, output, output_damage, colour);
 
     // top
     box.x = x;
     box.y = y + height - line_width;
     box.width = width;
     box.height = line_width;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+    render_rect(&box, output, output_damage, colour);
 
     // left
     box.x = x;
     box.y = y;
     box.width = line_width;
     box.height = height;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+    render_rect(&box, output, output_damage, colour);
 
     // right
     box.x = x + width - line_width;
     box.y = y;
     box.width = line_width;
     box.height = height;
-    wlr_render_rect(renderer, &box, colour, output->wlr_output->transform_matrix);
+    render_rect(&box, output, output_damage, colour);
 
 }
 
@@ -267,7 +296,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
     if (view->is_floating || !view->workspace->active_layout->no_borders) {
-        render_borders(view, output, is_active);
+        render_borders(view, output, damage, is_active);
     }
 
     // Then render any popups
@@ -343,7 +372,7 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
     bool is_active = is_grabbed || is_active_on_current_output;
     if (!view->is_static &&
         (view->is_floating || !view->workspace->active_layout->no_borders)) {
-        render_borders(view, output, is_active);
+        render_borders(view, output, damage, is_active);
     }
 
 #ifdef DEBUG
@@ -412,7 +441,7 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
     bool needs_frame;
     pixman_region32_init(&damage);
     bool attach_render_success = wlr_output_damage_attach_render(output->damage, &needs_frame, &damage);
-    wlr_log(WLR_INFO, "Return %d, needs frame: %d", attach_render_success, needs_frame);
+    /* wlr_log(WLR_INFO, "Return %d, needs frame: %d", attach_render_success, needs_frame); */
 	if (!attach_render_success) {
 		return;
 	}
@@ -434,10 +463,10 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
 	/* Begin the renderer (calls glViewport and some other GL sanity checks) */
 	wlr_renderer_begin(renderer, width, height);
 
-    if (output->server->config->debug_draw_only_damaged_regions) {
+    if (output->server->config->debug_mark_undamaged_regions) {
         // Clear the output with a solid colour, so that it is easy to
         // see what rendering has taken place this frame.
-        wlr_renderer_clear(renderer, (float[]){1.0, 0.1, 0.1, 1.0});
+        wlr_renderer_clear(renderer, (float[]){0.95, 0.2, 0.2, 1.0});
     }
 
     int num_rects;
