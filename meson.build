@@ -35,7 +35,8 @@ endif
 cc = meson.get_compiler('c')
 
 # For wlroots, use the system version if the correct version is available
-wlroots_dep = dependency('wlroots', version : '0.12.0', fallback : ['wlroots', 'wlroots'])
+wlroots_dep = dependency('wlroots', version : '0.12.0', fallback : ['wlroots', 'wlroots'],
+                         default_options : ['examples=false'])
 
 tomlc99_dep = dependency('toml', fallback : ['tomlc99', 'tomlc99_static_dep'])
 
