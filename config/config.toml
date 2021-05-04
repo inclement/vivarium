@@ -1,6 +1,6 @@
 
 [global-config]
-# Options: alt, ctrl, logo/super, mod2, mod3
+# Options: alt, ctrl, logo, mod2, mod3
 # This key can be referenced in custom keybindings as `meta`
 meta-key = "alt"
 
