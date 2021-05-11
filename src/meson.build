@@ -16,6 +16,7 @@ viv_sources = [
   'viv_toml_config.c',
   'viv_view.c',
   'viv_wl_list_utils.c',
+  'viv_wlr_surface_tree.c',
   'viv_workspace.c',
   'viv_xdg_popup.c',
   'viv_xdg_shell.c',

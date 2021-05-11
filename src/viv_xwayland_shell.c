@@ -5,6 +5,7 @@
 #include "viv_damage.h"
 #include "viv_types.h"
 #include "viv_view.h"
+#include "viv_wlr_surface_tree.h"
 #include "viv_workspace.h"
 #include "viv_xwayland_shell.h"
 #include "viv_xwayland_types.h"
@@ -110,12 +111,10 @@ static bool guess_should_have_no_borders(struct viv_view *view) {
     return view->xwayland_surface->parent != NULL;
 }
 
-static void handle_xwayland_surface_commit(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_view *view = wl_container_of(listener, view, surface_commit);
-    struct wlr_surface *surface = view->xwayland_surface->surface;
-
-    viv_damage_surface(view->server, surface, view->x, view->y);
+static void add_xwayland_view_global_coords(void *view_pointer, int *x, int *y) {
+    struct viv_view *view = view_pointer;
+    *x += view->x;
+    *y += view->y;
 }
 
 static void event_xwayland_surface_map(struct wl_listener *listener, void *data) {
@@ -192,8 +191,7 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
 
     viv_workspace_add_view(view->workspace, view);
 
-    view->surface_commit.notify = handle_xwayland_surface_commit;
-    wl_signal_add(&view->xwayland_surface->surface->events.commit, &view->surface_commit);
+    viv_surface_tree_root_create(view->server, view->xwayland_surface->surface, &add_xwayland_view_global_coords, view);
 }
 
 static void event_xwayland_surface_unmap(struct wl_listener *listener, void *data) {

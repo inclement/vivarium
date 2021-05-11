@@ -9,6 +9,7 @@
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
+#include "viv_wlr_surface_tree.h"
 #include "viv_workspace.h"
 #include "viv_xdg_popup.h"
 
@@ -18,14 +19,13 @@ static bool guess_should_be_floating(struct viv_view *view) {
     return (view->xdg_surface->toplevel->parent != NULL);
 }
 
-static void handle_xdg_surface_commit(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_view *view = wl_container_of(listener, view, surface_commit);
-    struct wlr_surface *surface = view->xdg_surface->surface;
+static void add_xdg_view_global_coords(void *view_pointer, int *x, int *y) {
+    struct viv_view *view = view_pointer;
+    *x += view->x;
+    *y += view->y;
 
-    viv_damage_surface(view->server, surface, view->x, view->y);
-
-    wlr_log(WLR_DEBUG, "view %s commit", view->xdg_surface->toplevel->app_id);
+    /* *x += view->xdg_surface->geometry.x; */
+    /* *y += view->xdg_surface->geometry.y; */
 }
 
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
@@ -62,8 +62,9 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
     viv_workspace_add_view(view->workspace, view);
 
-    view->surface_commit.notify = handle_xdg_surface_commit;
-    wl_signal_add(&view->xdg_surface->surface->events.commit, &view->surface_commit);
+    viv_surface_tree_root_create(view->server, view->xdg_surface->surface, &add_xdg_view_global_coords, view);
+
+    wlr_log(WLR_INFO, "Mapped xdg-surface wlr_surface at %p", view->xdg_surface->surface);
 }
 
 static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
@@ -255,10 +256,10 @@ static void handle_xdg_surface_new_popup(struct wl_listener *listener, void *dat
 	struct wlr_xdg_popup *wlr_popup = data;
 
     struct viv_xdg_popup *popup = calloc(1, sizeof(struct viv_xdg_popup));
-    viv_xdg_popup_init(popup, wlr_popup);
     popup->server = view->server;
     popup->lx = &view->x;
     popup->ly = &view->y;
+    viv_xdg_popup_init(popup, wlr_popup);
 }
 
 void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surface) {

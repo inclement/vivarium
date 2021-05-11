@@ -10,14 +10,13 @@
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
+#include "viv_wlr_surface_tree.h"
 #include "viv_xdg_popup.h"
 
-static void handle_layer_surface_commit(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, surface_commit);
-    struct wlr_surface *surface = layer_view->layer_surface->surface;
-
-    viv_damage_surface(layer_view->server, surface, layer_view->x, layer_view->y);
+static void add_layer_view_global_coords(void *layer_view_pointer, int *x, int *y) {
+    struct viv_layer_view *view = layer_view_pointer;
+    *x += view->x;
+    *y += view->y;
 }
 
 static void layer_surface_map(struct wl_listener *listener, void *data) {
@@ -99,8 +98,7 @@ void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *s
 	wl_signal_add(&layer_surface->events.new_popup, &layer_view->new_popup);
     UNUSED(layer_surface_new_popup);
 
-    layer_view->surface_commit.notify = handle_layer_surface_commit;
-    wl_signal_add(&layer_surface->surface->events.commit, &layer_view->surface_commit);
+    viv_surface_tree_root_create(layer_view->server, layer_surface->surface, &add_layer_view_global_coords, layer_view);
 
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
     wl_list_insert(&output->layer_views, &layer_view->output_link);
