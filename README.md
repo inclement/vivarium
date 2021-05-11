@@ -15,6 +15,7 @@ Core features include:
 * Floating windows on demand.
 * (optional) XWayland support.
 * Layer shell support, compatible with tools like [Waybar](https://github.com/Alexays/Waybar), [bemenu](https://github.com/Cloudef/bemenu) and [swaybg](https://github.com/swaywm/swaybg).
+* Damage tracking for efficient rendering
 
 Vivarium is unstable and unfinished...but usable!
 

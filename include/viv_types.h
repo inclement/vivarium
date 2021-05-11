@@ -189,6 +189,7 @@ struct viv_view_implementation {
 
 struct viv_xdg_popup {
     struct wlr_xdg_popup *wlr_popup;
+    struct viv_xdg_popup *parent_popup;
     struct viv_server *server;
 
     int *lx;  // pointer to x of parent view/layer-view in layout coords
@@ -197,6 +198,7 @@ struct viv_xdg_popup {
     struct wl_listener surface_commit;
     struct wl_listener surface_unmap;
     struct wl_listener destroy;
+    struct wl_listener new_popup;
 };
 
 struct viv_view {
