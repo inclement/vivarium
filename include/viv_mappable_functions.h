@@ -44,6 +44,7 @@ union viv_mappable_payload;
     MACRO(user_function, "Run a C function. Args: function (pointer (*function)(struct viv_workspace *workspace))", void (*function)(struct viv_workspace *workspace);) \
     MACRO(debug_damage_all, "Mark all outputs as damaged to force a full redraw") \
     MACRO(debug_swap_buffers, "Swap buffers") \
+    MACRO(debug_toggle_show_undamaged_regions, "Debug option to draw undamaged regions as red") \
 
 // Declare each mappable function and generate a payload struct to pass as its argument
 MACRO_FOR_EACH_MAPPABLE(GENERATE_DECLARATION)

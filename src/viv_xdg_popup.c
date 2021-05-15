@@ -37,8 +37,10 @@ static void handle_popup_surface_unmap(struct wl_listener *listener, void *data)
     UNUSED(data);
     struct viv_xdg_popup *popup = wl_container_of(listener, popup, surface_unmap);
 
-    int px = *popup->lx + popup->wlr_popup->geometry.x;
-    int py = *popup->ly + popup->wlr_popup->geometry.y;
+    int px = 0;
+    int py = 0;
+    add_popup_global_coords(popup, &px, &py);
+
     struct wlr_box geo_box = {
         .x = px,
         .y = py,
@@ -56,7 +58,7 @@ static void handle_popup_surface_destroy(struct wl_listener *listener, void *dat
     UNUSED(data);
     struct viv_xdg_popup *popup = wl_container_of(listener, popup, destroy);
     wlr_log(WLR_INFO, "Popup being destroyed");
-    /* free(popup); */
+    free(popup);
 }
 
 static void handle_new_popup(struct wl_listener *listener, void *data) {

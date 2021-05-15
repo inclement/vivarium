@@ -789,7 +789,7 @@ void load_toml_config(struct viv_config *config, char *user_path) {
         wlr_log(WLR_DEBUG, "Resolved that default config path is \"%s\"", config_search_path);
         viv_toml_config_load(config_search_path, config, false);
     } else {
-        EXIT_WITH_MESSAGE("Could not construct config path for some reason - is $HOME not defined?");
+        EXIT_WITH_MESSAGE("Could not work out config path for some reason - is $HOME not defined?");
     }
 }
 
