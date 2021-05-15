@@ -101,7 +101,7 @@ struct viv_keybind the_keybinds[] = {
     /// How to bind your own function rather than an existing command:
     KEYBIND_USER_FUNCTION(META, F, &example_user_function),
     KEYBIND_MAPPABLE(META, d, debug_damage_all),
-    KEYBIND_MAPPABLE(META, p, debug_swap_buffers), /*  */
+    KEYBIND_MAPPABLE(META, p, debug_swap_buffers),
     /// Autogenerate keybindings to switch to and/or send windows to each workspace:
     FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
     FOR_EACH_WORKSPACE(BIND_SHIFT_ACTIVE_WINDOW_TO_WORKSPACE)

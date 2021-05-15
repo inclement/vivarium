@@ -36,6 +36,13 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
     }
 	struct viv_server *server = view->server;
 
+    // Damage both previous and newly-active surface
+    // TODO: only damage the borders
+    if (view->workspace->active_view) {
+        viv_view_damage(view->workspace->active_view);
+    }
+    viv_view_damage(view);
+
 	/* Activate the new surface */
     view->workspace->active_view = view;
     viv_surface_focus(server, surface);
@@ -147,27 +154,19 @@ bool viv_view_oversized(struct viv_view *view) {
     return view->implementation->oversized(view);
 }
 
-/* /// Return the view bounding box in coordinates relative to the given output */
-/* static struct wlr_box viv_view_output_coords(struct viv_view *view, struct viv_output *output) { */
-/*     double lx, ly; */
-/*     wlr_output_layout_output_coords(view->server->output_layout, output->wlr_output, &lx, &ly); */
-
-/*     struct wlr_box geo_box = { */
-/*         .x = view->target_x - lx, */
-/*         .y = view->target_y - ly, */
-/*         .width = view->target_width, */
-/*         .height = view->target_height, */
-/*     }; */
-
-/*     return geo_box; */
-/* } */
-
 void viv_view_damage(struct viv_view *view) {
     struct viv_output *output;
+    struct wlr_box geo_box = { 0 };
+
+    viv_view_get_geometry(view, &geo_box);
+
+    int border_width = view->server->config->border_width;
+    geo_box.x -= border_width;
+    geo_box.y -= border_width;
+    geo_box.width += 2 * border_width;
+    geo_box.height += 2 * border_width;
+
     wl_list_for_each(output, &view->server->outputs, link) {
-        struct wlr_box geo_box;
-        viv_view_get_geometry(view, &geo_box);
-        /* wlr_output_damage_add_box(output->damage, &geo_box); */
         viv_output_damage_layout_coords_box(output, &geo_box);
     }
 }
@@ -180,11 +179,13 @@ void viv_view_make_active(struct viv_view *view) {
 void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
     ASSERT(view->implementation->set_size != NULL);
     view->implementation->set_size(view, width, height);
+    viv_view_damage(view);
 }
 
 void viv_view_set_pos(struct viv_view *view, uint32_t width, uint32_t height) {
     ASSERT(view->implementation->set_pos != NULL);
     view->implementation->set_pos(view, width, height);
+    viv_view_damage(view);
 }
 
 void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {

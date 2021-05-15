@@ -229,6 +229,9 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
     workspace->was_laid_out = true;
 
     viv_workspace_damage_views(workspace);
+    if (workspace->output) {
+        viv_output_damage(workspace->output);
+    }
 }
 
 uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace) {

@@ -261,3 +261,12 @@ void viv_mappable_debug_swap_buffers(struct viv_workspace *workspace, union viv_
     UNUSED(payload);
     wlr_output_commit(workspace->output->wlr_output);
 }
+
+void viv_mappable_debug_toggle_show_undamaged_regions(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    workspace->server->config->debug_mark_undamaged_regions = !workspace->server->config->debug_mark_undamaged_regions;
+    struct viv_output *output;
+    wl_list_for_each(output, &workspace->server->outputs, link) {
+        viv_output_damage(output);
+    }
+}

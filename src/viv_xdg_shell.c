@@ -23,9 +23,6 @@ static void add_xdg_view_global_coords(void *view_pointer, int *x, int *y) {
     struct viv_view *view = view_pointer;
     *x += view->x;
     *y += view->y;
-
-    /* *x += view->xdg_surface->geometry.x; */
-    /* *y += view->xdg_surface->geometry.y; */
 }
 
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
@@ -63,8 +60,6 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
     viv_workspace_add_view(view->workspace, view);
 
     viv_surface_tree_root_create(view->server, view->xdg_surface->surface, &add_xdg_view_global_coords, view);
-
-    wlr_log(WLR_INFO, "Mapped xdg-surface wlr_surface at %p", view->xdg_surface->surface);
 }
 
 static void xdg_surface_unmap(struct wl_listener *listener, void *data) {

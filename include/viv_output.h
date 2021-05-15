@@ -33,6 +33,8 @@ void viv_output_damage_layout_coords_box(struct viv_output *output, struct wlr_b
 /// Damage the given region, expected to be unscaled an in output-layout coordinates
 void viv_output_damage_layout_coords_region(struct viv_output *output, pixman_region32_t *damage);
 
+void viv_output_layout_coords_box_to_output_coords(struct viv_output *output, struct wlr_box *geo_box);
+
 /// Mark that whatever workspace is active will need its layout function applying
 void viv_output_mark_for_relayout(struct viv_output *output);
 #endif
