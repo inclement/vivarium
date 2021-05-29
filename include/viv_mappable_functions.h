@@ -30,6 +30,8 @@ union viv_mappable_payload;
     MACRO(shift_active_window_down, "Swap active window with next in the layout") \
     MACRO(shift_active_window_up, "Swap active window with previous in the layout") \
     MACRO(tile_window, "Make window tiling (does nothing for non-floating windows)") \
+    MACRO(float_window, "Make window floating (does nothing for already-floating windows)") \
+    MACRO(toggle_floating, "Switch window between tiling and floating") \
     MACRO(next_layout, "Switch workspace to next layout")               \
     MACRO(prev_layout, "Switch workspace to previous layout")           \
     MACRO(right_output, "Switch focus to output to the right of current") \
