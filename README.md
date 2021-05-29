@@ -85,16 +85,6 @@ Vivarium expects to be run from a TTY, but also supports embedding in an X sessi
 
 Vivarium comes with a default config that you can override by creating your own `config.toml`. You can also adjust the default config at compile time using `viv_config.h`, which is necessary if you want to inject your own code for e.g. custom layouts or adding keypress actions that aren't already provided by Vivarium.
 
-Configuration options include but are not limited to:
-
-* Custom hotkeys for all types of window manipulations.
-* Choose the list of layouts to use.
-* Window borders.
-* Keyboard layout(s).
-* Status bar configuration.
-* Background image/colour.
-* Mouse interaction options.
-
 ### config.toml
 
 **Use this if:** you've installed Vivarium and want to override its defaults with your own config.
@@ -126,32 +116,6 @@ Vivarium can automatically start a bar program such as [Waybar](https://github.c
 
 See `viv_config.h` or the `config.toml` for instructions on starting the bar program.
 
-To have Waybar update when signalled by Vivarium, set it up as below (instructions are for `config.h`):
-
-    // Choose a filename at which Vivarium will write a workspace status string
-    .ipc_workspaces_filename = "/path/to/status/file",
-
-    // Configure bar autostart
-    .bar = {
-        .command = "waybar",
-        .update_signal_number = 1,  // If non-zero, Vivarium sends the bar process
-                                    // SIGRTMIN + update_signal_number on changes
-    },
-
-Then in your Waybar config:
-
-    "modules-left": ["custom/workspaces"],
-
-    "custom/workspaces": {
-        "exec": "cat /path/to/status/file",
-        "interval": "once",
-        "signal": 1,
-        "format": " {} ",
-        "escape": true,
-    },
-
-Note that the `"signal"` option matches the `update_signal_number` from Vivarium's config, telling Waybar to refresh (re-read the status file) when the signal is received.
-
 ## FAQ (or not-so-FAQ)
 
 > What does "desktop semantics inspired by xmonad" mean?
@@ -166,6 +130,16 @@ Vivarium makes no attempt to rigorously mimic xmonad or to replicate its interna
 Vivarium attempts to tell windows not to draw their own decorations and this works for most applications, but the protocols for doing so are not yet standard or universally supported so some windows still draw their own. For now there's probably nothing you can do about it, but this is likely to improve in the future.
 
 It's also possible that there are bugs in Vivarium's window decoration configuration, bug reports welcome if so.
+
+> What's the status of Vivarium's damage tracking support?
+
+Vivarium supports damage tracking, i.e. drawing only regions of the screen that have actually changed, but this is semi-experimental.
+
+Damage tracking currently defaults to `"frame"`, which draws every frame in which something has changed anywhere on the screen. This is a dramatic improvement on rerendering all your unchanging windows every frame, but even better would be to have full damage tracking that redraws only the small parts of the frame that have actually changed.
+
+To test out full damage tracking, change the config value to `"full"`. This is tested and is thought to work if every monitor has the same scale, but there may be bugs in more complex output configurations. Full damage tracking will become the default as soon as these issues are resolved.
+
+If at any point you find Vivarium fails to render something (e.g. jerky frames, missing menu popups), try setting the config to `"none"`: if this makes it work then you've found a damage tracking issue. Either way, issue reports are [gratefully received](https://github.com/inclement/vivarium/issues).
 
 > Why TOML for configuration? How can I configure dynamic behaviour like my own layouts?
 
