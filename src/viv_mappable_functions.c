@@ -125,6 +125,62 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
     viv_workspace_mark_for_relayout(workspace);
 }
 
+void viv_mappable_float_window(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    wlr_log(WLR_DEBUG, "Mappable float_window");
+
+    struct viv_view *view = workspace->active_view;
+    if (view == NULL) {
+        wlr_log(WLR_DEBUG, "Cannot float active view, no view is active");
+        return;
+    }
+
+    if (view->is_floating) {
+        wlr_log(WLR_DEBUG, "Cannot float active view, it is already floating");
+        return;
+    }
+
+    viv_view_damage(view);
+
+    wl_list_remove(&view->workspace_link);
+
+    bool any_not_floating = false;
+    struct viv_view *non_floating_view;
+    wl_list_for_each(non_floating_view, &workspace->views, workspace_link) {
+        if (!non_floating_view->is_floating) {
+            any_not_floating = true;
+            break;
+        }
+    }
+
+    viv_view_ensure_floating(view);
+
+    if (any_not_floating) {
+        // Insert right before the first non-floating view
+        wl_list_insert(non_floating_view->workspace_link.prev, &view->workspace_link);
+    } else {
+        // Move to the start of the views (as all are floating)
+        wl_list_insert(workspace->views.next, &view->workspace_link);
+    }
+
+    viv_workspace_mark_for_relayout(workspace);
+}
+
+void viv_mappable_toggle_floating(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    wlr_log(WLR_DEBUG, "Mappable toggle_floating");
+    struct viv_view *view = workspace->active_view;
+    if (!view) {
+        wlr_log(WLR_DEBUG, "Cannot toggle floating: no view is active");
+        return;
+    }
+
+    if (view->is_floating) {
+        viv_mappable_tile_window(workspace, payload);
+    } else {
+        viv_mappable_float_window(workspace, payload);
+    }
+}
+
 void viv_mappable_next_layout(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     wlr_log(WLR_DEBUG, "Mappable next_layout");
