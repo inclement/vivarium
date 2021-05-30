@@ -1,7 +1,7 @@
 project(
     'vivarium',
     'c',
-    version : '0.0.3',
+    version : '0.0.4dev',
     default_options : [
       'c_std=c11',
       'warning_level=2',
