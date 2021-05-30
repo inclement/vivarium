@@ -269,7 +269,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     // Then render any popups
     rdata.limit_render_count = false;
     rdata.surface_bounds = NULL;  // popups can exceed the primary surface region
-    wlr_xdg_surface_for_each_popup(view->xdg_surface, popup_render_surface, &rdata);
+    wlr_xdg_surface_for_each_popup_surface(view->xdg_surface, popup_render_surface, &rdata);
 
 #ifdef DEBUG
     if (output->server->config->debug_mark_views_by_shell) {
@@ -397,7 +397,7 @@ void viv_render_layer_view(struct wlr_renderer *renderer, struct viv_layer_view 
     wlr_layer_surface_v1_for_each_surface(layer_view->layer_surface, render_surface, &rdata);
 
     rdata.surface_bounds = NULL;  // surface bounds don't apply to popups
-    wlr_layer_surface_v1_for_each_popup(layer_view->layer_surface, render_surface, &rdata);
+    wlr_layer_surface_v1_for_each_popup_surface(layer_view->layer_surface, render_surface, &rdata);
 
     pixman_region32_fini(&surface_bounds);
 }

@@ -28,6 +28,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/util/log.h>
+#include <wlr/version.h>
 #include <wordexp.h>
 
 #ifdef XWAYLAND
@@ -516,7 +517,7 @@ static void server_keyboard_handle_key(
     // If the key completes a configured keybinding, run the configured response function
 	bool handled = false;
 	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-	if (event->state == WLR_KEY_PRESSED) {
+	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
 		for (int i = 0; i < nsyms; i++) {
             wlr_log(WLR_DEBUG, "Keysym %d pressed, keycode %d", syms[i], keycode);
 			handled = handle_keybinding(server, keycode, syms[i], modifiers);
@@ -828,10 +829,28 @@ void viv_server_init(struct viv_server *server) {
     // backend for the environment, e.g. an X11 window if running under X.
 #ifdef HEADLESS_TEST
     // Use a headless backend for CI testing without any actual outputs
-	server->backend = wlr_headless_backend_create(server->wl_display, NULL);
+
+	server->backend = wlr_headless_backend_create(server->wl_display);
 #else
-	server->backend = wlr_backend_autocreate(server->wl_display, NULL);
+	server->backend = wlr_backend_autocreate(server->wl_display);
+
 #endif
+
+    if (!server->backend) {
+
+#ifdef HEADLESS_TEST
+        if (WLR_VERSION_MAJOR == 0 && WLR_VERSION_MINOR == 13 && getenv("GITHUB_ACTIONS")) {
+            // In wlroots 0.13.0 the headless backend won't work without a GBM allocator, which
+            // Github Actions seems to lack. In wlroots 0.14.0 this is resolved and the backend
+            // should be creatable again.
+            wlr_log(WLR_ERROR, "Failed to create server backend.");
+            wlr_log(WLR_INFO, "Assuming failure is acceptable due to wlroots 0.13 running on Github Actions");
+            exit(0);
+        }
+#endif
+
+        EXIT_WITH_MESSAGE("Failed to create server backend");
+    }
 
     // Init the default wlroots GLES2 renderer
 	server->renderer = wlr_backend_get_renderer(server->backend);
