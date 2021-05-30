@@ -837,18 +837,6 @@ void viv_server_init(struct viv_server *server) {
 #endif
 
     if (!server->backend) {
-
-#ifdef HEADLESS_TEST
-        if (WLR_VERSION_MAJOR == 0 && WLR_VERSION_MINOR == 13 && getenv("GITHUB_ACTIONS")) {
-            // In wlroots 0.13.0 the headless backend won't work without a GBM allocator, which
-            // Github Actions seems to lack. In wlroots 0.14.0 this is resolved and the backend
-            // should be creatable again.
-            wlr_log(WLR_ERROR, "Failed to create server backend.");
-            wlr_log(WLR_INFO, "Assuming failure is acceptable due to wlroots 0.13 running on Github Actions");
-            exit(0);
-        }
-#endif
-
         EXIT_WITH_MESSAGE("Failed to create server backend");
     }
 
