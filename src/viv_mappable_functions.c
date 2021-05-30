@@ -326,3 +326,13 @@ void viv_mappable_debug_toggle_show_undamaged_regions(struct viv_workspace *work
         viv_output_damage(output);
     }
 }
+
+void viv_mappable_debug_next_damage_tracking_mode(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    struct viv_config *config = workspace->server->config;
+
+    config->damage_tracking_mode++;
+    if (config->damage_tracking_mode == VIV_DAMAGE_TRACKING_MAX) {
+        config->damage_tracking_mode = (enum viv_damage_tracking_mode)0;
+    }
+}
