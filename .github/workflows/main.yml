@@ -41,6 +41,10 @@ jobs:
       - name: Checkout vivarium
         uses: actions/checkout@v2
 
+      - name: Prepare subprojects that wlroots depends on
+        run: |
+          git clone https://git.sr.ht/~kennylevinsen/seatd subprojects/seatd
+
       - name: Prepare build dir
         run: |
           meson build
