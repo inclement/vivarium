@@ -19,6 +19,7 @@ enum viv_damage_tracking_mode {
     VIV_DAMAGE_TRACKING_NONE,  // every frame is fully re-rendered
     VIV_DAMAGE_TRACKING_FRAME,   // any damage triggers a full frame render
     VIV_DAMAGE_TRACKING_FULL,  // only damaged regions are rendered
+    VIV_DAMAGE_TRACKING_MAX,
 };
 
 enum viv_cursor_mode {
