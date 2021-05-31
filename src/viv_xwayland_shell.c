@@ -210,6 +210,8 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
 
     struct viv_workspace *workspace = view->workspace;
     viv_workspace_mark_for_relayout(workspace);
+
+    viv_view_damage(view);
 }
 
 

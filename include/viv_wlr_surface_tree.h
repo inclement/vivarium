@@ -23,6 +23,7 @@ struct viv_wlr_subsurface {
     struct viv_server *server;
     struct wlr_subsurface *wlr_subsurface;
     struct viv_surface_tree_node *parent;
+    struct viv_surface_tree_node *child;
 
     struct wl_listener map;
     struct wl_listener unmap;

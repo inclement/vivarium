@@ -3,6 +3,7 @@
 #include <wlr/types/wlr_surface.h>
 
 #include "viv_damage.h"
+#include "viv_output.h"
 #include "viv_types.h"
 #include "viv_wlr_surface_tree.h"
 
@@ -10,25 +11,69 @@ static struct viv_surface_tree_node *viv_surface_tree_create(struct viv_server *
 static struct viv_surface_tree_node *viv_surface_tree_subsurface_node_create(struct viv_server *server, struct viv_surface_tree_node *parent,
                                                                              struct viv_wlr_subsurface *subsurface, struct wlr_surface *surface);
 
+/// Walks up the surface tree until reaching the root, adding all the surface offsets along the way
+static void add_surface_global_offset(struct viv_surface_tree_node *node, int *lx, int *ly) {
+    *lx += node->wlr_surface->sx;
+    *ly += node->wlr_surface->sy;
+
+    if (node->apply_global_offset) {
+        // This is the root node
+        ASSERT(!node->subsurface);
+        node->apply_global_offset(node->global_offset_data, lx, ly);
+    } else {
+        ASSERT(node->subsurface);
+
+        *lx += node->subsurface->wlr_subsurface->current.x;
+        *ly += node->subsurface->wlr_subsurface->current.y;
+
+        add_surface_global_offset(node->parent, lx, ly);
+    }
+}
+
 static void handle_subsurface_map (struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_wlr_subsurface *subsurface = wl_container_of(listener, subsurface, map);
     struct wlr_subsurface *wlr_subsurface = subsurface->wlr_subsurface;
 
-    viv_surface_tree_subsurface_node_create(subsurface->server, subsurface->parent, subsurface, wlr_subsurface->surface);
+
+    subsurface->child = viv_surface_tree_subsurface_node_create(subsurface->server, subsurface->parent, subsurface, wlr_subsurface->surface);
+
+    wlr_log(WLR_INFO, "Mapped subsurface at %p creates node at %p", subsurface, subsurface->child);
 }
 
 static void handle_subsurface_unmap (struct wl_listener *listener, void *data) {
     struct viv_wlr_subsurface *subsurface = wl_container_of(listener, subsurface, unmap);
-    // do nothing?
-    UNUSED(subsurface);
+
+    wlr_log(WLR_INFO, "Unmapped subsurface at %p", subsurface);
+
+    if (subsurface->child) {
+
+        struct viv_surface_tree_node *node = subsurface->child;
+
+        int lx = 0;
+        int ly = 0;
+        add_surface_global_offset(node, &lx, &ly);
+
+        struct wlr_box surface_extents = { 0 };
+        wlr_surface_get_extends(node->wlr_surface, &surface_extents);
+        surface_extents.x += lx;
+        surface_extents.y += ly;
+
+        struct viv_output *output;
+        wl_list_for_each(output, &node->server->outputs, link) {
+            viv_output_damage_layout_coords_box(output, &surface_extents);
+        }
+    }
+    subsurface->child = NULL;
+
     UNUSED(data);
 }
 
 static void handle_subsurface_destroy (struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_wlr_subsurface *subsurface = wl_container_of(listener, subsurface, destroy);
-    free(subsurface);  // ...is this safe?
+    wlr_log(WLR_INFO, "Destroyed subsurface at %p", subsurface);
+    free(subsurface);
 }
 
 static void handle_new_node_subsurface (struct wl_listener *listener, void *data) {
@@ -51,24 +96,10 @@ static void handle_new_node_subsurface (struct wl_listener *listener, void *data
 
     subsurface->destroy.notify = handle_subsurface_destroy;
     wl_signal_add(&wlr_subsurface->events.destroy, &subsurface->destroy);
-}
 
-/// Walks up the surface tree until reaching the root, adding all the surface offsets along the way
-static void add_surface_global_offset(struct viv_surface_tree_node *node, int *lx, int *ly) {
-    *lx += node->wlr_surface->sx;
-    *ly += node->wlr_surface->sy;
-
-    if (node->apply_global_offset) {
-        // This is the root node
-        ASSERT(!node->subsurface);
-        node->apply_global_offset(node->global_offset_data, lx, ly);
-    } else {
-        ASSERT(node->subsurface);
-
-        *lx += node->subsurface->wlr_subsurface->current.x;
-        *ly += node->subsurface->wlr_subsurface->current.y;
-
-        add_surface_global_offset(node->parent, lx, ly);
+    struct wlr_subsurface *existing_wlr_subsurface;
+    wl_list_for_each(existing_wlr_subsurface, &wlr_subsurface->surface->subsurfaces, parent_link) {
+        handle_new_node_subsurface(&node->new_subsurface, existing_wlr_subsurface);
     }
 }
 
