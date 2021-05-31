@@ -64,8 +64,10 @@ static void add_surface_global_offset(struct viv_surface_tree_node *node, int *l
         node->apply_global_offset(node->global_offset_data, lx, ly);
     } else {
         ASSERT(node->subsurface);
-        lx += node->subsurface->wlr_subsurface->current.x;
-        ly += node->subsurface->wlr_subsurface->current.y;
+
+        *lx += node->subsurface->wlr_subsurface->current.x;
+        *ly += node->subsurface->wlr_subsurface->current.y;
+
         add_surface_global_offset(node->parent, lx, ly);
     }
 }

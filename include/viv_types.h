@@ -119,6 +119,7 @@ struct viv_output {
 	struct wl_list link;
 	struct viv_server *server;
 	struct wlr_output *wlr_output;
+
 	struct wl_listener frame;
 
     struct wlr_output_damage *damage;
@@ -254,8 +255,6 @@ struct viv_workspace {
 
     struct viv_server *server;
     struct viv_output *output;
-
-    /* void (*do_layout)(struct viv_workspace *workspace); */
 
     struct wl_list views;  /// Ordered list of views associated with this workspace
     struct viv_view *active_view;  /// The view that currently has focus within the workspace
