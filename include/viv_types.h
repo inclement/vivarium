@@ -193,6 +193,7 @@ struct viv_xdg_popup {
     struct wlr_xdg_popup *wlr_popup;
     struct viv_xdg_popup *parent_popup;
     struct viv_server *server;
+    struct viv_output *output;
 
     int *lx;  // pointer to x of parent view/layer-view in layout coords
     int *ly;  // pointer to y of parent view/layer-view in layout coords

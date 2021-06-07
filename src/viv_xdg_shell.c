@@ -81,6 +81,7 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct viv_view *view = wl_container_of(listener, view, destroy);
+    wlr_log(WLR_INFO, "Destroying xdg-surface with view at %p", view);
     viv_view_destroy(view);
 }
 
@@ -254,6 +255,7 @@ static void handle_xdg_surface_new_popup(struct wl_listener *listener, void *dat
     popup->server = view->server;
     popup->lx = &view->x;
     popup->ly = &view->y;
+    popup->output = view->workspace->output;
     viv_xdg_popup_init(popup, wlr_popup);
 }
 

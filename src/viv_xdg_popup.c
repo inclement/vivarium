@@ -73,6 +73,31 @@ static void handle_new_popup(struct wl_listener *listener, void *data) {
     viv_xdg_popup_init(new_popup, wlr_popup);
 }
 
+/// Set the region in which the popup can be displayed, so that its position is shifted to
+/// stay within its output and not be rendered offscreen
+static void popup_unconstrain(struct viv_xdg_popup *popup) {
+    struct viv_output *output = popup->output;
+    struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
+
+    double lx = 0, ly = 0;
+    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
+
+    if (!output) {
+        wlr_log(WLR_ERROR, "Tried to unconstrain a popup that doesn't have an output");
+        return;
+    }
+
+    // The output box is relative to the popup's toplevel parent
+    struct wlr_box output_box = {
+        .x = lx - *popup->lx,
+        .y = ly - *popup->ly,
+        .width = output->wlr_output->width,
+        .height = output->wlr_output->height,
+    };
+
+    wlr_xdg_popup_unconstrain_from_box(wlr_popup, &output_box);
+}
+
 void viv_xdg_popup_init(struct viv_xdg_popup *popup, struct wlr_xdg_popup *wlr_popup) {
     popup->wlr_popup = wlr_popup;
 
@@ -88,6 +113,8 @@ void viv_xdg_popup_init(struct viv_xdg_popup *popup, struct wlr_xdg_popup *wlr_p
 
     popup->new_popup.notify = handle_new_popup;
     wl_signal_add(&wlr_popup->base->events.new_popup, &popup->new_popup);
+
+    popup_unconstrain(popup);
 
     wlr_log(WLR_INFO, "New wlr_popup surface at %p", wlr_popup->base->surface);
 }
