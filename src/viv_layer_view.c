@@ -75,11 +75,11 @@ static void layer_surface_new_popup(struct wl_listener *listener, void *data) {
 
     struct viv_xdg_popup *popup = calloc(1, sizeof(struct viv_xdg_popup));
 
-    viv_xdg_popup_init(popup, wlr_popup);
     popup->lx = &layer_view->x;
     popup->ly = &layer_view->y;
     popup->server = layer_view->server;
-    popup->wlr_popup = wlr_popup;
+    popup->output = layer_view->output;
+    viv_xdg_popup_init(popup, wlr_popup);
 
 }
 
