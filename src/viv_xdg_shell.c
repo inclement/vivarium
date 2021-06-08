@@ -87,6 +87,12 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct viv_view *view = wl_container_of(listener, view, destroy);
     wlr_log(WLR_INFO, "Destroying xdg-surface with view at %p", view);
+
+    if (view->surface_tree) {
+        viv_surface_tree_destroy(view->surface_tree);
+        view->surface_tree = NULL;
+    }
+
     viv_view_destroy(view);
 }
 

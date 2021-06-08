@@ -14,6 +14,7 @@
 #include "viv_types.h"
 #include "viv_wl_list_utils.h"
 #include "viv_workspace.h"
+#include "viv_wlr_surface_tree.h"
 
 #define VIEW_NAME_LEN 100
 
@@ -169,6 +170,10 @@ void viv_view_damage(struct viv_view *view) {
     wl_list_for_each(output, &view->server->outputs, link) {
         viv_output_damage_layout_coords_box(output, &geo_box);
     }
+
+    char view_name[VIEW_NAME_LEN];
+    viv_view_get_string_identifier(view, view_name, VIEW_NAME_LEN);
+    wlr_log(WLR_DEBUG, "Damaging view %s", view_name);
 }
 
 void viv_view_make_active(struct viv_view *view) {
@@ -214,6 +219,12 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
 void viv_view_destroy(struct viv_view *view) {
 	wl_list_remove(&view->workspace_link);
     wlr_log(WLR_INFO, "Destroying view at %p", view);
+
+    if (view->surface_tree) {
+        viv_surface_tree_destroy(view->surface_tree);
+        view->surface_tree = NULL;
+    }
+
 	free(view);
 }
 

@@ -70,6 +70,11 @@ static void layer_surface_destroy(struct wl_listener *listener, void *data) {
 
     viv_output_mark_for_relayout(layer_view->output);
 
+    if (layer_view->surface_tree) {
+        viv_surface_tree_destroy(layer_view->surface_tree);
+        layer_view->surface_tree = NULL;
+    }
+
 	free(layer_view);
 }
 
