@@ -10,6 +10,7 @@
 static struct viv_surface_tree_node *viv_surface_tree_create(struct viv_server *server,  struct wlr_surface *surface);
 static struct viv_surface_tree_node *viv_surface_tree_subsurface_node_create(struct viv_server *server, struct viv_surface_tree_node *parent,
                                                                              struct viv_wlr_subsurface *subsurface, struct wlr_surface *surface);
+static void viv_subsurface_destroy(struct viv_wlr_subsurface *subsurface);
 
 /// Walks up the surface tree until reaching the root, adding all the surface offsets along the way
 static void add_surface_global_offset(struct viv_surface_tree_node *node, int *lx, int *ly) {
@@ -74,6 +75,7 @@ static void handle_subsurface_unmap (struct wl_listener *listener, void *data) {
 static void handle_subsurface_destroy (struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_wlr_subsurface *subsurface = wl_container_of(listener, subsurface, destroy);
+    wl_list_remove(&subsurface->node_link);
     wlr_log(WLR_INFO, "Destroyed subsurface at %p", subsurface);
     free(subsurface);
 }
@@ -126,7 +128,15 @@ static void handle_node_destroy(struct wl_listener *listener, void *data) {
 
     wlr_log(WLR_INFO, "Destroy node at %p", node);
 
-    // TODO: Should we destroy all our children? Or are they guaranteed to be destroyed first?
+    struct viv_wlr_subsurface *subsurface;
+    wl_list_for_each(subsurface, &node->child_subsurfaces, node_link) {
+        viv_subsurface_destroy(subsurface);
+    }
+
+    wl_list_remove(&node->new_subsurface.link);
+    wl_list_remove(&node->commit.link);
+    wl_list_remove(&node->destroy.link);
+
     free(node);
 }
 
