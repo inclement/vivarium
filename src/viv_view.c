@@ -213,6 +213,7 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
 
 void viv_view_destroy(struct viv_view *view) {
 	wl_list_remove(&view->workspace_link);
+    wlr_log(WLR_INFO, "Destroying view at %p", view);
 	free(view);
 }
 

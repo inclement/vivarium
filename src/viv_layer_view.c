@@ -28,6 +28,8 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
 
     viv_output_mark_for_relayout(layer_view->output);
 
+    layer_view->surface_tree = viv_surface_tree_root_create(layer_view->server, layer_view->layer_surface->surface, &add_layer_view_global_coords, layer_view);
+
     if (layer_view->layer_surface->current.keyboard_interactive) {
         viv_surface_focus(layer_view->server, layer_view->layer_surface->surface);
     }
@@ -52,6 +54,9 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
     if (active_view != NULL) {
         viv_view_focus(active_view, NULL);
     }
+
+    viv_surface_tree_destroy(layer_view->surface_tree);
+    layer_view->surface_tree = NULL;
 }
 
 static void layer_surface_destroy(struct wl_listener *listener, void *data) {
@@ -97,8 +102,6 @@ void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *s
 	layer_view->new_popup.notify = layer_surface_new_popup;
 	wl_signal_add(&layer_surface->events.new_popup, &layer_view->new_popup);
     UNUSED(layer_surface_new_popup);
-
-    viv_surface_tree_root_create(layer_view->server, layer_surface->surface, &add_layer_view_global_coords, layer_view);
 
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
     wl_list_insert(&output->layer_views, &layer_view->output_link);

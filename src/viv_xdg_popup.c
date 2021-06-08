@@ -33,9 +33,22 @@ static void add_popup_global_coords(void *popup_pointer, int *x, int *y) {
     *y += py;
 }
 
+static void handle_popup_surface_map(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct viv_xdg_popup *popup = wl_container_of(listener, popup, surface_map);
+    wlr_log(WLR_INFO, "Map popup at %p", popup);
+
+    popup->surface_tree = viv_surface_tree_root_create(popup->server, popup->wlr_popup->base->surface, &add_popup_global_coords, popup);
+}
+
 static void handle_popup_surface_unmap(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_xdg_popup *popup = wl_container_of(listener, popup, surface_unmap);
+
+    wlr_log(WLR_INFO, "Unmap popup at %p", popup);
+
+    viv_surface_tree_destroy(popup->surface_tree);
+    popup->surface_tree = NULL;
 
     int px = 0;
     int py = 0;
@@ -57,7 +70,11 @@ static void handle_popup_surface_unmap(struct wl_listener *listener, void *data)
 static void handle_popup_surface_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_xdg_popup *popup = wl_container_of(listener, popup, destroy);
-    wlr_log(WLR_INFO, "Popup being destroyed");
+    wlr_log(WLR_INFO, "Popup at %p being destroyed", popup);
+    if (popup->surface_tree) {
+        viv_surface_tree_destroy(popup->surface_tree);
+        popup->surface_tree = NULL;
+    }
     free(popup);
 }
 
@@ -104,8 +121,9 @@ void viv_xdg_popup_init(struct viv_xdg_popup *popup, struct wlr_xdg_popup *wlr_p
 
     wlr_log(WLR_INFO, "New popup %p with parent %p", popup, popup->parent_popup);
 
-    viv_surface_tree_root_create(popup->server, wlr_popup->base->surface, &add_popup_global_coords, popup);
 
+    popup->surface_map.notify = handle_popup_surface_map;
+    wl_signal_add(&wlr_popup->base->events.map, &popup->surface_map);
     popup->surface_unmap.notify = handle_popup_surface_unmap;
     wl_signal_add(&wlr_popup->base->events.unmap, &popup->surface_unmap);
 

@@ -59,7 +59,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
     viv_workspace_add_view(view->workspace, view);
 
-    viv_surface_tree_root_create(view->server, view->xdg_surface->surface, &add_xdg_view_global_coords, view);
+    view->surface_tree = viv_surface_tree_root_create(view->server, view->xdg_surface->surface, &add_xdg_view_global_coords, view);
 }
 
 static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
@@ -77,6 +77,9 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
     viv_workspace_mark_for_relayout(workspace);
 
     viv_view_damage(view);
+
+    viv_surface_tree_destroy(view->surface_tree);
+    view->surface_tree = NULL;
 }
 
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
