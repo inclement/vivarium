@@ -194,6 +194,8 @@ struct viv_surface_tree_node *viv_surface_tree_root_create(struct viv_server *se
     return node;
 }
 
+/// Clean up the subsurface state (unbind events etc.), including for all children, and
+/// free it
 static void viv_subsurface_destroy(struct viv_wlr_subsurface *subsurface) {
     if (subsurface->child) {
         viv_surface_tree_destroy(subsurface->child);

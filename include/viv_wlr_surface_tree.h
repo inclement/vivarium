@@ -40,6 +40,7 @@ struct viv_wlr_subsurface {
 // including the global offset passed here.
 struct viv_surface_tree_node *viv_surface_tree_root_create(struct viv_server *server, struct wlr_surface *surface, void (*apply_global_offset)(void *, int *, int *), void *global_offset_data);
 
+/// Clean up the node's state (bound events etc.) and free it
 void viv_surface_tree_destroy(struct viv_surface_tree_node *node);
 
 #endif

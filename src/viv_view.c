@@ -170,10 +170,6 @@ void viv_view_damage(struct viv_view *view) {
     wl_list_for_each(output, &view->server->outputs, link) {
         viv_output_damage_layout_coords_box(output, &geo_box);
     }
-
-    char view_name[VIEW_NAME_LEN];
-    viv_view_get_string_identifier(view, view_name, VIEW_NAME_LEN);
-    wlr_log(WLR_DEBUG, "Damaging view %s", view_name);
 }
 
 void viv_view_make_active(struct viv_view *view) {

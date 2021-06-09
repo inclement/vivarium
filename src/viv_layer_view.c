@@ -55,8 +55,12 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
         viv_view_focus(active_view, NULL);
     }
 
-    viv_surface_tree_destroy(layer_view->surface_tree);
-    layer_view->surface_tree = NULL;
+    if (layer_view->surface_tree) {
+        viv_surface_tree_destroy(layer_view->surface_tree);
+        layer_view->surface_tree = NULL;
+    } else {
+        wlr_log(WLR_ERROR, "Layer view had no surface tree during unmap");
+    }
 }
 
 static void layer_surface_destroy(struct wl_listener *listener, void *data) {
