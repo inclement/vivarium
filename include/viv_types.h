@@ -156,6 +156,8 @@ struct viv_layer_view {
     struct viv_server *server;
     struct viv_output *output;
 
+    struct viv_surface_tree_node *surface_tree;
+
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;
@@ -195,10 +197,13 @@ struct viv_xdg_popup {
     struct viv_server *server;
     struct viv_output *output;
 
+    struct viv_surface_tree_node *surface_tree;
+
     int *lx;  // pointer to x of parent view/layer-view in layout coords
     int *ly;  // pointer to y of parent view/layer-view in layout coords
 
     struct wl_listener surface_commit;
+    struct wl_listener surface_map;
     struct wl_listener surface_unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
@@ -213,6 +218,8 @@ struct viv_view {
 
 	struct viv_server *server;
     struct viv_workspace *workspace;
+
+    struct viv_surface_tree_node *surface_tree;
 
     union {
         struct wlr_xdg_surface *xdg_surface;
