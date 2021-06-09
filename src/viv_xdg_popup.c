@@ -70,6 +70,7 @@ static void handle_new_popup(struct wl_listener *listener, void *data) {
     new_popup->lx = popup->lx;
     new_popup->ly = popup->ly;
     new_popup->parent_popup = popup;
+    new_popup->output = popup->output;
     viv_xdg_popup_init(new_popup, wlr_popup);
 }
 
