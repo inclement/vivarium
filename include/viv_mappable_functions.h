@@ -47,6 +47,7 @@ union viv_mappable_payload;
     MACRO(debug_damage_all, "Mark all outputs as damaged to force a full redraw") \
     MACRO(debug_swap_buffers, "Swap buffers") \
     MACRO(debug_toggle_show_undamaged_regions, "Debug option to draw undamaged regions as red") \
+    MACRO(debug_toggle_mark_frame_draws, "Debug option to mark frame draw events with a colour-cycling square") \
     MACRO(debug_next_damage_tracking_mode, "Switch to the next damage tracking mode (cycling back to the start if necessary)") \
 
 // Declare each mappable function and generate a payload struct to pass as its argument

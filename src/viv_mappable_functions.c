@@ -327,6 +327,11 @@ void viv_mappable_debug_toggle_show_undamaged_regions(struct viv_workspace *work
     }
 }
 
+void viv_mappable_debug_toggle_mark_frame_draws(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    UNUSED(payload);
+    workspace->server->config->debug_mark_frame_draws = !workspace->server->config->debug_mark_frame_draws;
+}
+
 void viv_mappable_debug_next_damage_tracking_mode(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     struct viv_config *config = workspace->server->config;
