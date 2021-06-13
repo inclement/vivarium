@@ -121,6 +121,11 @@ struct viv_output {
 	struct wlr_output *wlr_output;
 
 	struct wl_listener frame;
+	struct wl_listener damage_event;
+	struct wl_listener present;
+	struct wl_listener enable;
+	struct wl_listener mode;
+	struct wl_listener destroy;
 
     struct wlr_output_damage *damage;
 

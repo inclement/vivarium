@@ -48,6 +48,36 @@ static void output_frame(struct wl_listener *listener, void *data) {
     viv_routine_log_state(output->server);
 }
 
+static void output_damage_event(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_output *output = wl_container_of(listener, output, frame);
+    wlr_log(WLR_INFO, "Output \"%s\" event: damage", output->wlr_output->name);
+}
+
+static void output_present(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_output *output = wl_container_of(listener, output, frame);
+    wlr_log(WLR_INFO, "Output \"%s\" event: present", output->wlr_output->name);
+}
+
+static void output_enable(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_output *output = wl_container_of(listener, output, frame);
+    wlr_log(WLR_INFO, "Output \"%s\" event: enable", output->wlr_output->name);
+}
+
+static void output_mode(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_output *output = wl_container_of(listener, output, frame);
+    wlr_log(WLR_INFO, "Output \"%s\" event: mode", output->wlr_output->name);
+}
+
+static void output_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_output *output = wl_container_of(listener, output, frame);
+    wlr_log(WLR_INFO, "Output \"%s\" event: destroy", output->wlr_output->name);
+}
+
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
 
     struct wlr_output *wlr_output_at_point = wlr_output_layout_output_at(server->output_layout, lx, ly);
@@ -155,10 +185,24 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 
     output->damage = wlr_output_damage_create(output->wlr_output);
 
-	/* Sets up a listener for the frame notify event. */
 	output->frame.notify = output_frame;
 	wl_signal_add(&output->damage->events.frame, &output->frame);
 	wl_list_insert(&server->outputs, &output->link);
+
+	output->damage_event.notify = output_damage_event;
+	wl_signal_add(&output->wlr_output->events.damage, &output->damage_event);
+	output->present.notify = output_present;
+	wl_signal_add(&output->wlr_output->events.present, &output->present);
+	output->enable.notify = output_enable;
+	wl_signal_add(&output->wlr_output->events.enable, &output->enable);
+	output->mode.notify = output_mode;
+	wl_signal_add(&output->wlr_output->events.mode, &output->mode);
+	output->destroy.notify = output_destroy;
+	wl_signal_add(&output->wlr_output->events.destroy, &output->destroy);
+
+
+	wl_list_insert(&server->outputs, &output->link);
+
     wlr_log(WLR_INFO, "New output width width %d, height %d", wlr_output->width, wlr_output->height);
 
     struct viv_workspace *current_workspace;
