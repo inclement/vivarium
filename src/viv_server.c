@@ -732,7 +732,9 @@ void viv_check_data_consistency(struct viv_server *server) {
     struct viv_output *output;
     wl_list_for_each(output, &server->outputs, link) {
         DEBUG_ASSERT_EQUAL(output->server, server);
-        DEBUG_ASSERT_EQUAL(output->current_workspace->output, output);
+        if (output->current_workspace) {
+            DEBUG_ASSERT_EQUAL(output->current_workspace->output, output);
+        }
     }
 
     struct viv_workspace *workspace;

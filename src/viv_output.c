@@ -14,6 +14,42 @@
 #include "viv_view.h"
 #include "viv_workspace.h"
 
+/// Start using the output, i.e. add it to our output layout and draw a workspace on it
+static void start_using_output(struct viv_output *output) {
+    struct viv_server *server = output->server;
+    wl_list_insert(&server->outputs, &output->link);
+
+    struct viv_workspace *current_workspace;
+    wl_list_for_each(current_workspace, &server->workspaces, server_link) {
+        if (current_workspace->output == NULL) {
+            wlr_log(WLR_INFO, "Assigning new output workspace %s", current_workspace->name);
+            viv_workspace_assign_to_output(current_workspace, output);
+            break;
+        }
+    }
+
+	wlr_output_layout_add_auto(server->output_layout, output->wlr_output);
+}
+
+/// Remove the output from our output layout, revoke its workspace assignation, and clean
+/// any other references to it.
+static void stop_using_output(struct viv_output *output) {
+    struct viv_server *server = output->server;
+    wl_list_remove(&output->link);
+
+    struct viv_workspace *current_workspace;
+    wl_list_for_each(current_workspace, &server->workspaces, server_link) {
+        if (current_workspace->output == output) {
+            wlr_log(WLR_INFO, "Clearing output for workspace %s", current_workspace->name);
+            current_workspace->output = NULL;
+            break;
+        }
+    }
+    output->current_workspace = NULL;
+
+    wlr_output_layout_remove(server->output_layout, output->wlr_output);
+}
+
 /// Handle a render frame event: render everything on the output, then do any scheduled relayouts
 static void output_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -50,32 +86,45 @@ static void output_frame(struct wl_listener *listener, void *data) {
 
 static void output_damage_event(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, frame);
+	struct viv_output *output = wl_container_of(listener, output, damage_event);
     wlr_log(WLR_INFO, "Output \"%s\" event: damage", output->wlr_output->name);
 }
 
 static void output_present(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, frame);
-    wlr_log(WLR_INFO, "Output \"%s\" event: present", output->wlr_output->name);
+	/* struct viv_output *output = wl_container_of(listener, output, frame); */
+    /* wlr_log(WLR_INFO, "Output \"%s\" event: present", output->wlr_output->name); */
 }
 
 static void output_enable(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, frame);
-    wlr_log(WLR_INFO, "Output \"%s\" event: enable", output->wlr_output->name);
+	struct viv_output *output = wl_container_of(listener, output, enable);
+
+    wlr_log(WLR_INFO, "Output \"%s\" event: enable became %d", output->wlr_output->name, output->wlr_output->enabled);
 }
 
 static void output_mode(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, frame);
+	struct viv_output *output = wl_container_of(listener, output, mode);
     wlr_log(WLR_INFO, "Output \"%s\" event: mode", output->wlr_output->name);
 }
 
 static void output_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, frame);
+	struct viv_output *output = wl_container_of(listener, output, destroy);
     wlr_log(WLR_INFO, "Output \"%s\" event: destroy", output->wlr_output->name);
+
+    stop_using_output(output);
+
+    wl_list_remove(&output->frame.link);
+    wl_list_remove(&output->damage_event.link);
+    wl_list_remove(&output->present.link);
+    wl_list_remove(&output->enable.link);
+    wl_list_remove(&output->mode.link);
+    wl_list_remove(&output->destroy.link);
+
+    free(output);
 }
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
@@ -187,7 +236,6 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 
 	output->frame.notify = output_frame;
 	wl_signal_add(&output->damage->events.frame, &output->frame);
-	wl_list_insert(&server->outputs, &output->link);
 
 	output->damage_event.notify = output_damage_event;
 	wl_signal_add(&output->wlr_output->events.damage, &output->damage_event);
@@ -200,21 +248,9 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 	output->destroy.notify = output_destroy;
 	wl_signal_add(&output->wlr_output->events.destroy, &output->destroy);
 
-
-	wl_list_insert(&server->outputs, &output->link);
-
     wlr_log(WLR_INFO, "New output width width %d, height %d", wlr_output->width, wlr_output->height);
 
-    struct viv_workspace *current_workspace;
-    wl_list_for_each(current_workspace, &server->workspaces, server_link) {
-        if (current_workspace->output == NULL) {
-            wlr_log(WLR_INFO, "Assigning new output workspace %s", current_workspace->name);
-            viv_workspace_assign_to_output(current_workspace, output);
-            break;
-        }
-    }
-
-	wlr_output_layout_add_auto(server->output_layout, wlr_output);
+    start_using_output(output);
 }
 
 void viv_output_do_layout_if_necessary(struct viv_output *output) {
