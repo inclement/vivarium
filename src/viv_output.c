@@ -115,6 +115,12 @@ static void output_destroy(struct wl_listener *listener, void *data) {
 	struct viv_output *output = wl_container_of(listener, output, destroy);
     wlr_log(WLR_INFO, "Output \"%s\" event: destroy", output->wlr_output->name);
 
+    struct viv_layer_view *layer_view;
+    wl_list_for_each(layer_view, &output->layer_views, output_link){
+        layer_view->output = NULL;
+        wlr_layer_surface_v1_close(layer_view->layer_surface);
+    }
+
     stop_using_output(output);
 
     wl_list_remove(&output->frame.link);
@@ -314,5 +320,9 @@ void viv_output_layout_coords_box_to_output_coords(struct viv_output *output, st
 }
 
 void viv_output_mark_for_relayout(struct viv_output *output) {
-    viv_output_damage(output);
+    if (output) {
+        viv_output_damage(output);
+    } else {
+        wlr_log(WLR_ERROR, "Tried to mark NULL output for relayout");
+    }
 }
