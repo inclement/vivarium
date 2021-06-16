@@ -124,7 +124,13 @@ static void process_cursor_pass_through_to_surface(struct viv_server *server, ui
         }
     } else if (view) {
         // View under the cursor and not already active => focus it if appropriate
-        struct viv_view *active_view = server->active_output->current_workspace->active_view;
+        struct viv_view *active_view = NULL;
+
+        struct viv_output *active_output = server->active_output;
+        if (active_output) {
+            active_view = active_output->current_workspace->active_view;
+        }
+
         if ((view != active_view) && server->config->focus_follows_mouse) {
             viv_view_focus(view, surface);
         }

@@ -75,6 +75,11 @@ struct viv_layer_view *viv_server_layer_view_at(
 		struct wlr_surface **surface, double *sx, double *sy,
         uint32_t layers) {
 
+    if (!server->active_output) {
+        // No active output => nothing to collide with
+        return NULL;
+    }
+
     if (wl_list_length(&server->active_output->layer_views)) {
         struct viv_layer_view *layer_view;
         wl_list_for_each(layer_view, &server->active_output->layer_views, output_link) {
@@ -100,6 +105,12 @@ struct viv_view *viv_server_view_at(
     // from top to bottom
 
     struct viv_output *active_output = server->active_output;
+
+    if (!active_output) {
+        // If there's no active output, there's no collision check todo
+        // TODO: Consider querying the output layout for the current output
+        return NULL;
+    }
 
 	struct viv_view *view;
     // Try floating views first
@@ -270,7 +281,11 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 		server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 	} else {
         // Always focus the clicked-on window
-        struct viv_view *active_view = server->active_output->current_workspace->active_view;
+        struct viv_view *active_view = NULL;
+        if (server->active_output) {
+            active_view = server->active_output->current_workspace->active_view;
+        }
+
         if (view != active_view) {
             viv_view_focus(view, surface);
         }
@@ -403,7 +418,14 @@ static void server_new_layer_surface(struct wl_listener *listener, void *data) {
 
     // If the layer surface doesn't specify an output to display on, use the active output
     if (!layer_surface->output) {
-        layer_surface->output = server->active_output->wlr_output;
+        struct viv_output *active_output = server->active_output;
+        if (active_output) {
+            layer_surface->output = active_output->wlr_output;
+        } else {
+            wlr_log(WLR_ERROR, "Closing new layer surface as no output available to display it on");
+            layer_surface->output = NULL;
+            wlr_layer_surface_v1_close(layer_surface);
+        }
     }
 
     struct wlr_layer_surface_v1_state *state = &layer_surface->current;
@@ -449,6 +471,9 @@ static bool handle_server_keybinding(struct viv_server *server, xkb_keysym_t sym
 /// Look up a key press in the configured keybindings, and run the bound function if found
 static bool handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_keysym_t sym, uint32_t modifiers) {
     struct viv_output *output = server->active_output;
+    if (!output) {
+        wlr_log(WLR_ERROR, "Ignoring keybinding as no output active to act on");
+    }
 
     struct viv_workspace *workspace = output->current_workspace;
 

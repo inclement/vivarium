@@ -203,7 +203,14 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
 
     // Make sure the view gets added to a workspace
     struct viv_output *output = server->active_output;
-    view->workspace = output->current_workspace;
+
+    if (output) {
+        view->workspace = output->current_workspace;
+    } else {
+        // No output active (=> no outputs available), so just stick in the first workspace
+        struct viv_workspace *workspace = wl_container_of(&server->workspaces.next, workspace, server_link);
+        view->workspace = workspace;
+    }
 
     viv_view_ensure_tiled(view);
 

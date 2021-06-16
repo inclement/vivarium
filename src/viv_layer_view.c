@@ -50,7 +50,11 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
         seat->keyboard_state.focused_surface = NULL;
     }
 
-    struct viv_view *active_view = layer_view->server->active_output->current_workspace->active_view;
+    struct viv_view *active_view = NULL;
+    if (layer_view->server->active_output) {
+        active_view = layer_view->server->active_output->current_workspace->active_view;
+    }
+
     if (active_view != NULL) {
         viv_view_focus(active_view, NULL);
     }

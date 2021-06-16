@@ -94,6 +94,10 @@ static void handle_new_popup(struct wl_listener *listener, void *data) {
 /// stay within its output and not be rendered offscreen
 static void popup_unconstrain(struct viv_xdg_popup *popup) {
     struct viv_output *output = popup->server->active_output;
+    if (!output) {
+        wlr_log(WLR_ERROR, "Cannot unconstraint popup, no active output");
+    }
+
     struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
 
     double lx = 0, ly = 0;
