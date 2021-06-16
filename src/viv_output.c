@@ -37,6 +37,21 @@ static void stop_using_output(struct viv_output *output) {
     struct viv_server *server = output->server;
     wl_list_remove(&output->link);
 
+    if (server->active_output == output) {
+        server->active_output = NULL;
+
+        // Set a new active output if any are available
+        struct viv_output *new_active_output;
+        wl_list_for_each(new_active_output, &server->outputs, link) {
+            viv_output_make_active(new_active_output);
+            break;
+        }
+    }
+
+    if (server->log_state.last_active_output == output) {
+        server->log_state.last_active_output = NULL;
+    }
+
     struct viv_workspace *current_workspace;
     wl_list_for_each(current_workspace, &server->workspaces, server_link) {
         if (current_workspace->output == output) {

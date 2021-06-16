@@ -97,7 +97,6 @@ static void layer_surface_new_popup(struct wl_listener *listener, void *data) {
     popup->lx = &layer_view->x;
     popup->ly = &layer_view->y;
     popup->server = layer_view->server;
-    popup->output = layer_view->output;
     viv_xdg_popup_init(popup, wlr_popup);
 
 }

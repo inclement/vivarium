@@ -200,7 +200,6 @@ struct viv_xdg_popup {
     struct wlr_xdg_popup *wlr_popup;
     struct viv_xdg_popup *parent_popup;
     struct viv_server *server;
-    struct viv_output *output;
 
     struct viv_surface_tree_node *surface_tree;
 
