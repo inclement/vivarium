@@ -63,6 +63,15 @@ static void stop_using_output(struct viv_output *output) {
     output->current_workspace = NULL;
 
     wlr_output_layout_remove(server->output_layout, output->wlr_output);
+
+    // Clean up layer views last, to ensure that none of the cleanup tries to access
+    // still-initialised output state
+    struct viv_layer_view *layer_view;
+    wl_list_for_each(layer_view, &output->layer_views, output_link){
+        layer_view->output = NULL;
+        wlr_layer_surface_v1_close(layer_view->layer_surface);
+    }
+
 }
 
 /// Handle a render frame event: render everything on the output, then do any scheduled relayouts
@@ -129,12 +138,6 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	struct viv_output *output = wl_container_of(listener, output, destroy);
     wlr_log(WLR_INFO, "Output \"%s\" event: destroy", output->wlr_output->name);
-
-    struct viv_layer_view *layer_view;
-    wl_list_for_each(layer_view, &output->layer_views, output_link){
-        layer_view->output = NULL;
-        wlr_layer_surface_v1_close(layer_view->layer_surface);
-    }
 
     stop_using_output(output);
 
