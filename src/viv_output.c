@@ -110,33 +110,31 @@ static void output_frame(struct wl_listener *listener, void *data) {
 
 static void output_damage_event(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, damage_event);
+    struct viv_output *output = wl_container_of(listener, output, damage_event);
     wlr_log(WLR_INFO, "Output \"%s\" event: damage", output->wlr_output->name);
 }
 
 static void output_present(struct wl_listener *listener, void *data) {
     UNUSED(listener);
     UNUSED(data);
-	/* struct viv_output *output = wl_container_of(listener, output, frame); */
-    /* wlr_log(WLR_INFO, "Output \"%s\" event: present", output->wlr_output->name); */
 }
 
 static void output_enable(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, enable);
+    struct viv_output *output = wl_container_of(listener, output, enable);
 
     wlr_log(WLR_INFO, "Output \"%s\" event: enable became %d", output->wlr_output->name, output->wlr_output->enabled);
 }
 
 static void output_mode(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, mode);
+    struct viv_output *output = wl_container_of(listener, output, mode);
     wlr_log(WLR_INFO, "Output \"%s\" event: mode", output->wlr_output->name);
 }
 
 static void output_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
-	struct viv_output *output = wl_container_of(listener, output, destroy);
+    struct viv_output *output = wl_container_of(listener, output, destroy);
     wlr_log(WLR_INFO, "Output \"%s\" event: destroy", output->wlr_output->name);
 
     stop_using_output(output);
