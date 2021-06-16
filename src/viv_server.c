@@ -363,7 +363,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 
     // If there isn't already an active output, we may as well use this one
     if (!server->active_output) {
-        server->active_output = output;
+        viv_output_make_active(output);
     }
 }
 
