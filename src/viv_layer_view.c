@@ -43,14 +43,18 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
 
     viv_output_mark_for_relayout(layer_view->output);
 
-	struct wlr_seat *seat = layer_view->output->server->seat;
+	struct wlr_seat *seat = layer_view->server->seat;
 	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
     struct wlr_surface *our_surface = layer_view->layer_surface->surface;
     if (prev_surface == our_surface) {
         seat->keyboard_state.focused_surface = NULL;
     }
 
-    struct viv_view *active_view = layer_view->output->server->active_output->current_workspace->active_view;
+    struct viv_view *active_view = NULL;
+    if (layer_view->server->active_output) {
+        active_view = layer_view->server->active_output->current_workspace->active_view;
+    }
+
     if (active_view != NULL) {
         viv_view_focus(active_view, NULL);
     }
@@ -79,6 +83,11 @@ static void layer_surface_destroy(struct wl_listener *listener, void *data) {
         layer_view->surface_tree = NULL;
     }
 
+    wl_list_remove(&layer_view->map.link);
+    wl_list_remove(&layer_view->unmap.link);
+    wl_list_remove(&layer_view->destroy.link);
+    wl_list_remove(&layer_view->new_popup.link);
+
 	free(layer_view);
 }
 
@@ -92,7 +101,6 @@ static void layer_surface_new_popup(struct wl_listener *listener, void *data) {
     popup->lx = &layer_view->x;
     popup->ly = &layer_view->y;
     popup->server = layer_view->server;
-    popup->output = layer_view->output;
     viv_xdg_popup_init(popup, wlr_popup);
 
 }

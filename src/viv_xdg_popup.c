@@ -87,14 +87,17 @@ static void handle_new_popup(struct wl_listener *listener, void *data) {
     new_popup->lx = popup->lx;
     new_popup->ly = popup->ly;
     new_popup->parent_popup = popup;
-    new_popup->output = popup->output;
     viv_xdg_popup_init(new_popup, wlr_popup);
 }
 
 /// Set the region in which the popup can be displayed, so that its position is shifted to
 /// stay within its output and not be rendered offscreen
 static void popup_unconstrain(struct viv_xdg_popup *popup) {
-    struct viv_output *output = popup->output;
+    struct viv_output *output = popup->server->active_output;
+    if (!output) {
+        wlr_log(WLR_ERROR, "Cannot unconstraint popup, no active output");
+    }
+
     struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
 
     double lx = 0, ly = 0;

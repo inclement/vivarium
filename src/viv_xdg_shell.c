@@ -266,7 +266,6 @@ static void handle_xdg_surface_new_popup(struct wl_listener *listener, void *dat
     popup->server = view->server;
     popup->lx = &view->x;
     popup->ly = &view->y;
-    popup->output = view->workspace->output;
     viv_xdg_popup_init(popup, wlr_popup);
 }
 

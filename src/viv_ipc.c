@@ -39,6 +39,11 @@ void viv_routine_log_state(struct viv_server *server) {
         return;
     }
 
+    if (!server->active_output) {
+        // Don't try to log anything, we aren't expecting anything to really change
+        return;
+    }
+
     if ((server->log_state.last_active_output == server->active_output) &&
         (server->log_state.last_active_workspace == server->active_output->current_workspace)) {
         // Nothing loggable has changed
