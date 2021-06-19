@@ -161,10 +161,19 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
 
         uint32_t x = surface->x;
         uint32_t y = surface->y;
-        uint32_t width = surface->width;
-        uint32_t height = surface->height;
+        uint32_t width = 500;
+        uint32_t height = 300;
 
-        if (size_hints->min_width >= 0 && size_hints->min_height >= 0) {
+        // All three of these options seem to be necessary/used by some applications.
+        // Probably a formally correct method of size resolution is written somewhere but
+        // I haven't found it.
+        if (surface->width && surface->height) {
+            width = surface->width;
+            height = surface->height;
+        } else if (size_hints->width > 0 && size_hints->height > 0) {
+            width = size_hints->width;
+            height = size_hints->height;
+        } else if (size_hints->min_width >= 0 && size_hints->min_height >= 0) {
             width = size_hints->min_width;
             height = size_hints->min_height;
         }
