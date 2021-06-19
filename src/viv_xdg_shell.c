@@ -38,14 +38,48 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
     if (guess_should_be_floating(view)) {
         view->is_floating = true;
 
-        // TODO: we shouldn't use the minimum size, probably actually
-        // want some indication of fractional pos and size relative to
-        // workspace output, which is handled during layout
         struct wlr_xdg_toplevel_state *current = &view->xdg_surface->toplevel->current;
+
+        struct wlr_xdg_surface *xdg_surface = view->xdg_surface;
+        struct wlr_box surface_geometry = { 0 };
+        wlr_xdg_surface_get_geometry(xdg_surface, &surface_geometry);
+
+        uint32_t view_name_len = 200;
+        char view_name[view_name_len];
+        viv_view_get_string_identifier(view, view_name, view_name_len);
+        wlr_log(WLR_DEBUG,
+                "Mapping xdg-shell surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
+                "min width %d, min height %d, max width %d, max height %d",
+                view_name,
+                surface_geometry.width,
+                surface_geometry.height,
+                current->width,
+                current->height,
+                current->min_width,
+                current->min_height,
+                current->max_width,
+                current->max_height);
+
+
         uint32_t x = 0;
         uint32_t y = 0;
-        uint32_t width = current->min_width;
-        uint32_t height = current->min_height;
+        uint32_t width = surface_geometry.width;
+        uint32_t height = surface_geometry.height;
+
+        if (width < current->min_width) {
+            width = current->min_width;
+        }
+        if (height < current->min_height) {
+            height = current->min_height;
+        }
+
+        if (width < 2 && current->width >= 2) {
+            width = current->width;
+        }
+        if (height < 2 && current->height >= 2) {
+            height = current->height;
+        }
+
         struct viv_output *output = view->workspace->output;
         if (output != NULL) {
             x += (uint32_t)(0.5 * output->wlr_output->width - 0.5 * width);
