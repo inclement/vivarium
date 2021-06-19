@@ -70,6 +70,7 @@ static bool guess_should_be_floating(struct viv_view *view) {
         if ((window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_DIALOG]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_UTILITY]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_TOOLBAR]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_MENU]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_POPUP_MENU]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_DROPDOWN_MENU]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_TOOLTIP]) ||
@@ -97,6 +98,7 @@ static bool guess_should_have_no_borders(struct viv_view *view) {
         xcb_atom_t window_type = surface->window_type[i];
         if ((window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_POPUP_MENU]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_DROPDOWN_MENU]) ||
+            (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_MENU]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_TOOLTIP]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_NOTIFICATION]) ||
             (window_type == window_type_atoms[_NET_WM_WINDOW_TYPE_COMBO]) ||
