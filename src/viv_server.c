@@ -22,7 +22,6 @@
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
-#include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
@@ -47,6 +46,7 @@
 #include "viv_layout.h"
 #include "viv_output.h"
 #include "viv_render.h"
+#include "viv_seat.h"
 #include "viv_toml_config.h"
 #include "viv_layer_view.h"
 #include "viv_view.h"
@@ -60,9 +60,11 @@
 #include "viv_config.h"
 #include "viv_config_support.h"
 
+#define DEFAULT_SEAT_NAME "seat0"
+
 void viv_server_clear_grab_state(struct viv_server *server) {
-        server->grab_state.view = NULL;
-        server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
+    server->grab_state.view = NULL;
+    server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 }
 
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
@@ -173,7 +175,7 @@ static void server_cursor_motion(struct wl_listener *listener, void *data) {
 
 void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface) {
     ASSERT(surface != NULL);
-	struct wlr_seat *seat = server->seat;
+	struct wlr_seat *seat = server->default_seat->wlr_seat;
 	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
 	if (prev_surface == surface) {
 		/* Don't re-focus an already focused surface. */
@@ -230,7 +232,7 @@ void viv_server_begin_interactive(struct viv_view *view, enum viv_cursor_mode mo
 	 * consumes them itself, to move or resize windows. */
 	struct viv_server *server = view->server;
 	struct wlr_surface *focused_surface =
-		server->seat->pointer_state.focused_surface;
+		server->default_seat->wlr_seat->pointer_state.focused_surface;
 	if (viv_view_get_toplevel_surface(view) != focused_surface) {
 		/* Deny move/resize requests from unfocused clients. */
 		return;
@@ -311,7 +313,7 @@ static void server_cursor_button(struct wl_listener *listener, void *data) {
 
     // Only notify the client about the button state if nothing is being dragged
     if (server->cursor_mode == VIV_CURSOR_PASSTHROUGH) {
-        wlr_seat_pointer_notify_button(server->seat,
+        wlr_seat_pointer_notify_button(server->default_seat->wlr_seat,
                                        event->time_msec, event->button, event->state);
     }
 }
@@ -322,7 +324,7 @@ static void server_cursor_axis(struct wl_listener *listener, void *data) {
 		wl_container_of(listener, server, cursor_axis);
 	struct wlr_event_pointer_axis *event = data;
 	/* Notify the client with pointer focus of the axis event. */
-	wlr_seat_pointer_notify_axis(server->seat,
+	wlr_seat_pointer_notify_axis(server->default_seat->wlr_seat,
 			event->time_msec, event->orientation, event->delta,
 			event->delta_discrete, event->source);
 }
@@ -335,7 +337,7 @@ static void server_cursor_frame(struct wl_listener *listener, void *data) {
 	struct viv_server *server =
 		wl_container_of(listener, server, cursor_frame);
 	/* Notify the client with pointer focus of the frame event. */
-	wlr_seat_pointer_notify_frame(server->seat);
+	wlr_seat_pointer_notify_frame(server->default_seat->wlr_seat);
 }
 
 /// Respond to a new output becoming available
@@ -407,7 +409,7 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
 static void server_xwayland_ready(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	struct viv_server *server = wl_container_of(listener, server, xwayland_ready);
-    wlr_xwayland_set_seat(server->xwayland_shell, server->seat);
+    wlr_xwayland_set_seat(server->xwayland_shell, server->default_seat->wlr_seat);
     wlr_log(WLR_INFO, "XWayland is ready");
 
     // Get the xcb_atom_t for all the X properties we care about, for later lookup
@@ -452,10 +454,10 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
 	struct viv_keyboard *keyboard =
 		wl_container_of(listener, keyboard, modifiers);
     // Let the seat know about the key press: it handles all connected keyboards
-	wlr_seat_set_keyboard(keyboard->server->seat, keyboard->device);
+	wlr_seat_set_keyboard(keyboard->server->default_seat->wlr_seat, keyboard->device);
 
     // Send modifiers to the current client
-	wlr_seat_keyboard_notify_modifiers(keyboard->server->seat,
+	wlr_seat_keyboard_notify_modifiers(keyboard->server->default_seat->wlr_seat,
 		&keyboard->device->keyboard->modifiers);
 }
 
@@ -536,7 +538,7 @@ static void server_keyboard_handle_key(
 		wl_container_of(listener, keyboard, key);
 	struct viv_server *server = keyboard->server;
 	struct wlr_event_keyboard_key *event = data;
-	struct wlr_seat *seat = server->seat;
+	struct wlr_seat *seat = server->default_seat->wlr_seat;
 
 	// Translate libinput keycode -> xkbcommon
 	uint32_t keycode = event->keycode + 8;
@@ -621,7 +623,7 @@ static void server_new_keyboard(struct viv_server *server,
 	wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifiers);
 	keyboard->key.notify = server_keyboard_handle_key;
 	wl_signal_add(&device->keyboard->events.key, &keyboard->key);
-	wlr_seat_set_keyboard(server->seat, device);
+	wlr_seat_set_keyboard(server->default_seat->wlr_seat, device);
 
     // Handle the destruction of the input device
     keyboard->destroy.notify = keyboard_handle_destroy;
@@ -665,29 +667,7 @@ static void server_new_input(struct wl_listener *listener, void *data) {
 	if (!wl_list_empty(&server->keyboards)) {
 		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
 	}
-	wlr_seat_set_capabilities(server->seat, caps);
-}
-
-/// Handle a cursor request (i.e. client requesting a specific image)
-static void seat_request_cursor(struct wl_listener *listener, void *data) {
-	struct viv_server *server = wl_container_of(
-			listener, server, request_cursor);
-	struct wlr_seat_pointer_request_set_cursor_event *event = data;
-	struct wlr_seat_client *focused_client =
-		server->seat->pointer_state.focused_client;
-    // Ignore the request if the client isn't currently pointer-focused
-	if (focused_client == event->seat_client) {
-		wlr_cursor_set_surface(server->cursor, event->surface,
-				event->hotspot_x, event->hotspot_y);
-	}
-}
-
-/// Handle a request to set the selection
-static void seat_request_set_selection(struct wl_listener *listener, void *data) {
-	struct viv_server *server = wl_container_of(
-			listener, server, request_set_selection);
-	struct wlr_seat_request_set_selection_event *event = data;
-	wlr_seat_set_selection(server->seat, event->source, event->serial);
+	wlr_seat_set_capabilities(server->default_seat->wlr_seat, caps);
 }
 
 /// Handle new xdg toplevel decorations
@@ -958,13 +938,9 @@ void viv_server_init(struct viv_server *server) {
 	wl_list_init(&server->keyboards);
 	server->new_input.notify = server_new_input;
 	wl_signal_add(&server->backend->events.new_input, &server->new_input);
-	server->seat = wlr_seat_create(server->wl_display, "seat0");
-	server->request_cursor.notify = seat_request_cursor;
-	wl_signal_add(&server->seat->events.request_set_cursor,
-			&server->request_cursor);
-	server->request_set_selection.notify = seat_request_set_selection;
-	wl_signal_add(&server->seat->events.request_set_selection,
-			&server->request_set_selection);
+
+    wl_list_init(&server->seats);
+	server->default_seat = viv_seat_create(server, DEFAULT_SEAT_NAME);
 
     struct wlr_server_decoration_manager *decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
     server->decoration_manager = decoration_manager;

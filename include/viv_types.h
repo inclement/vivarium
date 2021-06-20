@@ -66,10 +66,10 @@ struct viv_server {
 	struct wl_listener cursor_axis;
 	struct wl_listener cursor_frame;
 
-	struct wlr_seat *seat;
+	struct viv_seat *default_seat;
+    struct wl_list seats;  // server_link
+
 	struct wl_listener new_input;
-	struct wl_listener request_cursor;
-	struct wl_listener request_set_selection;
 	struct wl_list keyboards;
 	enum viv_cursor_mode cursor_mode;
 
@@ -335,6 +335,16 @@ struct viv_config {
     bool debug_mark_active_output;
     bool debug_mark_frame_draws;
     bool debug_mark_undamaged_regions;
+};
+
+struct viv_seat {
+    struct viv_server *server;
+    struct wlr_seat *wlr_seat;
+
+	struct wl_listener request_cursor;
+	struct wl_listener request_set_selection;
+
+    struct wl_list server_link;
 };
 
 

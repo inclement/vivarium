@@ -100,7 +100,7 @@ static bool layer_view_wants_keyboard_focus(struct viv_layer_view *layer_view) {
 /// Find the focusable surface under the pointer (if any) and pass the event data along
 static void process_cursor_pass_through_to_surface(struct viv_server *server, uint32_t time) {
 	double sx, sy;
-	struct wlr_seat *seat = server->seat;
+	struct wlr_seat *seat = server->default_seat->wlr_seat;
 	struct wlr_surface *surface = NULL;
 
     // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
@@ -199,7 +199,7 @@ static struct wlr_surface *uppermost_surface_at_cursor(struct viv_server *server
 }
 
 void viv_cursor_reset_focus(struct viv_server *server, uint32_t time) {
-    struct wlr_seat *seat = server->seat;
+    struct wlr_seat *seat = server->default_seat->wlr_seat;
 	double sx, sy;
 	struct wlr_surface *surface = uppermost_surface_at_cursor(server, &sx, &sy);
 

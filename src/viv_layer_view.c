@@ -43,7 +43,7 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
 
     viv_output_mark_for_relayout(layer_view->output);
 
-	struct wlr_seat *seat = layer_view->server->seat;
+	struct wlr_seat *seat = layer_view->server->default_seat->wlr_seat;
 	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
     struct wlr_surface *our_surface = layer_view->layer_surface->surface;
     if (prev_surface == our_surface) {
