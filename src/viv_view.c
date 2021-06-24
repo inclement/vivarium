@@ -10,6 +10,7 @@
 #include "viv_view.h"
 
 #include "viv_output.h"
+#include "viv_seat.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_wl_list_utils.h"
@@ -46,7 +47,7 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 
 	/* Activate the new surface */
     view->workspace->active_view = view;
-    viv_surface_focus(server, surface);
+    viv_seat_focus_surface(server->default_seat, surface);
     viv_view_set_activated(view, true);
 }
 

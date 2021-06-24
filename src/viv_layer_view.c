@@ -7,6 +7,7 @@
 #include "viv_damage.h"
 #include "viv_layer_view.h"
 #include "viv_output.h"
+#include "viv_seat.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
@@ -31,7 +32,7 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
     layer_view->surface_tree = viv_surface_tree_root_create(layer_view->server, layer_view->layer_surface->surface, &add_layer_view_global_coords, layer_view);
 
     if (layer_view->layer_surface->current.keyboard_interactive) {
-        viv_surface_focus(layer_view->server, layer_view->layer_surface->surface);
+        viv_seat_focus_surface(layer_view->server->default_seat, layer_view->layer_surface->surface);
     }
 }
 

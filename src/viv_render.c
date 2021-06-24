@@ -257,7 +257,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     wlr_surface_for_each_surface(view->xdg_surface->surface, render_surface, &rdata);
 
     // Then render the main surface's borders
-    bool is_grabbed = ((output->server->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
+    bool is_grabbed = ((output->server->default_seat->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
                        (view == output->server->grab_state.view));
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
@@ -324,7 +324,7 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
     wlr_surface_for_each_surface(viv_view_get_toplevel_surface(view), render_surface, &rdata);
 
     // Then render the main surface's borders
-    bool is_grabbed = ((output->server->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
+    bool is_grabbed = ((output->server->default_seat->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
                        (view == output->server->grab_state.view));
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
