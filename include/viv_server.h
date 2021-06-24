@@ -35,4 +35,7 @@ void viv_server_reload_config(struct viv_server *server);
 /// Clear the server grab state, i.e. set cursor mode to passthrough and invalidate the
 /// grabbed view pointer
 void viv_server_clear_grab_state(struct viv_server *server);
+
+/// Look up a key press in the configured keybindings, and run the bound function if found
+bool viv_server_handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_keysym_t sym, uint32_t modifiers);
 #endif

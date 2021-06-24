@@ -12,15 +12,128 @@
 #include "viv_view.h"
 
 /// True if the global meta key from the config is currently held, else false
-static bool global_meta_held(struct viv_server *server) {
+static bool global_meta_held(struct viv_seat *seat) {
     struct viv_keyboard *keyboard;
-    wl_list_for_each(keyboard, &server->keyboards, link) {
+    wl_list_for_each(keyboard, &seat->keyboards, link) {
         uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-        if (modifiers & server->config->global_meta_key) {
+        if (modifiers & seat->server->config->global_meta_key) {
             return true;
         }
     }
     return false;
+}
+
+static struct xkb_keymap *load_keymap(struct xkb_context *context, struct xkb_rule_names *rules) {
+	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    const char *model_str = rules->model ? rules->model : "";
+    const char *layout_str = rules->layout ? rules->layout : "";
+    const char *variant_str = rules->variant ? rules->variant : "";
+    const char *options_str = rules->options ? rules->options : "";
+    if (!keymap) {
+        wlr_log(WLR_ERROR,
+                "Could not load keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\" - "
+                "using default keymap instead (probably qwerty)",
+                model_str, layout_str, variant_str, options_str);
+        struct xkb_rule_names default_rules = { 0 };
+        context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+        keymap = xkb_map_new_from_names(context, &default_rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    } else {
+        wlr_log(WLR_INFO, "Successfully loaded keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\"",
+                model_str, layout_str, variant_str, options_str);
+    }
+
+    return keymap;
+}
+
+/// Handle a modifier key press event
+static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_keyboard *keyboard = wl_container_of(listener, keyboard, modifiers);
+    // Let the seat know about the key press: it handles all connected keyboards
+	wlr_seat_set_keyboard(keyboard->seat->wlr_seat, keyboard->device);
+
+    // Send modifiers to the current client
+	wlr_seat_keyboard_notify_modifiers(keyboard->seat->wlr_seat,
+		&keyboard->device->keyboard->modifiers);
+}
+
+/// Handle a key press event
+static void keyboard_handle_key(
+		struct wl_listener *listener, void *data) {
+	struct viv_keyboard *keyboard =
+		wl_container_of(listener, keyboard, key);
+	struct viv_server *server = keyboard->seat->server;
+	struct wlr_event_keyboard_key *event = data;
+	struct wlr_seat *seat = keyboard->seat->wlr_seat;
+
+	// Translate libinput keycode -> xkbcommon
+	uint32_t keycode = event->keycode + 8;
+	const xkb_keysym_t *syms;
+	int nsyms = xkb_state_key_get_syms(
+			keyboard->device->keyboard->xkb_state, keycode, &syms);
+
+    // If the key completes a configured keybinding, run the configured response function
+	bool handled = false;
+	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+		for (int i = 0; i < nsyms; i++) {
+            wlr_log(WLR_DEBUG, "Keysym %d pressed, keycode %d", syms[i], keycode);
+			handled = viv_server_handle_keybinding(server, keycode, syms[i], modifiers);
+		}
+	}
+
+    // If the key wasn't a shortcut, pass it through to the focused view
+	if (!handled) {
+		wlr_seat_set_keyboard(seat, keyboard->device);
+		wlr_seat_keyboard_notify_key(seat, event->time_msec,
+			event->keycode, event->state);
+	}
+}
+
+static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct viv_keyboard *keyboard = wl_container_of(listener, keyboard, destroy);
+    wl_list_remove(&keyboard->link);
+}
+
+
+void viv_seat_create_new_keyboard(struct viv_seat *seat, struct wlr_input_device *device) {
+	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
+    CHECK_ALLOCATION(keyboard);
+
+	keyboard->seat = seat;
+	keyboard->device = device;
+
+    struct viv_server *server = seat->server;
+	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    struct xkb_rule_names rules = {
+        .rules = server->config->xkb_rules.rules,
+        .model = server->config->xkb_rules.model,
+        .layout = server->config->xkb_rules.layout,
+        .variant = server->config->xkb_rules.variant,
+        .options = server->config->xkb_rules.options,
+    };
+    struct xkb_keymap *keymap = load_keymap(context, &rules);
+
+    wlr_keyboard_set_keymap(device->keyboard, keymap);
+    xkb_keymap_unref(keymap);
+	xkb_context_unref(context);
+	wlr_keyboard_set_repeat_info(device->keyboard, 25, 600);
+
+    // Handle events from the wlr_keyboard
+	keyboard->modifiers.notify = keyboard_handle_modifiers;
+	wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifiers);
+	keyboard->key.notify = keyboard_handle_key;
+	wl_signal_add(&device->keyboard->events.key, &keyboard->key);
+	wlr_seat_set_keyboard(seat->wlr_seat, device);
+
+    // Handle the destruction of the input device
+    keyboard->destroy.notify = keyboard_handle_destroy;
+    wl_signal_add(&device->events.destroy, &keyboard->destroy);
+
+	/* And add the keyboard to our list of keyboards */
+	wl_list_insert(&seat->keyboards, &keyboard->link);
 }
 
 void viv_seat_focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
@@ -65,14 +178,12 @@ void viv_seat_focus_surface(struct viv_seat *seat, struct wlr_surface *surface) 
 
 /// Begin a cursor interaction with the given view: this stores the view at server root
 /// level so that future cursor movements can be applied to it.
-void viv_seat_begin_interactive(struct viv_view *view, enum viv_cursor_mode mode, uint32_t edges) {
+void viv_seat_begin_interactive(struct viv_seat *seat, struct viv_view *view, enum viv_cursor_mode mode, uint32_t edges) {
 	/* This function sets up an interactive move or resize operation, where the
 	 * compositor stops propegating pointer events to clients and instead
 	 * consumes them itself, to move or resize windows. */
 	struct viv_server *server = view->server;
-    struct viv_seat *seat = server->default_seat;
-	struct wlr_surface *focused_surface =
-		server->default_seat->wlr_seat->pointer_state.focused_surface;
+	struct wlr_surface *focused_surface = seat->wlr_seat->pointer_state.focused_surface;
 	if (viv_view_get_toplevel_surface(view) != focused_surface) {
 		/* Deny move/resize requests from unfocused clients. */
 		return;
@@ -171,13 +282,13 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
         }
 
         // If making a window floating, always bring it to the front
-        if (global_meta_held(server)) {
+        if (global_meta_held(seat)) {
             viv_view_bring_to_front(view);
             if (event->state == WLR_BUTTON_PRESSED) {
                 if (event->button == VIV_LEFT_BUTTON) {
-                    viv_seat_begin_interactive(view, VIV_CURSOR_MOVE, 0);
+                    viv_seat_begin_interactive(seat, view, VIV_CURSOR_MOVE, 0);
                 } else if (event->button == VIV_RIGHT_BUTTON) {
-                    viv_seat_begin_interactive(view, VIV_CURSOR_RESIZE, WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT);
+                    viv_seat_begin_interactive(seat, view, VIV_CURSOR_RESIZE, WLR_EDGE_BOTTOM | WLR_EDGE_RIGHT);
                 }
             }
         }
@@ -185,20 +296,18 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
 
     // Only notify the client about the button state if nothing is being dragged
     if (seat->cursor_mode == VIV_CURSOR_PASSTHROUGH) {
-        wlr_seat_pointer_notify_button(server->default_seat->wlr_seat,
-                                       event->time_msec, event->button, event->state);
+        wlr_seat_pointer_notify_button(seat->wlr_seat, event->time_msec, event->button, event->state);
     }
 }
 
 /// Handle cursor axis event, e.g. from scroll wheel
 static void seat_cursor_axis(struct wl_listener *listener, void *data) {
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_axis);
-	struct viv_server *server = seat->server;
 	struct wlr_event_pointer_axis *event = data;
 	/* Notify the client with pointer focus of the axis event. */
-	wlr_seat_pointer_notify_axis(server->default_seat->wlr_seat,
-			event->time_msec, event->orientation, event->delta,
-			event->delta_discrete, event->source);
+	wlr_seat_pointer_notify_axis(seat->wlr_seat,
+                                 event->time_msec, event->orientation, event->delta,
+                                 event->delta_discrete, event->source);
 }
 
 /// Handle cursor frame event. Frame events are sent after normal pointer events to group
@@ -207,9 +316,8 @@ static void seat_cursor_axis(struct wl_listener *listener, void *data) {
 static void seat_cursor_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_frame);
-	struct viv_server *server = seat->server;
 	/* Notify the client with pointer focus of the frame event. */
-	wlr_seat_pointer_notify_frame(server->default_seat->wlr_seat);
+	wlr_seat_pointer_notify_frame(seat->wlr_seat);
 }
 
 struct viv_seat *viv_seat_create(struct viv_server *server, char *name) {
@@ -226,6 +334,8 @@ struct viv_seat *viv_seat_create(struct viv_server *server, char *name) {
 
     wl_list_init(&seat->server_link);
     wl_list_insert(server->seats.prev, &seat->server_link);
+
+    wl_list_init(&seat->keyboards);
 
     seat->cursor_mode = VIV_CURSOR_PASSTHROUGH;
 

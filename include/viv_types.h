@@ -64,7 +64,6 @@ struct viv_server {
     struct wl_list seats;  // server_link
 
 	struct wl_listener new_input;
-	struct wl_list keyboards;
 
     /// State relating to any currently-grabbed view
     struct {
@@ -271,7 +270,7 @@ struct viv_workspace {
 
 struct viv_keyboard {
 	struct wl_list link;
-	struct viv_server *server;
+    struct viv_seat *seat;
 	struct wlr_input_device *device;
 
     struct wl_listener destroy;
@@ -335,6 +334,8 @@ struct viv_seat {
     struct wlr_seat *wlr_seat;
 
 	enum viv_cursor_mode cursor_mode;
+
+	struct wl_list keyboards;
 
 	struct wl_listener request_cursor;
 	struct wl_listener request_set_selection;

@@ -264,19 +264,6 @@ static void server_new_layer_surface(struct wl_listener *listener, void *data) {
     wlr_log(WLR_INFO, "New layer surface props: layer %d, anchor %d, exclusive %d, margin (%d, %d, %d, %d), desired size (%d, %d), actual size (%d, %d)", state->layer, state->anchor, state->exclusive_zone, state->margin.top, state->margin.right, state->margin.bottom, state->margin.left, state->desired_width, state->desired_height, state->actual_width, state->actual_height);
 }
 
-/// Handle a modifier key press event
-static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-	struct viv_keyboard *keyboard =
-		wl_container_of(listener, keyboard, modifiers);
-    // Let the seat know about the key press: it handles all connected keyboards
-	wlr_seat_set_keyboard(keyboard->server->default_seat->wlr_seat, keyboard->device);
-
-    // Send modifiers to the current client
-	wlr_seat_keyboard_notify_modifiers(keyboard->server->default_seat->wlr_seat,
-		&keyboard->device->keyboard->modifiers);
-}
-
 /// Handle builtin keybindings that cannot be overridden
 static bool handle_server_keybinding(struct viv_server *server, xkb_keysym_t sym) {
 
@@ -293,7 +280,7 @@ static bool handle_server_keybinding(struct viv_server *server, xkb_keysym_t sym
 }
 
 /// Look up a key press in the configured keybindings, and run the bound function if found
-static bool handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_keysym_t sym, uint32_t modifiers) {
+bool viv_server_handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_keysym_t sym, uint32_t modifiers) {
     struct viv_output *output = server->active_output;
     if (!output) {
         wlr_log(WLR_ERROR, "Ignoring keybinding as no output active to act on");
@@ -347,107 +334,6 @@ static bool handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_k
     return false;
 }
 
-/// Handle a key press event
-static void server_keyboard_handle_key(
-		struct wl_listener *listener, void *data) {
-	struct viv_keyboard *keyboard =
-		wl_container_of(listener, keyboard, key);
-	struct viv_server *server = keyboard->server;
-	struct wlr_event_keyboard_key *event = data;
-	struct wlr_seat *seat = server->default_seat->wlr_seat;
-
-	// Translate libinput keycode -> xkbcommon
-	uint32_t keycode = event->keycode + 8;
-	const xkb_keysym_t *syms;
-	int nsyms = xkb_state_key_get_syms(
-			keyboard->device->keyboard->xkb_state, keycode, &syms);
-
-
-    // If the key completes a configured keybinding, run the configured response function
-	bool handled = false;
-	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-		for (int i = 0; i < nsyms; i++) {
-            wlr_log(WLR_DEBUG, "Keysym %d pressed, keycode %d", syms[i], keycode);
-			handled = handle_keybinding(server, keycode, syms[i], modifiers);
-		}
-	}
-
-    // If the key wasn't a shortcut, pass it through to the focused view
-	if (!handled) {
-		wlr_seat_set_keyboard(seat, keyboard->device);
-		wlr_seat_keyboard_notify_key(seat, event->time_msec,
-			event->keycode, event->state);
-	}
-}
-
-static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_keyboard *keyboard = wl_container_of(listener, keyboard, destroy);
-    wl_list_remove(&keyboard->link);
-}
-
-static struct xkb_keymap *load_keymap(struct xkb_context *context, struct xkb_rule_names *rules) {
-	struct xkb_keymap *keymap = xkb_map_new_from_names(context, rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-
-    const char *model_str = rules->model ? rules->model : "";
-    const char *layout_str = rules->layout ? rules->layout : "";
-    const char *variant_str = rules->variant ? rules->variant : "";
-    const char *options_str = rules->options ? rules->options : "";
-    if (!keymap) {
-        wlr_log(WLR_ERROR,
-                "Could not load keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\" - "
-                "using default keymap instead (probably qwerty)",
-                model_str, layout_str, variant_str, options_str);
-        struct xkb_rule_names default_rules = { 0 };
-        context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-        keymap = xkb_map_new_from_names(context, &default_rules, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    } else {
-        wlr_log(WLR_INFO, "Successfully loaded keymap with model \"%s\", layout \"%s\", variant \"%s\", options \"%s\"",
-                model_str, layout_str, variant_str, options_str);
-    }
-
-    return keymap;
-}
-
-/// Handle a new-keyboard event
-static void server_new_keyboard(struct viv_server *server,
-		struct wlr_input_device *device) {
-	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
-    CHECK_ALLOCATION(keyboard);
-
-	keyboard->server = server;
-	keyboard->device = device;
-
-	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    struct xkb_rule_names rules = {
-        .rules = server->config->xkb_rules.rules,
-        .model = server->config->xkb_rules.model,
-        .layout = server->config->xkb_rules.layout,
-        .variant = server->config->xkb_rules.variant,
-        .options = server->config->xkb_rules.options,
-    };
-    struct xkb_keymap *keymap = load_keymap(context, &rules);
-
-    wlr_keyboard_set_keymap(device->keyboard, keymap);
-    xkb_keymap_unref(keymap);
-	xkb_context_unref(context);
-	wlr_keyboard_set_repeat_info(device->keyboard, 25, 600);
-
-    // Handle events from the wlr_keyboard
-	keyboard->modifiers.notify = keyboard_handle_modifiers;
-	wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifiers);
-	keyboard->key.notify = server_keyboard_handle_key;
-	wl_signal_add(&device->keyboard->events.key, &keyboard->key);
-	wlr_seat_set_keyboard(server->default_seat->wlr_seat, device);
-
-    // Handle the destruction of the input device
-    keyboard->destroy.notify = keyboard_handle_destroy;
-    wl_signal_add(&device->events.destroy, &keyboard->destroy);
-
-	/* And add the keyboard to our list of keyboards */
-	wl_list_insert(&server->keyboards, &keyboard->link);
-}
 
 /// Handle a new-pointer event
 static void server_new_pointer(struct viv_server *server,
@@ -462,7 +348,7 @@ static void server_new_input(struct wl_listener *listener, void *data) {
 	struct wlr_input_device *device = data;
 	switch (device->type) {
 	case WLR_INPUT_DEVICE_KEYBOARD:
-		server_new_keyboard(server, device);
+        viv_seat_create_new_keyboard(server->default_seat, device);
 		break;
 	case WLR_INPUT_DEVICE_POINTER:
 		server_new_pointer(server, device);
@@ -477,13 +363,16 @@ static void server_new_input(struct wl_listener *listener, void *data) {
     // Configure the new device, e.g. applying libinput config options
     viv_input_configure(device, server->config->libinput_configs);
 
-    // Let the wlr_seat know what our capabilities are. This information is available to
+    // Let the wlr_seat(s) know what our capabilities are. This information is available to
     // clients. We always support a cursor even if no input device can actually move it.
-	uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
-	if (!wl_list_empty(&server->keyboards)) {
-		caps |= WL_SEAT_CAPABILITY_KEYBOARD;
-	}
-	wlr_seat_set_capabilities(server->default_seat->wlr_seat, caps);
+    struct viv_seat *seat;
+    wl_list_for_each(seat, &server->seats, server_link) {
+        uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
+        if (!wl_list_empty(&seat->keyboards)) {
+            caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+        }
+        wlr_seat_set_capabilities(seat->wlr_seat, caps);
+    }
 }
 
 /// Handle new xdg toplevel decorations
@@ -732,7 +621,6 @@ void viv_server_init(struct viv_server *server) {
 	wlr_xcursor_manager_load(server->cursor_mgr, 1);
 
     // Set up a wlroots "seat" handling the combination of user input devices
-	wl_list_init(&server->keyboards);
 	server->new_input.notify = server_new_input;
 	wl_signal_add(&server->backend->events.new_input, &server->new_input);
 
