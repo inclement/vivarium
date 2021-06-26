@@ -36,4 +36,8 @@ void viv_surface_focus(struct viv_server *server, struct wlr_surface *surface);
 
 /// Reload the TOML config file
 void viv_server_reload_config(struct viv_server *server);
+
+/// Clear the server grab state, i.e. set cursor mode to passthrough and invalidate the
+/// grabbed view pointer
+void viv_server_clear_grab_state(struct viv_server *server);
 #endif

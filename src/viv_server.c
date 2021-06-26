@@ -59,6 +59,11 @@
 #include "viv_config.h"
 #include "viv_config_support.h"
 
+void viv_server_clear_grab_state(struct viv_server *server) {
+        server->grab_state.view = NULL;
+        server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
+}
+
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
     struct viv_workspace *workspace;
     wl_list_for_each(workspace, &server->workspaces, server_link) {

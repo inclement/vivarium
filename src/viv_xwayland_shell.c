@@ -3,6 +3,7 @@
 #include <xcb/xcb.h>
 
 #include "viv_damage.h"
+#include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
 #include "viv_wlr_surface_tree.h"
@@ -226,6 +227,10 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
 
     viv_surface_tree_destroy(view->surface_tree);
     view->surface_tree = NULL;
+
+    if (view->server->grab_state.view == view) {
+        viv_server_clear_grab_state(view->server);
+    }
 }
 
 
