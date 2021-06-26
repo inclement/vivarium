@@ -128,6 +128,10 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
     }
 
     viv_view_destroy(view);
+
+    if (view->server->grab_state.view == view) {
+        viv_server_clear_grab_state(view->server);
+    }
 }
 
 static void xdg_toplevel_request_move(struct wl_listener *listener, void *data) {

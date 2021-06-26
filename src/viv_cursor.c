@@ -9,7 +9,6 @@
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/util/edges.h>
 
-
 static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
     UNUSED(time);
 
