@@ -11,6 +11,7 @@ viv_sources = [
   'viv_mappable_functions.c',
   'viv_output.c',
   'viv_render.c',
+  'viv_seat.c',
   'viv_server.c',
   'viv_layer_view.c',
   'viv_toml_config.c',

@@ -7,6 +7,7 @@
 #include "viv_damage.h"
 #include "viv_layer_view.h"
 #include "viv_output.h"
+#include "viv_seat.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
@@ -31,7 +32,8 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
     layer_view->surface_tree = viv_surface_tree_root_create(layer_view->server, layer_view->layer_surface->surface, &add_layer_view_global_coords, layer_view);
 
     if (layer_view->layer_surface->current.keyboard_interactive) {
-        viv_surface_focus(layer_view->server, layer_view->layer_surface->surface);
+        struct viv_seat *seat = viv_server_get_default_seat(layer_view->server);
+        viv_seat_focus_surface(seat, layer_view->layer_surface->surface);
     }
 }
 
@@ -43,11 +45,11 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
 
     viv_output_mark_for_relayout(layer_view->output);
 
-	struct wlr_seat *seat = layer_view->server->seat;
-	struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+	struct viv_seat *seat = viv_server_get_default_seat(layer_view->server);
+	struct wlr_surface *prev_surface = seat->wlr_seat->keyboard_state.focused_surface;
     struct wlr_surface *our_surface = layer_view->layer_surface->surface;
     if (prev_surface == our_surface) {
-        seat->keyboard_state.focused_surface = NULL;
+        seat->wlr_seat->keyboard_state.focused_surface = NULL;
     }
 
     struct viv_view *active_view = NULL;

@@ -35,6 +35,7 @@ enum cursor_buttons {
 };
 
 struct viv_output;  // Forward declare for use by viv_server
+struct viv_view;
 
 struct viv_server {
     char *user_provided_config_filen;
@@ -58,28 +59,12 @@ struct viv_server {
     struct wlr_layer_shell_v1 *layer_shell;
     struct wl_listener new_layer_surface;
 
-	struct wlr_cursor *cursor;
 	struct wlr_xcursor_manager *cursor_mgr;
-	struct wl_listener cursor_motion;
-	struct wl_listener cursor_motion_absolute;
-	struct wl_listener cursor_button;
-	struct wl_listener cursor_axis;
-	struct wl_listener cursor_frame;
 
-	struct wlr_seat *seat;
+	struct viv_seat *default_seat;
+    struct wl_list seats;  // server_link
+
 	struct wl_listener new_input;
-	struct wl_listener request_cursor;
-	struct wl_listener request_set_selection;
-	struct wl_list keyboards;
-	enum viv_cursor_mode cursor_mode;
-
-    /// State relating to any currently-grabbed view
-    struct {
-        struct viv_view *view;  /// Currently-grabbed view
-        double x, y;
-        struct wlr_box geobox;
-        uint32_t resize_edges;  /// union of ::wlr_edges along which the view is being resized
-    } grab_state;
 
     struct wlr_xdg_output_manager_v1 *xdg_output_manager;
 
@@ -276,7 +261,7 @@ struct viv_workspace {
 
 struct viv_keyboard {
 	struct wl_list link;
-	struct viv_server *server;
+    struct viv_seat *seat;
 	struct wlr_input_device *device;
 
     struct wl_listener destroy;
@@ -333,6 +318,35 @@ struct viv_config {
     bool debug_mark_active_output;
     bool debug_mark_frame_draws;
     bool debug_mark_undamaged_regions;
+};
+
+struct viv_seat {
+    struct viv_server *server;
+    struct wlr_seat *wlr_seat;
+
+	enum viv_cursor_mode cursor_mode;
+
+	struct wl_list keyboards;
+
+    /// State relating to any currently-grabbed view
+    struct {
+        struct viv_view *view;  /// Currently-grabbed view
+        double x, y;
+        struct wlr_box geobox;
+        uint32_t resize_edges;  /// union of ::wlr_edges along which the view is being resized
+    } grab_state;
+
+	struct wl_listener request_cursor;
+	struct wl_listener request_set_selection;
+
+	struct wlr_cursor *cursor;
+	struct wl_listener cursor_motion;
+	struct wl_listener cursor_motion_absolute;
+	struct wl_listener cursor_button;
+	struct wl_listener cursor_axis;
+	struct wl_listener cursor_frame;
+
+    struct wl_list server_link;
 };
 
 

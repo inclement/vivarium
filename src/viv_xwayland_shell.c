@@ -212,9 +212,6 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
 	struct viv_view *view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 
-
-	struct wlr_seat *seat = view->workspace->server->seat;
-    seat->keyboard_state.focused_surface = NULL;
     viv_view_ensure_not_active_in_workspace(view);
 
     wl_list_remove(&view->workspace_link);
@@ -228,9 +225,7 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
     viv_surface_tree_destroy(view->surface_tree);
     view->surface_tree = NULL;
 
-    if (view->server->grab_state.view == view) {
-        viv_server_clear_grab_state(view->server);
-    }
+    viv_server_clear_view_from_grab_state(view->server, view);
 }
 
 

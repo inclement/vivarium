@@ -13,6 +13,7 @@
 
 #include "viv_types.h"
 #include "viv_output.h"
+#include "viv_server.h"
 #include "viv_view.h"
 
 #define MAX(A, B) (A > B ? A : B)
@@ -257,8 +258,9 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     wlr_surface_for_each_surface(view->xdg_surface->surface, render_surface, &rdata);
 
     // Then render the main surface's borders
-    bool is_grabbed = ((output->server->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
-                       (view == output->server->grab_state.view));
+    struct viv_seat *seat = viv_server_get_default_seat(view->server);
+    bool is_grabbed = ((seat->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
+                       viv_server_any_seat_grabs(view->server, view));
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
@@ -324,8 +326,9 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
     wlr_surface_for_each_surface(viv_view_get_toplevel_surface(view), render_surface, &rdata);
 
     // Then render the main surface's borders
-    bool is_grabbed = ((output->server->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
-                       (view == output->server->grab_state.view));
+    struct viv_seat *seat = viv_server_get_default_seat(view->server);
+    bool is_grabbed = ((seat->cursor_mode != VIV_CURSOR_PASSTHROUGH) &&
+                       viv_server_any_seat_grabs(view->server, view));
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
