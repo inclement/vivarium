@@ -26,7 +26,8 @@ void viv_view_bring_to_front(struct viv_view *view) {
 }
 
 void viv_view_clear_all_focus(struct viv_server *server) {
-    wlr_seat_keyboard_notify_clear_focus(server->default_seat->wlr_seat);
+    struct viv_seat *seat = viv_server_get_default_seat(server);
+    wlr_seat_keyboard_notify_clear_focus(seat->wlr_seat);
 }
 
 void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
@@ -47,7 +48,7 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 
 	/* Activate the new surface */
     view->workspace->active_view = view;
-    viv_seat_focus_surface(server->default_seat, surface);
+    viv_seat_focus_surface(viv_server_get_default_seat(server), surface);
     viv_view_set_activated(view, true);
 }
 
@@ -279,8 +280,8 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
     struct viv_workspace *workspace = view->workspace;
     if  (view == workspace->active_view) {
-        struct wlr_seat *seat = view->workspace->server->default_seat->wlr_seat;
-        seat->keyboard_state.focused_surface = NULL;
+        struct viv_seat *seat = viv_server_get_default_seat(view->server);
+        seat->wlr_seat->keyboard_state.focused_surface = NULL;
         if (wl_list_length(&workspace->views) > 1) {
             viv_workspace_focus_next_window(workspace);
         } else {

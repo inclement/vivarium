@@ -224,7 +224,8 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
 static void server_xwayland_ready(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	struct viv_server *server = wl_container_of(listener, server, xwayland_ready);
-    wlr_xwayland_set_seat(server->xwayland_shell, server->default_seat->wlr_seat);
+    struct viv_seat *seat = viv_server_get_default_seat(server);
+    wlr_xwayland_set_seat(server->xwayland_shell, seat->wlr_seat);
     wlr_log(WLR_INFO, "XWayland is ready");
 
     // Get the xcb_atom_t for all the X properties we care about, for later lookup
@@ -338,7 +339,8 @@ bool viv_server_handle_keybinding(struct viv_server *server, uint32_t keycode, x
 static void server_new_pointer(struct viv_server *server,
 		struct wlr_input_device *device) {
     //  TODO: Maybe set acceleration etc. here (and make that configurable)
-	wlr_cursor_attach_input_device(server->default_seat->cursor, device);
+    struct viv_seat *seat = viv_server_get_default_seat(server);
+	wlr_cursor_attach_input_device(seat->cursor, device);
 }
 
 /// Handle a new-input event
@@ -347,7 +349,7 @@ static void server_new_input(struct wl_listener *listener, void *data) {
 	struct wlr_input_device *device = data;
 	switch (device->type) {
 	case WLR_INPUT_DEVICE_KEYBOARD:
-        viv_seat_create_new_keyboard(server->default_seat, device);
+        viv_seat_create_new_keyboard(viv_server_get_default_seat(server), device);
 		break;
 	case WLR_INPUT_DEVICE_POINTER:
 		server_new_pointer(server, device);
@@ -650,7 +652,8 @@ void viv_server_init(struct viv_server *server) {
     server->bar_pid = viv_parse_and_run_bar_config(server->config->bar.command, server->config->bar.update_signal_number);
 
 #ifdef XWAYLAND
-    wlr_xcursor_manager_set_cursor_image(server->cursor_mgr, "left_ptr", server->default_seat->cursor);
+    struct viv_seat *seat = viv_server_get_default_seat(server);
+    wlr_xcursor_manager_set_cursor_image(server->cursor_mgr, "left_ptr", seat->cursor);
     struct wlr_xcursor *xcursor = wlr_xcursor_manager_get_xcursor(server->cursor_mgr, "left_ptr", 1);
     if (!xcursor) {ASSERT(false);}
     struct wlr_xcursor_image *image = xcursor->images[0];
@@ -659,6 +662,12 @@ void viv_server_init(struct viv_server *server) {
                             image->height, image->hotspot_x,
                             image->hotspot_y);
 #endif  // XWAYLAND
+}
+
+struct viv_seat *viv_server_get_default_seat(struct viv_server *server) {
+    // TODO: Work out how to actually handle transitions between seat events and do
+    // something more interesting here when multiple seats are supported
+    return server->default_seat;
 }
 
 void viv_server_deinit(struct viv_server *server) {

@@ -38,4 +38,7 @@ void viv_server_clear_grab_state(struct viv_server *server);
 
 /// Look up a key press in the configured keybindings, and run the bound function if found
 bool viv_server_handle_keybinding(struct viv_server *server, uint32_t keycode, xkb_keysym_t sym, uint32_t modifiers);
+
+/// Get the default seat against which all inputs are registered by default.
+struct viv_seat *viv_server_get_default_seat(struct viv_server *server);
 #endif

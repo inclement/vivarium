@@ -212,9 +212,6 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
 	struct viv_view *view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
 
-
-	struct wlr_seat *seat = view->workspace->server->default_seat->wlr_seat;
-    seat->keyboard_state.focused_surface = NULL;
     viv_view_ensure_not_active_in_workspace(view);
 
     wl_list_remove(&view->workspace_link);

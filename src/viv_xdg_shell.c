@@ -143,7 +143,8 @@ static void xdg_toplevel_request_move(struct wl_listener *listener, void *data) 
 	 * provied serial against a list of button press serials sent to this
 	 * client, to prevent the client from requesting this whenever they want. */
 	struct viv_view *view = wl_container_of(listener, view, request_move);
-	viv_seat_begin_interactive(view->server->default_seat, view, VIV_CURSOR_MOVE, 0);
+    struct viv_seat *seat = viv_server_get_default_seat(view->server);
+	viv_seat_begin_interactive(seat, view, VIV_CURSOR_MOVE, 0);
 }
 
 static void xdg_toplevel_request_resize(struct wl_listener *listener, void *data) {
@@ -154,7 +155,8 @@ static void xdg_toplevel_request_resize(struct wl_listener *listener, void *data
 	 * client, to prevent the client from requesting this whenever they want. */
 	struct wlr_xdg_toplevel_resize_event *event = data;
 	struct viv_view *view = wl_container_of(listener, view, request_resize);
-	viv_seat_begin_interactive(view->server->default_seat, view, VIV_CURSOR_RESIZE, event->edges);
+    struct viv_seat *seat = viv_server_get_default_seat(view->server);
+	viv_seat_begin_interactive(seat, view, VIV_CURSOR_RESIZE, event->edges);
 }
 
 static void xdg_toplevel_request_maximize(struct wl_listener *listener, void *data) {
