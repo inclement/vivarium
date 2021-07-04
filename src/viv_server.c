@@ -62,7 +62,10 @@
 
 void viv_server_clear_grab_state(struct viv_server *server) {
     server->grab_state.view = NULL;
-    server->cursor_mode = VIV_CURSOR_PASSTHROUGH;
+    struct viv_seat *seat;
+    wl_list_for_each(seat, &server->seats, server_link) {
+        seat->cursor_mode = VIV_CURSOR_PASSTHROUGH;
+    }
 }
 
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {
