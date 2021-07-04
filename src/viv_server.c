@@ -23,6 +23,7 @@
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_input_inhibitor.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
@@ -650,6 +651,8 @@ void viv_server_init(struct viv_server *server) {
     server->xdg_decoration_manager = wlr_xdg_decoration_manager_v1_create(server->wl_display);
     server->xdg_decoration_new_toplevel_decoration.notify = handle_xdg_new_toplevel_decoration;
     wl_signal_add(&server->xdg_decoration_manager->events.new_toplevel_decoration, &server->xdg_decoration_new_toplevel_decoration);
+
+    server->input_inhibit_manager = wlr_input_inhibit_manager_create(server->wl_display);
 
     wl_list_init(&server->unmapped_views);
 
