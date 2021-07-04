@@ -182,32 +182,31 @@ void viv_seat_begin_interactive(struct viv_seat *seat, struct viv_view *view, en
 	/* This function sets up an interactive move or resize operation, where the
 	 * compositor stops propegating pointer events to clients and instead
 	 * consumes them itself, to move or resize windows. */
-	struct viv_server *server = view->server;
 	struct wlr_surface *focused_surface = seat->wlr_seat->pointer_state.focused_surface;
 	if (viv_view_get_toplevel_surface(view) != focused_surface) {
 		/* Deny move/resize requests from unfocused clients. */
 		return;
 	}
-	server->grab_state.view = view;
+	seat->grab_state.view = view;
 	seat->cursor_mode = mode;
 
     // Any view can be interacted with, but this automatically pulls it out of tiling
     viv_view_ensure_floating(view);
 
 	if (mode == VIV_CURSOR_MOVE) {
-		server->grab_state.x = seat->cursor->x - view->x;
-		server->grab_state.y = seat->cursor->y - view->y;
+		seat->grab_state.x = seat->cursor->x - view->x;
+		seat->grab_state.y = seat->cursor->y - view->y;
 	} else {
         struct wlr_box geo_box;
         viv_view_get_geometry(view, &geo_box);
         double border_x = (geo_box.x) + ((edges & WLR_EDGE_RIGHT) ? geo_box.width : 0);
         double border_y = (geo_box.y) + ((edges & WLR_EDGE_BOTTOM) ? geo_box.height : 0);
-        server->grab_state.x = seat->cursor->x - border_x;
-        server->grab_state.y = seat->cursor->y - border_y;
+        seat->grab_state.x = seat->cursor->x - border_x;
+        seat->grab_state.y = seat->cursor->y - border_y;
 
-        server->grab_state.geobox = geo_box;
+        seat->grab_state.geobox = geo_box;
 
-        server->grab_state.resize_edges = edges;
+        seat->grab_state.resize_edges = edges;
 	}
 }
 
@@ -235,7 +234,6 @@ static void seat_cursor_motion(struct wl_listener *listener, void *data) {
 	/* This event is forwarded by the cursor when a pointer emits a _relative_
 	 * pointer motion event (i.e. a delta) */
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_motion);
-	struct viv_server *server = seat->server;
 	struct wlr_event_pointer_motion *event = data;
 
     // Pass the movement along (i.e. allow the cursor to actually move)
@@ -243,17 +241,16 @@ static void seat_cursor_motion(struct wl_listener *listener, void *data) {
 			event->delta_x, event->delta_y);
 
     // Do our own processing of the motion if necessary
-	viv_cursor_process_cursor_motion(server, event->time_msec);
+	viv_cursor_process_cursor_motion(seat, event->time_msec);
 }
 
 /// Handle an absolute cursor motion event. This happens when runing under a Wayland
 /// window rather than KMS+DRM.
 static void seat_cursor_motion_absolute(struct wl_listener *listener, void *data) {
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_motion_absolute);
-	struct viv_server *server = seat->server;
 	struct wlr_event_pointer_motion_absolute *event = data;
 	wlr_cursor_warp_absolute(seat->cursor, event->device, event->x, event->y);
-	viv_cursor_process_cursor_motion(server, event->time_msec);
+	viv_cursor_process_cursor_motion(seat, event->time_msec);
 }
 
 /// Handle cursor button press event

@@ -35,6 +35,7 @@ enum cursor_buttons {
 };
 
 struct viv_output;  // Forward declare for use by viv_server
+struct viv_view;
 
 struct viv_server {
     char *user_provided_config_filen;
@@ -64,14 +65,6 @@ struct viv_server {
     struct wl_list seats;  // server_link
 
 	struct wl_listener new_input;
-
-    /// State relating to any currently-grabbed view
-    struct {
-        struct viv_view *view;  /// Currently-grabbed view
-        double x, y;
-        struct wlr_box geobox;
-        uint32_t resize_edges;  /// union of ::wlr_edges along which the view is being resized
-    } grab_state;
 
     struct wlr_xdg_output_manager_v1 *xdg_output_manager;
 
@@ -334,6 +327,14 @@ struct viv_seat {
 	enum viv_cursor_mode cursor_mode;
 
 	struct wl_list keyboards;
+
+    /// State relating to any currently-grabbed view
+    struct {
+        struct viv_view *view;  /// Currently-grabbed view
+        double x, y;
+        struct wlr_box geobox;
+        uint32_t resize_edges;  /// union of ::wlr_edges along which the view is being resized
+    } grab_state;
 
 	struct wl_listener request_cursor;
 	struct wl_listener request_set_selection;

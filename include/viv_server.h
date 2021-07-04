@@ -41,4 +41,10 @@ bool viv_server_handle_keybinding(struct viv_server *server, uint32_t keycode, x
 
 /// Get the default seat against which all inputs are registered by default.
 struct viv_seat *viv_server_get_default_seat(struct viv_server *server);
+
+/// Clear the given view from being grabbed by any seat
+void viv_server_clear_view_from_grab_state(struct viv_server *server, struct viv_view *view);
+
+/// True if the given view is currently grabbed by any seat, else false
+bool viv_server_any_seat_grabs(struct viv_server *server, struct viv_view *view);
 #endif

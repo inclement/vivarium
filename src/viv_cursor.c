@@ -10,11 +10,10 @@
 #include "viv_types.h"
 #include "viv_view.h"
 
-static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
+static void process_cursor_move_view(struct viv_seat *seat, uint32_t time) {
     UNUSED(time);
 
-    struct viv_view *view = server->grab_state.view;
-    struct viv_seat *seat = viv_server_get_default_seat(server);
+    struct viv_view *view = seat->grab_state.view;
 
     int old_x = view->x;
     int old_y = view->y;
@@ -23,8 +22,8 @@ static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
     viv_view_damage(view);
 
 	/* Move the grabbed view to the new position. */
-	view->x = seat->cursor->x - server->grab_state.x;
-	view->y = seat->cursor->y - server->grab_state.y;
+	view->x = seat->cursor->x - seat->grab_state.x;
+	view->y = seat->cursor->y - seat->grab_state.y;
 
     view->target_x += (view->x - old_x);
     view->target_y += (view->y - old_y);
@@ -32,7 +31,7 @@ static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
     // Move the grabbed view to the new output, if necessary
 	double cursor_x = seat->cursor->x;
 	double cursor_y = seat->cursor->y;
-    struct viv_output *output_at_point = viv_output_at(server, cursor_x, cursor_y);
+    struct viv_output *output_at_point = viv_output_at(seat->server, cursor_x, cursor_y);
     if (output_at_point != view->workspace->output) {
         viv_view_shift_to_workspace(view, output_at_point->current_workspace);
     }
@@ -41,40 +40,36 @@ static void process_cursor_move_view(struct viv_server *server, uint32_t time) {
     viv_view_damage(view);
 }
 
-static void process_cursor_resize_view(struct viv_server *server, uint32_t time) {
+static void process_cursor_resize_view(struct viv_seat *seat, uint32_t time) {
     UNUSED(time);
-    // TODO: As it stands this inherits some simplications from
-    // tinywl, we should wait for a buffer at the new size before
-    // committing movement
-	struct viv_view *view = server->grab_state.view;
+	struct viv_view *view = seat->grab_state.view;
 
     viv_view_damage(view);
 
-    struct viv_seat *seat = viv_server_get_default_seat(server);
-	double border_x = seat->cursor->x - server->grab_state.x;
-	double border_y = seat->cursor->y - server->grab_state.y;
-	int new_left = server->grab_state.geobox.x;
-	int new_right = server->grab_state.geobox.x + server->grab_state.geobox.width;
-	int new_top = server->grab_state.geobox.y;
-	int new_bottom = server->grab_state.geobox.y + server->grab_state.geobox.height;
+	double border_x = seat->cursor->x - seat->grab_state.x;
+	double border_y = seat->cursor->y - seat->grab_state.y;
+	int new_left = seat->grab_state.geobox.x;
+	int new_right = seat->grab_state.geobox.x + seat->grab_state.geobox.width;
+	int new_top = seat->grab_state.geobox.y;
+	int new_bottom = seat->grab_state.geobox.y + seat->grab_state.geobox.height;
 
-	if (server->grab_state.resize_edges & WLR_EDGE_TOP) {
+	if (seat->grab_state.resize_edges & WLR_EDGE_TOP) {
 		new_top = border_y;
 		if (new_top >= new_bottom) {
 			new_top = new_bottom - 1;
 		}
-	} else if (server->grab_state.resize_edges & WLR_EDGE_BOTTOM) {
+	} else if (seat->grab_state.resize_edges & WLR_EDGE_BOTTOM) {
 		new_bottom = border_y;
 		if (new_bottom <= new_top) {
 			new_bottom = new_top + 1;
 		}
 	}
-	if (server->grab_state.resize_edges & WLR_EDGE_LEFT) {
+	if (seat->grab_state.resize_edges & WLR_EDGE_LEFT) {
 		new_left = border_x;
 		if (new_left >= new_right) {
 			new_left = new_right - 1;
 		}
-	} else if (server->grab_state.resize_edges & WLR_EDGE_RIGHT) {
+	} else if (seat->grab_state.resize_edges & WLR_EDGE_RIGHT) {
 		new_right = border_x;
 		if (new_right <= new_left) {
 			new_right = new_left + 1;
@@ -101,10 +96,10 @@ static bool layer_view_wants_keyboard_focus(struct viv_layer_view *layer_view) {
 }
 
 /// Find the focusable surface under the pointer (if any) and pass the event data along
-static void process_cursor_pass_through_to_surface(struct viv_server *server, uint32_t time) {
+static void process_cursor_pass_through_to_surface(struct viv_seat *seat, uint32_t time) {
 	double sx, sy;
-    struct viv_seat *seat = viv_server_get_default_seat(server);
 	struct wlr_surface *surface = NULL;
+    struct viv_server *server = seat->server;
 
     // TODO: This will need to iterate over views in each desktop, with some appropriate ordering
     struct viv_layer_view *layer_view;
@@ -161,24 +156,23 @@ static void process_cursor_pass_through_to_surface(struct viv_server *server, ui
 /** Handle new cursor data, i.e. acting on an in-progress move or resize, or otherwise
     passing through the event to a view.
 */
-void viv_cursor_process_cursor_motion(struct viv_server *server, uint32_t time) {
+void viv_cursor_process_cursor_motion(struct viv_seat *seat, uint32_t time) {
     // Always update the current output if necessary
-    struct viv_seat *seat = viv_server_get_default_seat(server);
 	double cursor_x = seat->cursor->x;
 	double cursor_y = seat->cursor->y;
-    struct viv_output *output_at_point = viv_output_at(server, cursor_x, cursor_y);
+    struct viv_output *output_at_point = viv_output_at(seat->server, cursor_x, cursor_y);
     viv_output_make_active(output_at_point);
 
     // Respond to the specific cursor movement
     switch (seat->cursor_mode) {
     case VIV_CURSOR_MOVE:
-		process_cursor_move_view(server, time);
+		process_cursor_move_view(seat, time);
         break;
     case VIV_CURSOR_RESIZE:
-        process_cursor_resize_view(server, time);
+        process_cursor_resize_view(seat, time);
         break;
     case VIV_CURSOR_PASSTHROUGH:
-        process_cursor_pass_through_to_surface(server, time);
+        process_cursor_pass_through_to_surface(seat, time);
         break;
     }
 

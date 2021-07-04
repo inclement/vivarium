@@ -60,12 +60,24 @@
 
 #define DEFAULT_SEAT_NAME "seat0"
 
-void viv_server_clear_grab_state(struct viv_server *server) {
-    server->grab_state.view = NULL;
+void viv_server_clear_view_from_grab_state(struct viv_server *server, struct viv_view *view) {
     struct viv_seat *seat;
     wl_list_for_each(seat, &server->seats, server_link) {
-        seat->cursor_mode = VIV_CURSOR_PASSTHROUGH;
+        if (seat->grab_state.view == view) {
+            seat->grab_state.view = NULL;
+            seat->cursor_mode = VIV_CURSOR_PASSTHROUGH;
+        }
     }
+}
+
+bool viv_server_any_seat_grabs(struct viv_server *server, struct viv_view *view) {
+    struct viv_seat *seat;
+    wl_list_for_each(seat, &server->seats, server_link) {
+        if (seat->grab_state.view == view) {
+            return true;
+        }
+    }
+    return false;
 }
 
 struct viv_workspace *viv_server_retrieve_workspace_by_name(struct viv_server *server, char *name) {

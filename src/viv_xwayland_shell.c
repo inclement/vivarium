@@ -225,9 +225,7 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
     viv_surface_tree_destroy(view->surface_tree);
     view->surface_tree = NULL;
 
-    if (view->server->grab_state.view == view) {
-        viv_server_clear_grab_state(view->server);
-    }
+    viv_server_clear_view_from_grab_state(view->server, view);
 }
 
 
