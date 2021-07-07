@@ -74,6 +74,8 @@ struct viv_server {
     struct wl_listener xdg_decoration_new_toplevel_decoration;
 
     struct wlr_input_inhibit_manager *input_inhibit_manager;
+    struct wl_listener input_inhibit_activate;
+    struct wl_listener input_inhibit_deactivate;
 
 	struct wlr_output_layout *output_layout;
     struct viv_output *active_output;
@@ -337,6 +339,11 @@ struct viv_seat {
         struct wlr_box geobox;
         uint32_t resize_edges;  /// union of ::wlr_edges along which the view is being resized
     } grab_state;
+
+    /// Client that has exclusive focus due to input_inhibit protocol - note this client
+    /// is specifically assumed to come from that protocol and is also used to trigger
+    /// other protocol behaviours such as ignoring hotkeys
+    struct wl_client *exclusive_client;
 
 	struct wl_listener request_cursor;
 	struct wl_listener request_set_selection;

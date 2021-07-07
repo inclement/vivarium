@@ -173,8 +173,7 @@ struct viv_view *viv_server_view_at(
 
 /// Respond to a new output becoming available
 static void server_new_output(struct wl_listener *listener, void *data) {
-	struct viv_server *server =
-		wl_container_of(listener, server, new_output);
+	struct viv_server *server = wl_container_of(listener, server, new_output);
 	struct wlr_output *wlr_output = data;
 
     wlr_log(WLR_INFO, "New output appeared with name %s, make %s, model %s, serial %s",
@@ -540,6 +539,31 @@ void viv_server_reload_config(struct viv_server *server) {
     // TODO: Reset workspaces and layouts according to new config
 }
 
+static void handle_input_inhibit_activate(struct wl_listener *listener, void *data) {
+	struct viv_server *server = wl_container_of(listener, server, input_inhibit_activate);
+
+    struct wlr_input_inhibit_manager *inhibit_manager = data;
+
+    wlr_log(WLR_INFO, "Input inhibit activated");
+
+    struct viv_seat* seat;
+    wl_list_for_each(seat, &server->seats, server_link) {
+        viv_seat_set_exclusive_client(seat, inhibit_manager->active_client);
+    }
+}
+
+static void handle_input_inhibit_deactivate(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+	struct viv_server *server = wl_container_of(listener, server, input_inhibit_deactivate);
+
+    wlr_log(WLR_INFO, "Input inhibit deactivated");
+
+    struct viv_seat* seat;
+    wl_list_for_each(seat, &server->seats, server_link) {
+        viv_seat_set_exclusive_client(seat, NULL);
+    }
+}
+
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.
  */
@@ -653,6 +677,10 @@ void viv_server_init(struct viv_server *server) {
     wl_signal_add(&server->xdg_decoration_manager->events.new_toplevel_decoration, &server->xdg_decoration_new_toplevel_decoration);
 
     server->input_inhibit_manager = wlr_input_inhibit_manager_create(server->wl_display);
+    server->input_inhibit_activate.notify = handle_input_inhibit_activate;
+    wl_signal_add(&server->input_inhibit_manager->events.activate, &server->input_inhibit_activate);
+    server->input_inhibit_deactivate.notify = handle_input_inhibit_deactivate;
+    wl_signal_add(&server->input_inhibit_manager->events.deactivate, &server->input_inhibit_deactivate);
 
     wl_list_init(&server->unmapped_views);
 
