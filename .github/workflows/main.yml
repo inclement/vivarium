@@ -42,6 +42,7 @@ jobs:
 
       - name: Install libdrm
         run: |
+          # The ubuntu-20.04 libdrm version is lower than 2.4.105, so we must install it ourselves
           git clone --depth 1 --branch libdrm-2.4.105 https://gitlab.freedesktop.org/mesa/drm.git
           cd drm
           meson build
