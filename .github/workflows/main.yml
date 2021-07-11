@@ -5,6 +5,8 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    - cron: '30 3 * * *'
 
   workflow_dispatch:
 
@@ -23,10 +25,11 @@ jobs:
       - name: Install dependencies
         run: |
            sudo apt-get update
-           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev xwayland waybar swaybg graphviz libxcb-icccm4 libxcb-ewmh-dev libxcb-ewmh2 libxcb-icccm4-dev
+           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev xwayland waybar swaybg graphviz libxcb-icccm4 libxcb-ewmh-dev libxcb-ewmh2 libxcb-icccm4-dev libxcb-res0 libxcb-res0-dev libpciaccess0 libpciaccess-dev
            python -m pip install --upgrade pip
            python -m pip install ninja
            python -m pip install meson
+           sudo python -m pip install ninja
 
       - name: Install wayland-server
         run: |
@@ -34,12 +37,33 @@ jobs:
           git clone --depth 1 --branch 1.19.0 https://github.com/wayland-project/wayland.git
           cd wayland
           meson build -Ddocumentation=false
-          sudo python -m pip install ninja
+          sudo ninja -C build install
+          cd ..
+
+      - name: Install libdrm
+        run: |
+          # The ubuntu-20.04 libdrm version is lower than 2.4.105, so we must install it ourselves
+          git clone --depth 1 --branch libdrm-2.4.105 https://gitlab.freedesktop.org/mesa/drm.git
+          cd drm
+          meson build
+          sudo ninja -C build install
+          cd ..
+
+      - name: Install wayland-protocols
+        run: |
+          # The ubuntu-20.04 wayland-protocols version is lower than 1.21, so we must install it ourselves
+          git clone --depth 1 --branch 1.21 https://github.com/wayland-project/wayland-protocols.git
+          cd wayland-protocols
+          meson build
           sudo ninja -C build install
           cd ..
 
       - name: Checkout vivarium
         uses: actions/checkout@v2
+
+      - name: Prepare subprojects that wlroots depends on
+        run: |
+          git clone https://git.sr.ht/~kennylevinsen/seatd subprojects/seatd
 
       - name: Prepare build dir
         run: |
