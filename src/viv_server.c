@@ -18,6 +18,7 @@
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
@@ -564,6 +565,22 @@ static void handle_input_inhibit_deactivate(struct wl_listener *listener, void *
     }
 }
 
+static void handle_output_manager_apply(struct wl_listener *listener, void *data) {
+	struct viv_server *server = wl_container_of(listener, server, output_manager_apply);
+    struct wlr_output_configuration_v1 *output_config = data;
+    wlr_output_manager_v1_set_configuration(server->output_manager, output_config);
+    wlr_output_configuration_v1_send_succeeded(output_config);
+    wlr_log(WLR_INFO, "Received output manager apply request");
+}
+
+static void handle_output_manager_test(struct wl_listener *listener, void *data) {
+	struct viv_server *server = wl_container_of(listener, server, output_manager_test);
+    struct wlr_output_configuration_v1 *output_config = data;
+    wlr_output_configuration_v1_send_succeeded(output_config);
+    free(data);
+    wlr_log(WLR_INFO, "Received output manager test request");
+}
+
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.
  */
@@ -642,7 +659,7 @@ void viv_server_init(struct viv_server *server) {
     server->new_layer_surface.notify = server_new_layer_surface;
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
 
-    // Set up the output manager protocol
+    // Set up the xdg output manager protocol
     server->xdg_output_manager = wlr_xdg_output_manager_v1_create(server->wl_display, server->output_layout);
 
     // Use a wlroots xcursor manager to handle the cursor theme
@@ -669,6 +686,13 @@ void viv_server_init(struct viv_server *server) {
     wl_signal_add(&server->input_inhibit_manager->events.activate, &server->input_inhibit_activate);
     server->input_inhibit_deactivate.notify = handle_input_inhibit_deactivate;
     wl_signal_add(&server->input_inhibit_manager->events.deactivate, &server->input_inhibit_deactivate);
+
+    server->output_manager = wlr_output_manager_v1_create(server->wl_display);
+    server->output_manager_apply.notify = handle_output_manager_apply;
+    wl_signal_add(&server->output_manager->events.apply, &server->output_manager_apply);
+    server->output_manager_test.notify = handle_output_manager_test;
+    wl_signal_add(&server->output_manager->events.test, &server->output_manager_test);
+
 
     wl_list_init(&server->unmapped_views);
 
