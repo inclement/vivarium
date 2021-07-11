@@ -1,4 +1,4 @@
 [wrap-git]
 directory = wlroots
 url = https://github.com/swaywm/wlroots.git
-revision = tags/0.14.0
+revision = head
