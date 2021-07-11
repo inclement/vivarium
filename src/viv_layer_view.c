@@ -4,6 +4,7 @@
 
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 
+#include "viv_cursor.h"
 #include "viv_damage.h"
 #include "viv_layer_view.h"
 #include "viv_output.h"

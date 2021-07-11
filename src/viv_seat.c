@@ -59,13 +59,11 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
 }
 
 /// Handle a key press event
-static void keyboard_handle_key(
-		struct wl_listener *listener, void *data) {
-	struct viv_keyboard *keyboard =
-		wl_container_of(listener, keyboard, key);
+static void keyboard_handle_key(struct wl_listener *listener, void *data) {
+	struct viv_keyboard *keyboard = wl_container_of(listener, keyboard, key);
 	struct viv_server *server = keyboard->seat->server;
 	struct wlr_event_keyboard_key *event = data;
-	struct wlr_seat *seat = keyboard->seat->wlr_seat;
+	struct viv_seat *seat = keyboard->seat;
 
 	// Translate libinput keycode -> xkbcommon
 	uint32_t keycode = event->keycode + 8;
@@ -75,19 +73,21 @@ static void keyboard_handle_key(
 
     // If the key completes a configured keybinding, run the configured response function
 	bool handled = false;
-	uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
-	if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-		for (int i = 0; i < nsyms; i++) {
-            wlr_log(WLR_DEBUG, "Keysym %d pressed, keycode %d", syms[i], keycode);
-			handled = viv_server_handle_keybinding(server, keycode, syms[i], modifiers);
-		}
-	}
+    // Don't service hotkeys while locked
+    if (!seat->exclusive_client) {
+        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+        if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+            for (int i = 0; i < nsyms; i++) {
+                wlr_log(WLR_DEBUG, "Keysym %d pressed, keycode %d", syms[i], keycode);
+                handled = viv_server_handle_keybinding(server, keycode, syms[i], modifiers);
+            }
+        }
+    }
 
     // If the key wasn't a shortcut, pass it through to the focused view
 	if (!handled) {
-		wlr_seat_set_keyboard(seat, keyboard->device);
-		wlr_seat_keyboard_notify_key(seat, event->time_msec,
-			event->keycode, event->state);
+		wlr_seat_set_keyboard(seat->wlr_seat, keyboard->device);
+        wlr_seat_keyboard_notify_key(seat->wlr_seat, event->time_msec, event->keycode, event->state);
 	}
 }
 
@@ -97,6 +97,10 @@ static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&keyboard->link);
 }
 
+bool viv_seat_input_allowed(struct viv_seat *seat, struct wlr_surface *surface) {
+    struct wl_client *client = wl_resource_get_client(surface->resource);
+    return (!seat->exclusive_client || (seat->exclusive_client == client));
+}
 
 void viv_seat_create_new_keyboard(struct viv_seat *seat, struct wlr_input_device *device) {
 	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
@@ -144,6 +148,12 @@ void viv_seat_focus_surface(struct viv_seat *seat, struct wlr_surface *surface) 
 		/* Don't re-focus an already focused surface. */
 		return;
 	}
+
+    if (!viv_seat_input_allowed(seat, surface)) {
+        wlr_log(WLR_DEBUG, "Denied focus change to surface %p, surface not owned by the exclusive client", surface);
+        return;
+    }
+
 	if (prev_surface) {
 		/*
 		 * Deactivate the previously focused surface. This lets the client know
@@ -174,6 +184,37 @@ void viv_seat_focus_surface(struct viv_seat *seat, struct wlr_surface *surface) 
 	 * clients without additional work on your part.
 	 */
 	wlr_seat_keyboard_notify_enter(wlr_seat, surface, keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+}
+
+void viv_seat_set_exclusive_client(struct viv_seat *seat, struct wl_client *client) {
+    if (!client) {
+        seat->exclusive_client = NULL;
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        viv_cursor_reset_focus(seat->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+        return;
+    }
+
+    // Clear pointer focus if necessary
+    struct wlr_seat_client *focused_pointer_client = seat->wlr_seat->pointer_state.focused_client;
+    if (focused_pointer_client && (focused_pointer_client->client != client)) {
+        wlr_seat_pointer_notify_clear_focus(seat->wlr_seat);
+    }
+
+    // Clear keyboard focus if necessary
+    struct wlr_seat_client *focused_keyboard_client = seat->wlr_seat->keyboard_state.focused_client;
+    if (focused_keyboard_client && (focused_keyboard_client->client != client)) {
+        // TODO: Do we need to do something more to handle
+        wlr_seat_keyboard_notify_clear_focus(seat->wlr_seat);
+    }
+
+    // Release any grabbed view
+    if (seat->grab_state.view) {
+        seat->grab_state.view = NULL;
+        seat->cursor_mode = VIV_CURSOR_PASSTHROUGH;
+    }
+
+    seat->exclusive_client = client;
 }
 
 /// Begin a cursor interaction with the given view: this stores the view at server root
@@ -263,6 +304,7 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
 	double sx, sy;
 	struct wlr_surface *surface;
 	struct viv_view *view = viv_server_view_at(server, seat->cursor->x, seat->cursor->y, &surface, &sx, &sy);
+    // TODO: check for layer views to click on
 
 	if (event->state == WLR_BUTTON_RELEASED || !view) {
         // End any ongoing grab event
