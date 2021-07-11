@@ -2,7 +2,7 @@
 #define VIV_TYPES_H
 
 #include <wayland-server-core.h>
-#include <wlr/types/wlr_box.h>
+#include <wlr/util/box.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
