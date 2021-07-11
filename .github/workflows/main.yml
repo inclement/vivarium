@@ -40,6 +40,14 @@ jobs:
           sudo ninja -C build install
           cd ..
 
+      - name: Install libdrm
+        run: |
+          git clone --depth 1 --branch 2.4.105 https://gitlab.freedesktop.org/mesa/drm.git
+          cd drm
+          meson build
+          sudo ninja -C build install
+          cd ..
+
       - name: Install wayland-protocols
         run: |
           # The ubuntu-20.04 wayland-protocols version is lower than 1.21, so we must install it ourselves
