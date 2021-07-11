@@ -51,6 +51,7 @@ xkbcommon_dep = dependency('xkbcommon')
 libinput_dep = dependency('libinput')
 xcb_dep = dependency('xcb', required: get_option('xwayland'))
 pixman_dep = dependency('pixman-1')
+drm_dep = dependency('drm', fallback : ['drm', 'ext_libdrm'])
 
 math_dep = cc.find_library('m')
 
