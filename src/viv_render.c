@@ -240,13 +240,14 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
         pixman_region32_intersect_rect(&surface_bounds, &surface_bounds, target_geometry.x, target_geometry.y, target_geometry.width, target_geometry.height);
     }
 
+    struct wlr_surface *surface = view->xdg_surface->surface;
     struct viv_render_data rdata = {
         .output = output->wlr_output,
         .view = view,
         .renderer = renderer,
         .when = &now,
         .limit_render_count = true,
-        .max_surfaces_to_render = 1 + wl_list_length(&view->xdg_surface->surface->subsurfaces),
+        .max_surfaces_to_render = 1 + wl_list_length(&surface->subsurfaces_below) + wl_list_length(&surface->subsurfaces_above),
         .sx = 0,
         .sy = 0,
         .damage = damage,
