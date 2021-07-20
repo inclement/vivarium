@@ -113,6 +113,8 @@ struct viv_output {
 	struct viv_server *server;
 	struct wlr_output *wlr_output;
 
+    bool enabled;
+
 	struct wl_listener frame;
 	struct wl_listener damage_event;
 	struct wl_listener present;
