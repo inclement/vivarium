@@ -49,4 +49,6 @@ void viv_server_clear_view_from_grab_state(struct viv_server *server, struct viv
 bool viv_server_any_seat_grabs(struct viv_server *server, struct viv_view *view);
 
 void viv_server_update_idle_inhibitor_state(struct viv_server *server);
+
+void viv_server_update_output_manager_config(struct viv_server *server);
 #endif
