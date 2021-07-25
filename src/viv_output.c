@@ -81,6 +81,10 @@ static void output_frame(struct wl_listener *listener, void *data) {
     // This has been called because a specific output is ready to display a frame,
     // retrieve this info
 	struct viv_output *output = wl_container_of(listener, output, frame);
+    if (!output->enabled) {
+        return;
+    }
+
 	struct wlr_renderer *renderer = output->server->renderer;
 
 #ifdef DEBUG
@@ -161,6 +165,8 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&output->destroy.link);
 
     free(output);
+
+    viv_server_update_output_manager_config(output->server);
 }
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
