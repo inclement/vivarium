@@ -163,6 +163,11 @@ struct viv_view *viv_server_view_at(
     }
 
     // No floating view found => try other views
+    // First check the active view, as this will be drawn on top in the case of overlap
+    struct viv_view *active_view = server->active_output->current_workspace->active_view;
+    if (active_view && viv_view_is_at(active_view, lx, ly, surface, sx, sy)) {
+        return active_view;
+    }
 	wl_list_for_each(view, &server->active_output->current_workspace->views, workspace_link) {
 		if (viv_view_is_at(view, lx, ly, surface, sx, sy)) {
 			return view;
