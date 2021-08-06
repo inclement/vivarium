@@ -2,6 +2,8 @@
 
 ![Build Status](https://github.com/inclement/vivarium/workflows/Build%20and%20run%20Vivarium/badge.svg)
 
+IRC chat: [#vivarium](https://web.libera.chat/?channels=#vivarium) on [irc.libera.chat:6697](ircs://irc.libera.chat:6697)
+
 A dynamic tiling [Wayland](https://wayland.freedesktop.org/) compositor using [wlroots](https://github.com/swaywm/wlroots), with desktop semantics inspired by [xmonad](https://xmonad.org/).
 
 <p align="center">
