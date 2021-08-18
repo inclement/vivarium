@@ -270,6 +270,33 @@ static void seat_request_set_selection(struct wl_listener *listener, void *data)
 	wlr_seat_set_selection(seat->wlr_seat, event->source, event->serial);
 }
 
+/// Handle a request to start a drag event
+static void seat_request_start_drag(struct wl_listener *listener, void *data) {
+    struct viv_seat *seat = wl_container_of(listener, seat, request_start_drag);
+	struct wlr_seat_request_start_drag_event *event = data;
+    wlr_log(WLR_INFO, "Request to start dragging with event %p", event);
+
+    if (wlr_seat_validate_pointer_grab_serial(seat->wlr_seat, event->origin, event->serial)) {
+        wlr_log(WLR_INFO, "Accepting drag start request");
+        wlr_seat_start_pointer_drag(seat->wlr_seat, event->drag, event->serial);
+        return;
+    }
+
+    wlr_log(WLR_ERROR, "Ignoring request_start_drag, could not validate pointer serial %d",
+            event->serial);
+    wlr_data_source_destroy(event->drag->source);
+}
+
+/// Handle a start_drag event
+static void seat_start_drag(struct wl_listener *listener, void *data) {
+    struct viv_seat *seat = wl_container_of(listener, seat, start_drag);
+    UNUSED(data);
+    wlr_log(WLR_INFO, "Starting drag");
+    // Don't actually do anything: the drag event becomes active in the wlr_seat and
+    // automatically does the right thing w.r.t passing this information through to
+    // surfaces
+}
+
 /// Handle a cursor motion event
 static void seat_cursor_motion(struct wl_listener *listener, void *data) {
 	/* This event is forwarded by the cursor when a pointer emits a _relative_
@@ -382,6 +409,11 @@ struct viv_seat *viv_seat_create(struct viv_server *server, char *name) {
 	wl_signal_add(&wlr_seat->events.request_set_cursor, &seat->request_cursor);
 	seat->request_set_selection.notify = seat_request_set_selection;
 	wl_signal_add(&wlr_seat->events.request_set_selection, &seat->request_set_selection);
+
+    seat->request_start_drag.notify = seat_request_start_drag;
+    wl_signal_add(&wlr_seat->events.request_start_drag, &seat->request_start_drag);
+    seat->start_drag.notify = seat_start_drag;
+    wl_signal_add(&wlr_seat->events.start_drag, &seat->start_drag);
 
     // Create a wlroots cursor for handling the cursor image shown on the screen for this seat
 	seat->cursor = wlr_cursor_create();
