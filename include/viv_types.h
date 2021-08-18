@@ -355,6 +355,10 @@ struct viv_seat {
 	struct wl_listener cursor_axis;
 	struct wl_listener cursor_frame;
 
+    struct wl_listener request_start_drag;
+    struct wl_listener start_drag;
+    struct wl_listener drag_destroy;
+
     struct wl_list server_link;
 };
 
