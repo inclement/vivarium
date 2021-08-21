@@ -138,15 +138,11 @@ static void process_cursor_pass_through_to_surface(struct viv_seat *seat, uint32
 
     viv_cursor_reset_focus(server, time);
 	if (surface) {
-		bool focus_changed = seat->wlr_seat->pointer_state.focused_surface != surface;
-        // Set pointer focus appropriately - note this is distinct from keyboard focus
+        // Always call both notify-enter and notify-motion, wlroots can handle actually
+        // sending whichever is appropriate.
+        // Also note pointer focus is independent of keyboard focus.
 		wlr_seat_pointer_notify_enter(seat->wlr_seat, surface, sx, sy);
-		if (!focus_changed || seat->wlr_seat->drag) {
-            // The enter event contains coordinates, so we only need to notify about
-            // motion if the focus didn't change or we're in the middle of a drag action
-            // (in which case the pointer focus remains NULL)
-			wlr_seat_pointer_notify_motion(seat->wlr_seat, time, sx, sy);
-		}
+        wlr_seat_pointer_notify_motion(seat->wlr_seat, time, sx, sy);
 	} else {
 		/* Clear pointer focus so future button events and such are not sent to
 		 * the last client to have the cursor over it. */
