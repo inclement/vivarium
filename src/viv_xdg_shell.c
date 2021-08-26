@@ -190,16 +190,11 @@ static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *
     const char *app_id = view->xdg_surface->toplevel->app_id;
     wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", app_id, event->fullscreen);
 
-    // Tell the surface we accepted the fullscreen request even though we don't currently
-    // handle it properly. This is a workaround for firefox which by default behaves badly
-    // when the request is refused even if it receives a configure event.
-    // TODO: Get rid of this and just leave the schedule_configure below
-    wlr_xdg_toplevel_set_fullscreen(view->xdg_surface, event->fullscreen);
+    // Ignore the fullscreen request - we don't currently implement xdg-shell fullscreen,
+    // which requires the surface to be displayed in a specific way
 
     // We are required by the xdg-shell protocol to send a configure to acknowledge the
-    // request, even if we ignored it.
-    // TODO: This is redundant with set_fullscreen above, but is the correct thing to do
-    // when that is fixed to deny the fullscreen request
+    // request, even though we ignored it.
     wlr_xdg_surface_schedule_configure(view->xdg_surface);
 }
 
