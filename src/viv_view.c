@@ -259,10 +259,10 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     x += ox;
     y += oy;
 
-    view->target_x = x;
-    view->target_y = y;
-    view->target_width = width;
-    view->target_height = height;
+    view->target_box.x = x;
+    view->target_box.y = y;
+    view->target_box.width = width;
+    view->target_box.height = height;
 
     int border_width = output->server->config->border_width;
     if (output->current_workspace->active_layout->no_borders ||

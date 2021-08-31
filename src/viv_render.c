@@ -167,10 +167,10 @@ static void render_borders(struct viv_view *view, struct viv_output *output, pix
 
     double x = 0, y = 0;
     wlr_output_layout_output_coords(server->output_layout, output->wlr_output, &x, &y);
-    x += view->target_x + gap_width;
-    y += view->target_y + gap_width;
-    int width = MAX(1, view->target_width - 2 * gap_width);
-    int height = MAX(1, view->target_height - 2 * gap_width);
+    x += view->target_box.x + gap_width;
+    y += view->target_box.y + gap_width;
+    int width = MAX(1, view->target_box.width - 2 * gap_width);
+    int height = MAX(1, view->target_box.height - 2 * gap_width);
     float *colour = (is_active ?
                      server->config->active_border_colour :
                      server->config->inactive_border_colour);
@@ -222,15 +222,10 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
 
     // Note this renders both the toplevel and any popups
     struct wlr_box actual_geometry = { 0 };
-    struct wlr_box target_geometry = {
-        .x = view->target_x,
-        .y = view->target_y,
-        .width = view->target_width,
-        .height = view->target_height
-    };
+    struct wlr_box *target_geometry = &view->target_box;
     wlr_xdg_surface_get_geometry(view->xdg_surface, &actual_geometry);
 
-    viv_output_layout_coords_box_to_output_coords(output, &target_geometry);
+    viv_output_layout_coords_box_to_output_coords(output, target_geometry);
 
     pixman_region32_t surface_bounds;
     pixman_region32_init(&surface_bounds);
@@ -238,7 +233,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
 
     bool apply_surface_bounds = (output->server->config->damage_tracking_mode == VIV_DAMAGE_TRACKING_FULL);
     if (apply_surface_bounds) {
-        pixman_region32_intersect_rect(&surface_bounds, &surface_bounds, target_geometry.x, target_geometry.y, target_geometry.width, target_geometry.height);
+        pixman_region32_intersect_rect(&surface_bounds, &surface_bounds, target_geometry->x, target_geometry->y, target_geometry->width, target_geometry->height);
     }
 
     struct wlr_surface *surface = view->xdg_surface->surface;
@@ -301,16 +296,12 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
 
-    struct wlr_box target_geometry = {
-        .x = view->target_x,
-        .y = view->target_y,
-        .width = view->target_width,
-        .height = view->target_height
-    };
+    struct wlr_box *target_geometry = &view->target_box;
 
     pixman_region32_t surface_bounds;
     pixman_region32_init(&surface_bounds);
-    pixman_region32_union_rect(&surface_bounds, &surface_bounds, target_geometry.x, target_geometry.y, target_geometry.width, target_geometry.height);
+    pixman_region32_union_rect(&surface_bounds, &surface_bounds,
+                               target_geometry->x, target_geometry->y, target_geometry->width, target_geometry->height);
 
     struct viv_render_data rdata = {
         .output = output->wlr_output,
