@@ -242,7 +242,7 @@ static void implementation_set_size(struct viv_view *view, uint32_t width, uint3
 static void implementation_set_pos(struct viv_view *view, uint32_t x, uint32_t y) {
     view->x = x;
     view->y = y;
-    wlr_xwayland_surface_configure(view->xwayland_surface, x, y, view->target_width, view->target_height);
+    wlr_xwayland_surface_configure(view->xwayland_surface, x, y, view->target_box.width, view->target_box.height);
 }
 
 static void implementation_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
@@ -284,12 +284,6 @@ static bool implementation_is_at(struct viv_view *view, double lx, double ly, st
 
     // If the view is oversized, we don't let it draw outside its target region so can
     // stop immediately if the cursor is outside that region
-    struct wlr_box target_box = {
-        .x = view->target_x,
-        .y = view->target_y,
-        .width = view->target_width,
-        .height = view->target_height,
-    };
 
     // Get surface at point from the full selection of popups and toplevel surfaces
 	struct wlr_surface *_surface = NULL;
@@ -297,7 +291,7 @@ static bool implementation_is_at(struct viv_view *view, double lx, double ly, st
 
     // We can only click on a toplevel surface if it's within the target render box,
     // otherwise that part isn't being drawn and shouldn't be accessible
-    bool cursor_in_target_box = wlr_box_contains_point(&target_box, lx, ly);
+    bool cursor_in_target_box = wlr_box_contains_point(&view->target_box, lx, ly);
 
 	if ((_surface != NULL) && cursor_in_target_box) {
 		*sx = _sx;
@@ -314,15 +308,10 @@ static bool implementation_oversized(struct viv_view *view) {
         .width = view->xwayland_surface->surface->current.width,
         .height = view->xwayland_surface->surface->current.height,
     };
-    struct wlr_box target_geometry = {
-        .x = view->target_x,
-        .y = view->target_y,
-        .width = view->target_width,
-        .height = view->target_height
-    };
+    struct wlr_box *target_geometry = &view->target_box;
 
-    bool surface_exceeds_bounds = ((actual_geometry.width > (target_geometry.width)) ||
-                                   (actual_geometry.height > (target_geometry.height)));
+    bool surface_exceeds_bounds = ((actual_geometry.width > (target_geometry->width)) ||
+                                   (actual_geometry.height > (target_geometry->height)));
 
     return surface_exceeds_bounds;
 }

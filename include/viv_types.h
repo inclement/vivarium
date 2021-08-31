@@ -237,8 +237,7 @@ struct viv_view {
     struct wl_listener new_xdg_popup;
 
     // Target positions, where the layout is trying to place the view
-    int target_x, target_y;
-    int target_width, target_height;
+    struct wlr_box target_box;
 
     bool is_floating;
     float floating_width, floating_height;  /// width and height to be used if the view becomes floating

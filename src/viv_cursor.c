@@ -25,8 +25,8 @@ static void process_cursor_move_view(struct viv_seat *seat, uint32_t time) {
 	view->x = seat->cursor->x - seat->grab_state.x;
 	view->y = seat->cursor->y - seat->grab_state.y;
 
-    view->target_x += (view->x - old_x);
-    view->target_y += (view->y - old_y);
+    view->target_box.x += (view->x - old_x);
+    view->target_box.y += (view->y - old_y);
 
     // Move the grabbed view to the new output, if necessary
 	double cursor_x = seat->cursor->x;
@@ -83,10 +83,10 @@ static void process_cursor_resize_view(struct viv_seat *seat, uint32_t time) {
 	int new_height = new_bottom - new_top;
     viv_view_set_size(view, new_width, new_height);
 
-    view->target_x = new_left;
-    view->target_y = new_top;
-    view->target_width = new_width;
-    view->target_height = new_height;
+    view->target_box.x = new_left;
+    view->target_box.y = new_top;
+    view->target_box.width = new_width;
+    view->target_box.height = new_height;
 
     viv_view_damage(view);
 }
