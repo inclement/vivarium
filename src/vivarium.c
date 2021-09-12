@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     // TODO: Should this be necessary? Or is there a better way to do it, for wayland
     // using an X11 backend?
     setenv("QT_QPA_PLATFORM", "wayland", true);
-    setenv("GDK_BACKEND", "wayland", true);  // NOTE: not a typo, it really is GDK not GTK
+    setenv("MOZ_ENABLE_WAYLAND", "1", true);
 
 #ifndef HEADLESS_TEST
     // Start the wayland eventloop. From here, all compositor activity comes via events it
