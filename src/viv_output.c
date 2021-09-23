@@ -337,6 +337,8 @@ void viv_output_layout_coords_box_to_output_coords(struct viv_output *output, st
 
 void viv_output_mark_for_relayout(struct viv_output *output) {
     if (output) {
+        // The layout will be applied after the next frame
+        output->needs_layout = true;
         viv_output_damage(output);
     } else {
         wlr_log(WLR_ERROR, "Tried to mark NULL output for relayout");
