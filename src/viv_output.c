@@ -81,6 +81,10 @@ static void output_frame(struct wl_listener *listener, void *data) {
     // This has been called because a specific output is ready to display a frame,
     // retrieve this info
 	struct viv_output *output = wl_container_of(listener, output, frame);
+    if (!output->enabled) {
+        return;
+    }
+
 	struct wlr_renderer *renderer = output->server->renderer;
 
 #ifdef DEBUG
@@ -123,7 +127,21 @@ static void output_enable(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_output *output = wl_container_of(listener, output, enable);
 
-    wlr_log(WLR_INFO, "Output \"%s\" event: enable became %d", output->wlr_output->name, output->wlr_output->enabled);
+    bool enabled = output->wlr_output->enabled;
+    wlr_log(WLR_INFO, "Output \"%s\" event: enable became %d", output->wlr_output->name, enabled);
+
+    if (output->enabled == enabled) {
+        wlr_log(WLR_ERROR, "Asked to set enable %d for output %p but this was already set", enabled, output);
+        return;
+    }
+
+    if (output->enabled) {
+        start_using_output(output);
+    } else {
+        stop_using_output(output);
+    }
+
+    output->enabled = enabled;
 }
 
 static void output_mode(struct wl_listener *listener, void *data) {
@@ -147,6 +165,8 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&output->destroy.link);
 
     free(output);
+
+    viv_server_update_output_manager_config(output->server);
 }
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
@@ -248,6 +268,8 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 
 	output->wlr_output = wlr_output;
 	output->server = server;
+
+    output->enabled = true;
 
     output->excluded_margin.top = 0;
     output->excluded_margin.bottom = 0;

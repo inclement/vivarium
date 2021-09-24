@@ -18,6 +18,7 @@
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_pointer.h>
@@ -60,6 +61,22 @@
 #include "viv_config_support.h"
 
 #define DEFAULT_SEAT_NAME "seat0"
+
+void viv_server_update_output_manager_config(struct viv_server *server) {
+    struct wlr_output_configuration_v1 *config = wlr_output_configuration_v1_create();
+
+    struct viv_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        struct wlr_output_configuration_head_v1 *head = wlr_output_configuration_head_v1_create(config, output->wlr_output);
+        struct wlr_box *output_region = wlr_output_layout_get_box(server->output_layout, output->wlr_output);
+        head->state.enabled = output->enabled;
+        head->state.mode = output->wlr_output->current_mode;
+        head->state.x = output_region->x;
+        head->state.y = output_region->y;
+    }
+
+    wlr_output_manager_v1_set_configuration(server->output_manager, config);
+}
 
 void viv_server_clear_view_from_grab_state(struct viv_server *server, struct viv_view *view) {
     struct viv_seat *seat;
@@ -188,7 +205,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
             wlr_output->serial);
 
     // Use the monitor's preferred mode for now
-    // TODO: Make this configuarble
+    // TODO: Make this configurable
 	if (!wl_list_empty(&wlr_output->modes)) {
 		struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output);
 		wlr_output_set_mode(wlr_output, mode);
@@ -208,6 +225,8 @@ static void server_new_output(struct wl_listener *listener, void *data) {
     if (!server->active_output) {
         viv_output_make_active(output);
     }
+
+    viv_server_update_output_manager_config(server);
 }
 
 /// Create a new viv_view to track a new xdg surface
@@ -569,6 +588,128 @@ static void handle_input_inhibit_deactivate(struct wl_listener *listener, void *
     }
 }
 
+static void queue_output_configuration_for_head(struct viv_server *server, struct wlr_output_head_v1 *head) {
+    struct wlr_output_head_v1_state *state = &head->state;
+    struct viv_output *output = viv_output_of_wlr_output(server, state->output);
+
+    if (!state->enabled) {
+        wlr_log(WLR_INFO, "Disabling output %p (current enabled state is %d)", output, output->enabled);
+        wlr_output_enable(output->wlr_output, false);
+        return;  // skip other elements of output config if the output won't actually be used
+    }
+
+    wlr_log(WLR_INFO, "Enabling output %p (current enabled state is %d)", output, output->enabled);
+    wlr_output_enable(output->wlr_output, true);
+
+    if (state->mode) {
+        struct wlr_output_mode *mode = state->mode;
+        wlr_log(WLR_INFO, "Setting mode to width %d height %d refresh %d", mode->width, mode->height, mode->refresh);
+        wlr_output_set_custom_mode(output->wlr_output, mode->width, mode->height, mode->refresh);
+    } else {
+        int32_t width = state->custom_mode.width;
+        int32_t height = state->custom_mode.height;
+        int32_t refresh = state->custom_mode.refresh;
+        wlr_log(WLR_INFO, "Setting mode to width %d height %d refresh %d", width, height, refresh);
+        wlr_output_set_custom_mode(output->wlr_output, width, height, refresh);
+    }
+
+    if (state->transform) {
+        wlr_log(WLR_INFO, "Setting transform to %d", state->transform);
+        wlr_output_set_transform(output->wlr_output, state->transform);
+    }
+
+    if (state->scale > 0.0f) {
+        wlr_log(WLR_INFO, "Setting scale to %f", state->scale);
+        wlr_output_set_scale(output->wlr_output, state->scale);
+    }
+
+}
+
+static void queue_output_configuration(struct viv_server *server, struct wlr_output_configuration_v1 *output_config) {
+    struct wlr_output_head_v1 *head;
+    wl_list_for_each(head, &output_config->heads, link) {
+        queue_output_configuration_for_head(server, head);
+    }
+
+}
+
+static bool test_queued_configuration(struct viv_server *server, struct wlr_output_configuration_v1 *output_config) {
+    struct wlr_output_head_v1 *head;
+    wl_list_for_each(head, &output_config->heads, link) {
+        struct viv_output *output = viv_output_of_wlr_output(server, head->state.output);
+        if (!wlr_output_test(output->wlr_output)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void rollback_queued_configuration(struct wlr_output_configuration_v1 *output_config) {
+    struct wlr_output_head_v1 *head;
+    wl_list_for_each(head, &output_config->heads, link) {
+        wlr_output_rollback(head->state.output);
+    }
+}
+
+static bool commit_new_output_configuration(struct wlr_output_configuration_v1 *output_config) {
+    bool all_good = true;
+    struct wlr_output_head_v1 *head;
+    wl_list_for_each(head, &output_config->heads, link) {
+        all_good &= wlr_output_commit(head->state.output);
+    }
+    return all_good;
+}
+
+static void handle_output_manager_apply(struct wl_listener *listener, void *data) {
+	struct viv_server *server = wl_container_of(listener, server, output_manager_apply);
+    struct wlr_output_configuration_v1 *output_config = data;
+
+    wlr_log(WLR_INFO, "Received output manager apply request");
+
+    queue_output_configuration(server, output_config);
+    bool commit_success = commit_new_output_configuration(output_config);
+    if (commit_success) {
+        wlr_log(WLR_INFO, "Commit succeeded for new output config");
+        wlr_output_configuration_v1_send_succeeded(output_config);
+    } else {
+        wlr_log(WLR_ERROR, "Some new output state failed to to commit");
+        rollback_queued_configuration(output_config) ;
+        wlr_output_configuration_v1_send_failed(output_config);
+    }
+
+    struct wlr_output_head_v1 *head;
+    wl_list_for_each(head, &output_config->heads, link) {
+        struct viv_output *output = viv_output_of_wlr_output(server, head->state.output);
+        wlr_log(WLR_INFO, "Setting output %p layout pos to %d,%d", output, head->state.x, head->state.y);
+        wlr_output_layout_add(server->output_layout, output->wlr_output, head->state.x, head->state.y);
+        viv_output_mark_for_relayout(output);
+        viv_output_damage(output);
+    }
+
+	wlr_output_configuration_v1_destroy(output_config);
+
+    viv_server_update_output_manager_config(server);
+}
+
+static void handle_output_manager_test(struct wl_listener *listener, void *data) {
+	struct viv_server *server = wl_container_of(listener, server, output_manager_test);
+    struct wlr_output_configuration_v1 *output_config = data;
+    wlr_log(WLR_INFO, "Received output manager test request");
+
+    queue_output_configuration(server, output_config);
+    bool test_success = test_queued_configuration(server, output_config);
+    if (test_success) {
+        wlr_log(WLR_ERROR, "Test passed for new output config");
+        wlr_output_configuration_v1_send_succeeded(output_config);
+    } else {
+        wlr_log(WLR_ERROR, "Test failed for new output config");
+        wlr_output_configuration_v1_send_failed(output_config);
+    }
+    rollback_queued_configuration(output_config) ;
+
+	wlr_output_configuration_v1_destroy(output_config);
+}
+
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.
  */
@@ -647,7 +788,7 @@ void viv_server_init(struct viv_server *server) {
     server->new_layer_surface.notify = server_new_layer_surface;
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
 
-    // Set up the output manager protocol
+    // Set up the xdg output manager protocol
     server->xdg_output_manager = wlr_xdg_output_manager_v1_create(server->wl_display, server->output_layout);
 
     // Use a wlroots xcursor manager to handle the cursor theme
@@ -674,6 +815,13 @@ void viv_server_init(struct viv_server *server) {
     wl_signal_add(&server->input_inhibit_manager->events.activate, &server->input_inhibit_activate);
     server->input_inhibit_deactivate.notify = handle_input_inhibit_deactivate;
     wl_signal_add(&server->input_inhibit_manager->events.deactivate, &server->input_inhibit_deactivate);
+
+    server->output_manager = wlr_output_manager_v1_create(server->wl_display);
+    server->output_manager_apply.notify = handle_output_manager_apply;
+    wl_signal_add(&server->output_manager->events.apply, &server->output_manager_apply);
+    server->output_manager_test.notify = handle_output_manager_test;
+    wl_signal_add(&server->output_manager->events.test, &server->output_manager_test);
+
 
     wl_list_init(&server->unmapped_views);
 
