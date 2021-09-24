@@ -92,6 +92,13 @@ static struct string_map_pair scroll_method_map[] = {
     NULL_STRING_MAP_PAIR,
 };
 
+static struct string_map_pair click_method_map[] = {
+    {"none", LIBINPUT_CONFIG_CLICK_METHOD_NONE},
+    {"area", LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS},
+    {"fingers", LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER},
+    NULL_STRING_MAP_PAIR,
+};
+
 static struct string_map_pair damage_tracking_mode_map[] = {
     {"none", VIV_DAMAGE_TRACKING_NONE},
     {"frame", VIV_DAMAGE_TRACKING_FRAME},
@@ -469,9 +476,29 @@ static void parse_libinput_config_table(toml_table_t *libinput_table, struct viv
         libinput_config->natural_scroll = (uint32_t)natural_scroll.u.i;
     }
 
-    wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d",
+    libinput_config->disable_with_typing = LIBINPUT_CONFIG_DWT_ENABLED;
+    toml_datum_t disable_with_typing = toml_bool_in(libinput_table, "disable-with-typing");
+    if (disable_with_typing.ok) {
+        libinput_config->disable_with_typing = disable_with_typing.u.i ? LIBINPUT_CONFIG_DWT_ENABLED : LIBINPUT_CONFIG_DWT_DISABLED;
+    }
+
+    libinput_config->click_method = LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS;
+    toml_datum_t click_method = toml_string_in(libinput_table, "click-method");
+    if (click_method.ok) {
+        enum libinput_config_click_method click_method_enum;
+        bool success = look_up_string_in_map(click_method.u.s, click_method_map, &click_method_enum);
+        if (!success) {
+            EXIT_WITH_FORMATTED_MESSAGE("Error parsing [[libinput-config]] for device \"%s\": click-method \"%s\" not recognised",
+                                        device_name.u.s, click_method.u.s);
+        } else {
+            libinput_config->click_method = click_method_enum;
+        }
+        free(click_method.u.s);
+    }
+
+    wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d, disable with typing %d, click method %d",
             device_name.u.s, libinput_config->scroll_method, libinput_config->scroll_button,
-            libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll);
+            libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll, libinput_config->disable_with_typing, libinput_config->click_method);
 
     libinput_config->device_name = device_name.u.s;
 }
