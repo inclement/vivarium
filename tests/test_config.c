@@ -141,7 +141,7 @@ void test_config_toml_libinput_configs_match_defaults(void) {
         TEST_ASSERT_EQUAL(default_li_config.middle_emulation, load_li_config.middle_emulation);
         TEST_ASSERT_EQUAL(default_li_config.left_handed, load_li_config.left_handed);
         TEST_ASSERT_EQUAL(default_li_config.natural_scroll, load_li_config.natural_scroll);
-        TEST_ASSERT_EQUAL(default_li_config.disable_with_typing, load_li_config.disable_with_typing);
+        TEST_ASSERT_EQUAL(default_li_config.disable_while_typing, load_li_config.disable_while_typing);
         TEST_ASSERT_EQUAL(default_li_config.click_method, load_li_config.click_method);
 
         if (strlen(default_li_config.device_name) == 0) {

@@ -128,10 +128,10 @@ struct viv_libinput_config the_libinput_configs[] = {
         .left_handed = 0,
         // Invert scroll direction
         .natural_scroll = 0,
-        // Disable while typing
-        .disable_with_typing = LIBINPUT_CONFIG_DWT_ENABLED,
-        // Method used for registering the type of click
-        .click_method = LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS,
+        // Disable while typing (usually touchpad only)
+        .disable_while_typing = LIBINPUT_CONFIG_DWT_DISABLED,
+        // Method used for registering the type of click (usually touchpad only)
+        .click_method = LIBINPUT_CONFIG_CLICK_METHOD_NONE,
     },
     TERMINATE_LIBINPUT_CONFIG_LIST(),
 };
