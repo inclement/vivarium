@@ -104,10 +104,10 @@ static void handle_new_node_subsurface (struct wl_listener *listener, void *data
     wl_signal_add(&wlr_subsurface->events.destroy, &subsurface->destroy);
 
     struct wlr_subsurface *existing_wlr_subsurface;
-    wl_list_for_each(existing_wlr_subsurface, &wlr_subsurface->surface->subsurfaces_below, parent_link) {
+    wl_list_for_each(existing_wlr_subsurface, &wlr_subsurface->surface->current.subsurfaces_below, current.link) {
         handle_new_node_subsurface(&node->new_subsurface, existing_wlr_subsurface);
     }
-    wl_list_for_each(existing_wlr_subsurface, &wlr_subsurface->surface->subsurfaces_above, parent_link) {
+    wl_list_for_each(existing_wlr_subsurface, &wlr_subsurface->surface->current.subsurfaces_above, current.link) {
         handle_new_node_subsurface(&node->new_subsurface, existing_wlr_subsurface);
     }
 
@@ -165,10 +165,10 @@ static struct viv_surface_tree_node *viv_surface_tree_create(struct viv_server *
     wl_signal_add(&surface->events.destroy, &node->destroy);
 
     struct wlr_subsurface *wlr_subsurface;
-    wl_list_for_each(wlr_subsurface, &surface->subsurfaces_below, parent_link) {
+    wl_list_for_each(wlr_subsurface, &surface->current.subsurfaces_below, current.link) {
         handle_new_node_subsurface(&node->new_subsurface, wlr_subsurface);
     }
-    wl_list_for_each(wlr_subsurface, &surface->subsurfaces_above, parent_link) {
+    wl_list_for_each(wlr_subsurface, &surface->current.subsurfaces_above, current.link) {
         handle_new_node_subsurface(&node->new_subsurface, wlr_subsurface);
     }
 

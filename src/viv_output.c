@@ -69,7 +69,7 @@ static void stop_using_output(struct viv_output *output) {
     struct viv_layer_view *layer_view;
     wl_list_for_each(layer_view, &output->layer_views, output_link){
         layer_view->output = NULL;
-        wlr_layer_surface_v1_close(layer_view->layer_surface);
+        wlr_layer_surface_v1_destroy(layer_view->layer_surface);
     }
 
 }

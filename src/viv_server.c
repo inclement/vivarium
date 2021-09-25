@@ -283,7 +283,7 @@ static void server_new_layer_surface(struct wl_listener *listener, void *data) {
         } else {
             wlr_log(WLR_ERROR, "Closing new layer surface as no output available to display it on");
             layer_surface->output = NULL;
-            wlr_layer_surface_v1_close(layer_surface);
+            wlr_layer_surface_v1_destroy(layer_surface);
         }
     }
 
