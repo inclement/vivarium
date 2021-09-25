@@ -30,6 +30,8 @@ struct viv_libinput_config {
     enum libinput_config_middle_emulation_state middle_emulation;
     int left_handed;
     int natural_scroll;
+    enum libinput_config_dwt_state disable_while_typing;
+    enum libinput_config_click_method click_method;
 };
 
 #endif

@@ -13,6 +13,8 @@ static void configure_libinput_device(struct libinput_device *device, struct viv
     libinput_device_config_middle_emulation_set_enabled(device, config->middle_emulation);
     libinput_device_config_left_handed_set(device, config->left_handed);
     libinput_device_config_scroll_set_natural_scroll_enabled(device, config->natural_scroll);
+    libinput_device_config_dwt_set_enabled(device, config->disable_while_typing);
+    libinput_device_config_click_set_method(device, config->click_method);
 }
 
 static void try_configure_libinput_device(struct wlr_input_device *device, struct viv_libinput_config *libinput_configs) {
