@@ -56,8 +56,7 @@ static void log_window_type_strings(struct wlr_xwayland_surface *surface) {
 }
 #endif
 
-/// Return true if the view looks like it should be floating. This is a poor proxy for proper window type inspection.
-/// TODO: Do proper window type inspection.
+/// Return true if the view looks like it should be floating according to its window type atoms.
 static bool guess_should_be_floating(struct viv_view *view) {
 
     struct wlr_xwayland_surface *surface = view->xwayland_surface;
@@ -154,8 +153,6 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
 #endif
 
     if (guess_should_be_floating(view)) {
-        // Assume this is a popup or something, and just give it the size it wants
-        // TODO: There is probably a better/proper way to do this based on actual window type parsing
         view->is_floating = true;
 
         if (guess_should_have_no_borders(view)) {
