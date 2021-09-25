@@ -52,7 +52,7 @@ jobs:
       - name: Install wayland-protocols
         run: |
           # The ubuntu-20.04 wayland-protocols version is lower than 1.21, so we must install it ourselves
-          git clone --depth 1 --branch 1.21 https://github.com/wayland-project/wayland-protocols.git
+          git clone --depth 1 --branch 1.22 https://github.com/wayland-project/wayland-protocols.git
           cd wayland-protocols
           meson build
           sudo ninja -C build install
