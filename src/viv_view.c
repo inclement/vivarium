@@ -244,6 +244,15 @@ bool viv_view_is_at(struct viv_view *view, double lx, double ly, struct wlr_surf
 void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
     struct viv_workspace *workspace = view->workspace;
     struct viv_output *output = workspace->output;
+
+    if (!output) {
+        // If the view's workspace is not currently being displayed (e.g. it was switched
+        // away from in between a view init and map), interpret the target box as being on
+        // the active output.
+        // TODO: This will be obsolete if the target box abstraction is changed to be output-independent
+        output = workspace->server->active_output;
+    }
+
     struct wlr_output_layout_output *output_layout_output = wlr_output_layout_get(output->server->output_layout, output->wlr_output);
 
     int gap_width = output->server->config->gap_width;
