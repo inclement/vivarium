@@ -53,3 +53,27 @@ layer_shell_protocol_dep = declare_dependency(
   link_with : layer_shell_protocol,
   sources : layer_shell_include,
 )
+
+output_power_manager_src = custom_target(
+  'output_power_manager_protocol_c',
+  input : join_paths([local_protocols_dir, 'wlr-output-power-management-unstable-v1.xml']),
+  output : '@BASENAME@-protocol.c',
+  command : [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'],
+)
+
+output_power_manager_include = custom_target(
+  'output_power_manager_protocol_h',
+  input : join_paths([local_protocols_dir, 'wlr-output-power-management-unstable-v1.xml']),
+  output : '@BASENAME@-protocol.h',
+  command : [wayland_scanner, 'server-header', '@INPUT@', '@OUTPUT@'],
+)
+
+output_power_manager_protocol = static_library(
+  'output_power_manager_protocol',
+  [output_power_manager_src, output_power_manager_include],
+)
+
+output_power_manager_protocol_dep = declare_dependency(
+  link_with : output_power_manager_protocol,
+  sources : output_power_manager_include,
+)
