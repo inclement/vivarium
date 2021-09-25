@@ -2,6 +2,7 @@
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_seat.h>
+#include <wlr/types/wlr_idle.h>
 #include <wlr/util/edges.h>
 
 #include "viv_cursor.h"
@@ -64,6 +65,8 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
 	struct viv_server *server = keyboard->seat->server;
 	struct wlr_event_keyboard_key *event = data;
 	struct viv_seat *seat = keyboard->seat;
+
+    wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
 
 	// Translate libinput keycode -> xkbcommon
 	uint32_t keycode = event->keycode + 8;
@@ -304,6 +307,8 @@ static void seat_cursor_motion(struct wl_listener *listener, void *data) {
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_motion);
 	struct wlr_event_pointer_motion *event = data;
 
+    wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
+
     // Pass the movement along (i.e. allow the cursor to actually move)
 	wlr_cursor_move(seat->cursor, event->device,
 			event->delta_x, event->delta_y);
@@ -317,6 +322,9 @@ static void seat_cursor_motion(struct wl_listener *listener, void *data) {
 static void seat_cursor_motion_absolute(struct wl_listener *listener, void *data) {
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_motion_absolute);
 	struct wlr_event_pointer_motion_absolute *event = data;
+
+    wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
+
 	wlr_cursor_warp_absolute(seat->cursor, event->device, event->x, event->y);
 	viv_cursor_process_cursor_motion(seat, event->time_msec);
 }
@@ -331,6 +339,9 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
 	double sx, sy;
 	struct wlr_surface *surface;
 	struct viv_view *view = viv_server_view_at(server, seat->cursor->x, seat->cursor->y, &surface, &sx, &sy);
+
+    wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
+
     // TODO: check for layer views to click on
 
 	if (event->state == WLR_BUTTON_RELEASED || !view) {
@@ -370,6 +381,9 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
 static void seat_cursor_axis(struct wl_listener *listener, void *data) {
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_axis);
 	struct wlr_event_pointer_axis *event = data;
+
+    wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
+
 	/* Notify the client with pointer focus of the axis event. */
 	wlr_seat_pointer_notify_axis(seat->wlr_seat,
                                  event->time_msec, event->orientation, event->delta,

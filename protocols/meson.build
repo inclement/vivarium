@@ -77,3 +77,27 @@ output_power_manager_protocol_dep = declare_dependency(
   link_with : output_power_manager_protocol,
   sources : output_power_manager_include,
 )
+
+idle_src = custom_target(
+  'idle_protocol_c',
+  input : join_paths([local_protocols_dir, 'idle.xml']),
+  output : '@BASENAME@-protocol.c',
+  command : [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'],
+)
+
+idle_include = custom_target(
+  'idle_protocol_h',
+  input : join_paths([local_protocols_dir, 'idle.xml']),
+  output : '@BASENAME@-protocol.h',
+  command : [wayland_scanner, 'server-header', '@INPUT@', '@OUTPUT@'],
+)
+
+idle_protocol = static_library(
+  'idle_protocol',
+  [idle_src, idle_include],
+)
+
+idle_protocol_dep = declare_dependency(
+  link_with : idle_protocol,
+  sources : idle_include,
+)

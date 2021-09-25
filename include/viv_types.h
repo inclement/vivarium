@@ -64,6 +64,8 @@ struct viv_server {
 	struct viv_seat *default_seat;
     struct wl_list seats;  // server_link
 
+    struct wlr_idle *idle;
+
 	struct wl_listener new_input;
 
     struct wlr_xdg_output_manager_v1 *xdg_output_manager;

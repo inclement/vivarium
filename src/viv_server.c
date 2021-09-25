@@ -28,6 +28,7 @@
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
+#include <wlr/types/wlr_idle.h>
 #include <wlr/util/log.h>
 #include <wlr/version.h>
 #include <wordexp.h>
@@ -675,6 +676,8 @@ void viv_server_init(struct viv_server *server) {
 
     wl_list_init(&server->seats);
 	server->default_seat = viv_seat_create(server, DEFAULT_SEAT_NAME);
+
+    server->idle = wlr_idle_create(server->wl_display);
 
     struct wlr_server_decoration_manager *decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
     server->decoration_manager = decoration_manager;
