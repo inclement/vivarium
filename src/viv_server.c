@@ -20,6 +20,7 @@
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_output_power_management_v1.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xcursor_manager.h>
@@ -569,6 +570,20 @@ static void handle_input_inhibit_deactivate(struct wl_listener *listener, void *
     }
 }
 
+static void handle_output_power_manager_set_mode(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+
+    struct wlr_output_power_v1_set_mode_event *event = data;
+    bool enabling = event->mode == ZWLR_OUTPUT_POWER_V1_MODE_ON;
+
+    wlr_log(WLR_INFO, "Setting %s power mode to %d", event->output->name, enabling);
+
+    wlr_output_enable(event->output, enabling);
+    if (!wlr_output_commit(event->output)) {
+        wlr_log(WLR_ERROR, "Failed to commit %s power mode with value %d", event->output->name, enabling);
+    }
+}
+
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.
  */
@@ -674,6 +689,10 @@ void viv_server_init(struct viv_server *server) {
     wl_signal_add(&server->input_inhibit_manager->events.activate, &server->input_inhibit_activate);
     server->input_inhibit_deactivate.notify = handle_input_inhibit_deactivate;
     wl_signal_add(&server->input_inhibit_manager->events.deactivate, &server->input_inhibit_deactivate);
+
+    server->output_power_manager = wlr_output_power_manager_v1_create(server->wl_display);
+    server->output_power_manager_set_mode.notify = handle_output_power_manager_set_mode;
+    wl_signal_add(&server->output_power_manager->events.set_mode, &server->output_power_manager_set_mode);
 
     wl_list_init(&server->unmapped_views);
 

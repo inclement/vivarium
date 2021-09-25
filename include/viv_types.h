@@ -82,6 +82,9 @@ struct viv_server {
 	struct wl_list outputs;
 	struct wl_listener new_output;
 
+    struct wlr_output_power_manager_v1 *output_power_manager;
+    struct wl_listener output_power_manager_set_mode;
+
     struct wl_list workspaces;
 
     pid_t bar_pid;
