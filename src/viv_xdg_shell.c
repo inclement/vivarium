@@ -91,6 +91,9 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
         viv_view_set_target_box(view, x, y, width, height);
 
     }
+    bool fullscreen = view->xdg_surface->toplevel->client_pending.fullscreen;
+    viv_view_set_fullscreen(view, fullscreen);
+    view->xdg_surface->toplevel->server_pending.fullscreen = fullscreen;
 
     viv_workspace_add_view(view->workspace, view);
 
@@ -186,16 +189,17 @@ static void xdg_toplevel_set_title(struct wl_listener *listener, void *data) {
 static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *data) {
 	struct viv_view *view = wl_container_of(listener, view, request_fullscreen);
 	struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
-    UNUSED(event);
     const char *app_id = view->xdg_surface->toplevel->app_id;
     wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", app_id, event->fullscreen);
 
-    // Ignore the fullscreen request - we don't currently implement xdg-shell fullscreen,
-    // which requires the surface to be displayed in a specific way
+    if (event->surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+        wlr_log(WLR_ERROR, "\"%s\" requested fullscreen %d for a non-toplevel surface", app_id, event->fullscreen);
+        return;
+    }
 
-    // We are required by the xdg-shell protocol to send a configure to acknowledge the
-    // request, even though we ignored it.
-    wlr_xdg_surface_schedule_configure(view->xdg_surface);
+    viv_view_set_fullscreen(view, event->fullscreen);
+    event->surface->toplevel->server_pending.fullscreen = event->fullscreen;
+    wlr_xdg_surface_schedule_configure(event->surface);
 }
 
 static void implementation_set_size(struct viv_view *view, uint32_t width, uint32_t height) {

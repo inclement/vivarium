@@ -262,7 +262,7 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     int ox = output_layout_output->x;
     int oy = output_layout_output->y;
     if (!output->current_workspace->active_layout->ignore_excluded_regions &&
-        !view->is_floating) {
+        !view->is_floating && !view->is_fullscreen) {
         ox += output->excluded_margin.left;
         oy += output->excluded_margin.top;
     }
@@ -277,7 +277,7 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     int border_width = output->server->config->border_width;
     if (output->current_workspace->active_layout->no_borders ||
-        view->is_static) {
+        view->is_static || view->is_fullscreen) {
         border_width = 0u;
     }
 
@@ -299,4 +299,25 @@ void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
             workspace->active_view = NULL;
         }
     }
+}
+
+void viv_view_set_fullscreen(struct viv_view *view, bool fullscreen) {
+    if (view->is_fullscreen == fullscreen) {
+        return;
+    }
+
+    view->is_fullscreen = fullscreen;
+
+    if (view->is_fullscreen) {
+        int width = view->workspace->output->wlr_output->width;
+        int height = view->workspace->output->wlr_output->height;
+        view->target_box_before_fullscreen = view->target_box;
+        viv_view_set_target_box(view, 0, 0, width, height);
+    }
+    else if (view->is_floating) {
+        struct wlr_box *box = &view->target_box_before_fullscreen;
+        viv_view_set_target_box(view, box->x, box->y, box->width, box->height);
+    }
+
+    viv_workspace_mark_for_relayout(view->workspace);
 }

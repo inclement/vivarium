@@ -260,7 +260,7 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
-    if (view->is_floating || !view->workspace->active_layout->no_borders) {
+    if ((view->is_floating || !view->workspace->active_layout->no_borders) && !view->is_fullscreen) {
         render_borders(view, output, damage, is_active);
     }
 
@@ -325,6 +325,7 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
     if (!view->is_static &&
+        !view->is_fullscreen &&
         (view->is_floating || !view->workspace->active_layout->no_borders)) {
         render_borders(view, output, damage, is_active);
     }
@@ -468,7 +469,7 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
 
     // Begin rendering actual views: first render tiled windows
     wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (view->is_floating || (view == output->current_workspace->active_view)) {
+        if (view->is_floating || (view == output->current_workspace->active_view) || view->is_fullscreen) {
             continue;
         }
         viv_render_view(renderer, view, output, &damage);
@@ -477,6 +478,7 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
     // Then render the active view if necessary
     if ((output->current_workspace->active_view != NULL) &&
         (output->current_workspace->active_view->mapped) &&
+        (!output->current_workspace->active_view->is_fullscreen) &&
         (!output->current_workspace->active_view->is_floating)) {
         viv_render_view(renderer, output->current_workspace->active_view, output, &damage);
     }
@@ -498,7 +500,7 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
 
     // Finally render all floating views on this output (which may include the active view)
     wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (!view->is_floating) {
+        if (!view->is_floating || view->is_fullscreen) {
             continue;
         }
         viv_render_view(renderer, view, output, &damage);
@@ -514,6 +516,14 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
         if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY)) {
             viv_render_layer_view(renderer, layer_view, output, &damage);
         }
+    }
+
+    // Render fullscreen views last
+    wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
+        if (!view->is_fullscreen) {
+            continue;
+        }
+        viv_render_view(renderer, view, output, &damage);
     }
 
     wlr_renderer_scissor(renderer, NULL);

@@ -140,6 +140,11 @@ void viv_mappable_float_window(struct viv_workspace *workspace, union viv_mappab
         return;
     }
 
+    if (view->is_fullscreen) {
+        wlr_log(WLR_DEBUG, "Cannot float active view, it is fullscreen");
+        return;
+    }
+
     viv_view_damage(view);
 
     wl_list_remove(&view->workspace_link);
