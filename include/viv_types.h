@@ -243,12 +243,15 @@ struct viv_view {
 
     // Target positions, where the layout is trying to place the view
     struct wlr_box target_box;
+    struct wlr_box target_box_before_fullscreen;
 
     bool is_floating;
     float floating_width, floating_height;  /// width and height to be used if the view becomes floating
 
     bool is_static;  /// true for e.g. X11 right click menus, signals that no borders should be drawn
                      /// and resizing/moving is not allowed
+
+    bool is_fullscreen;
 };
 
 struct viv_workspace {

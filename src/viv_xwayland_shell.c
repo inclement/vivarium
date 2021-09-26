@@ -133,7 +133,7 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
     if (size_hints) {
         wlr_log(WLR_DEBUG,
                 "Mapping xwayland surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
-                "min width %d, min height %d, max width %d, max height %d, base width %d, base height %d, parent %p",
+                "min width %d, min height %d, max width %d, max height %d, base width %d, base height %d, fullscreen %d, parent %p",
                 view_name,
                 surface->width,
                 surface->height,
@@ -145,6 +145,7 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
                 size_hints->max_width,
                 size_hints->base_height,
                 size_hints->base_width,
+                surface->fullscreen,
                 surface->parent);
     }
 
@@ -200,6 +201,8 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
 
     viv_workspace_add_view(view->workspace, view);
 
+    viv_view_set_fullscreen(view, surface->fullscreen);
+
     view->surface_tree = viv_surface_tree_root_create(view->server, view->xwayland_surface->surface, &add_xwayland_view_global_coords, view);
 }
 
@@ -225,6 +228,15 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
     viv_server_clear_view_from_grab_state(view->server, view);
 }
 
+static void event_xwayland_request_fullscreen(struct wl_listener *listener, void *data) {
+    struct viv_view *view = wl_container_of(listener, view, request_fullscreen);
+    struct wlr_xwayland_surface *surface = data;
+
+    const char *class = view->xwayland_surface->class;
+    wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", class, surface->fullscreen);
+
+    viv_view_set_fullscreen(view, surface->fullscreen);
+}
 
 static void event_xwayland_surface_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -337,6 +349,8 @@ void viv_xwayland_view_init(struct viv_view *view, struct wlr_xwayland_surface *
 	wl_signal_add(&xwayland_surface->events.unmap, &view->unmap);
 	view->destroy.notify = event_xwayland_surface_destroy;
 	wl_signal_add(&xwayland_surface->events.destroy, &view->destroy);
+    view->request_fullscreen.notify = event_xwayland_request_fullscreen;
+    wl_signal_add(&xwayland_surface->events.request_fullscreen, &view->request_fullscreen);
 }
 
 void viv_xwayland_lookup_atoms(struct viv_server *server) {
