@@ -188,6 +188,7 @@ struct viv_view_implementation {
     void (*close)(struct viv_view *view);
     bool (*is_at)(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
     bool (*oversized)(struct viv_view *view);
+    void (*inform_unrequested_fullscreen_change)(struct viv_view *view);
 };
 
 struct viv_xdg_popup {
@@ -267,6 +268,7 @@ struct viv_workspace {
 
     struct wl_list views;  /// Ordered list of views associated with this workspace
     struct viv_view *active_view;  /// The view that currently has focus within the workspace
+    struct viv_view *fullscreen_view;
 
     struct wl_list server_link;
 };

@@ -257,6 +257,15 @@ void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *vi
         wl_list_insert(&workspace->views, &view->workspace_link);
     }
 
+    if (view->is_fullscreen) {
+        if (workspace->fullscreen_view && (workspace->fullscreen_view != view)) {
+            wlr_log(WLR_DEBUG, "Tried to add fullscreen view to a workspace that already another one. Adding as non-fullscreen");
+            viv_view_force_remove_fullscreen(view);
+        } else {
+            workspace->fullscreen_view = view;
+        }
+    }
+
 	viv_view_focus(view, viv_view_get_toplevel_surface(view));
 
     viv_workspace_mark_for_relayout(workspace);

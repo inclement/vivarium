@@ -276,6 +276,19 @@ void viv_mappable_shift_active_window_to_workspace(struct viv_workspace *workspa
     viv_view_shift_to_workspace(cur_view, target_workspace);
 }
 
+void viv_mappable_remove_fullscreen(struct viv_workspace *workspace, union viv_mappable_payload payload) {
+    char *name = payload.shift_active_window_to_workspace.workspace_name;
+    wlr_log(WLR_DEBUG, "Mappable remove_workspace_fullscreen with name %s", name);
+
+    if (!workspace->fullscreen_view) {
+        wlr_log(WLR_DEBUG, "No fullscreen view, cannot remove attribute from workspace %s", name);
+        return;
+    }
+
+    viv_view_force_remove_fullscreen(workspace->fullscreen_view);
+    viv_workspace_mark_for_relayout(workspace);
+}
+
 void viv_mappable_switch_to_workspace(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(workspace);
 
