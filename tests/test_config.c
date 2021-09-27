@@ -58,6 +58,8 @@ void test_config_toml_static_options_match_defaults(void) {
 
     TEST_ASSERT_CONFIG_EQUAL(gap_width);
 
+    TEST_ASSERT_CONFIG_EQUAL(allow_fullscreen);
+
     TEST_ASSERT_CONFIG_EQUAL_FLOAT_ARRAY(clear_colour, RGBA_NUM_VALUES);
 
     TEST_ASSERT_CONFIG_EQUAL_STRING(background.colour);

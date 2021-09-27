@@ -620,6 +620,7 @@ void load_file_as_toml_config(FILE *fp, struct viv_config *config) {
     parse_config_array_fixed_size_float_float(root, "global-config", "inactive-border-colour", 4, config->inactive_border_colour);
     parse_config_int(root, "global-config", "gap-width", &config->gap_width);
     parse_config_array_fixed_size_float_float(root, "global-config", "clear-colour", 4, config->clear_colour);
+    parse_config_bool(root, "global-config", "allow-fullscreen", &config->allow_fullscreen);
 
     toml_array_t *workspace_names = toml_array_in(global_config, "workspace-names");
     if (toml_array_kind(workspace_names) != 'v') {

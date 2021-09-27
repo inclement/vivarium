@@ -297,6 +297,8 @@ struct viv_config {
 
     int gap_width;
 
+    bool allow_fullscreen;
+
     char workspaces[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH];
 
     struct {

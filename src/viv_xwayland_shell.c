@@ -201,8 +201,10 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
 
     viv_workspace_add_view(view->workspace, view);
 
-    viv_view_set_fullscreen(view, surface->fullscreen);
-    wlr_xwayland_surface_set_fullscreen(surface, view->is_fullscreen);
+    if (view->server->config->allow_fullscreen) {
+        viv_view_set_fullscreen(view, surface->fullscreen);
+        wlr_xwayland_surface_set_fullscreen(surface, view->is_fullscreen);
+    }
 
     view->surface_tree = viv_surface_tree_root_create(view->server, view->xwayland_surface->surface, &add_xwayland_view_global_coords, view);
 }
@@ -235,6 +237,11 @@ static void event_xwayland_request_fullscreen(struct wl_listener *listener, void
 
     const char *class = view->xwayland_surface->class;
     wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", class, surface->fullscreen);
+
+    if (!view->server->config->allow_fullscreen) {
+        wlr_log(WLR_DEBUG, "Ignoring \"%s\" fullscreen request. \"allow-fullscreen\" is set to false", class);
+        return;
+    }
 
     // Sometimes fullscreen is requested before mapping. Explicitly handling the request
     // here would mean the fullscreen attribute would be gone when mapping

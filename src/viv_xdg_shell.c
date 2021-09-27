@@ -92,7 +92,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
     }
     bool fullscreen = view->xdg_surface->toplevel->client_pending.fullscreen;
-    if (viv_view_set_fullscreen(view, fullscreen)) {
+    if (view->server->config->allow_fullscreen && viv_view_set_fullscreen(view, fullscreen)) {
         view->xdg_surface->toplevel->server_pending.fullscreen = fullscreen;
         wlr_xdg_surface_schedule_configure(view->xdg_surface);
     }
@@ -193,6 +193,12 @@ static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *
 	struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
     const char *app_id = view->xdg_surface->toplevel->app_id;
     wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", app_id, event->fullscreen);
+
+    if (!view->server->config->allow_fullscreen) {
+        wlr_log(WLR_DEBUG, "Ignoring \"%s\" fullscreen request. \"allow-fullscreen\" is set to false", app_id);
+        wlr_xdg_surface_schedule_configure(event->surface);
+        return;
+    }
 
     if (event->surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
         wlr_log(WLR_ERROR, "\"%s\" requested fullscreen %d for a non-toplevel surface", app_id, event->fullscreen);
