@@ -40,6 +40,7 @@ union viv_mappable_payload;
     MACRO(shift_active_window_to_workspace, "Move active window to given workspace. Args: workspace_name (string)", char workspace_name[100];) \
     MACRO(shift_active_window_to_right_output, "Move active window to output to the right of current") \
     MACRO(shift_active_window_to_left_output, "Move active window to output to the left of current") \
+    MACRO(remove_fullscreen, "Unfullscreen the fullscreen view in the current workspace") \
     MACRO(close_window, "Close active window")                          \
     MACRO(make_window_main, "Move active window to first position in current layout") \
     MACRO(reload_config, "Reload the config.toml (warning: may have weird results, restart vivarium if possible)") \

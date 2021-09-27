@@ -92,8 +92,10 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
     }
     bool fullscreen = view->xdg_surface->toplevel->client_pending.fullscreen;
-    viv_view_set_fullscreen(view, fullscreen);
-    view->xdg_surface->toplevel->server_pending.fullscreen = fullscreen;
+    if (viv_view_set_fullscreen(view, fullscreen)) {
+        view->xdg_surface->toplevel->server_pending.fullscreen = fullscreen;
+        wlr_xdg_surface_schedule_configure(view->xdg_surface);
+    }
 
     viv_workspace_add_view(view->workspace, view);
 
@@ -197,8 +199,9 @@ static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *
         return;
     }
 
-    viv_view_set_fullscreen(view, event->fullscreen);
-    event->surface->toplevel->server_pending.fullscreen = event->fullscreen;
+    if (viv_view_set_fullscreen(view, event->fullscreen)) {
+        event->surface->toplevel->server_pending.fullscreen = event->fullscreen;
+    }
     wlr_xdg_surface_schedule_configure(event->surface);
 }
 
@@ -296,6 +299,11 @@ static bool implementation_oversized(struct viv_view *view) {
     return surface_exceeds_bounds;
 }
 
+static void implementation_inform_unrequested_fullscreen_change(struct viv_view *view) {
+    view->xdg_surface->toplevel->server_pending.fullscreen = view->is_fullscreen;
+    wlr_xdg_surface_schedule_configure(view->xdg_surface);
+}
+
 static struct viv_view_implementation xdg_view_implementation = {
     .set_size = &implementation_set_size,
     .set_pos = &implementation_set_pos,
@@ -307,6 +315,7 @@ static struct viv_view_implementation xdg_view_implementation = {
     .close = &implementation_close,
     .is_at = &implementation_is_at,
     .oversized = &implementation_oversized,
+    .inform_unrequested_fullscreen_change = &implementation_inform_unrequested_fullscreen_change,
 };
 
 static void handle_xdg_surface_new_popup(struct wl_listener *listener, void *data) {

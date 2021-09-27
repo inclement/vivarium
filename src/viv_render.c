@@ -455,75 +455,70 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
 
     struct viv_layer_view *layer_view;
 
-    // First render layer-protocol surfaces in the background or bottom layers
-    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
-        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND)) {
-            viv_render_layer_view(renderer, layer_view, output, &damage);
+    if (output->current_workspace->fullscreen_view) {
+        viv_render_view(renderer, output->current_workspace->fullscreen_view, output, &damage);
+    } else {
+        // First render layer-protocol surfaces in the background or bottom layers
+        wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+            if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND)) {
+                viv_render_layer_view(renderer, layer_view, output, &damage);
+            }
         }
-    }
-    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
-        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM)) {
-            viv_render_layer_view(renderer, layer_view, output, &damage);
+        wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+            if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM)) {
+                viv_render_layer_view(renderer, layer_view, output, &damage);
+            }
         }
-    }
 
-    // Begin rendering actual views: first render tiled windows
-    wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (view->is_floating || (view == output->current_workspace->active_view) || view->is_fullscreen) {
-            continue;
+        // Begin rendering actual views: first render tiled windows
+        wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
+            if (view->is_floating || (view == output->current_workspace->active_view)) {
+                continue;
+            }
+            viv_render_view(renderer, view, output, &damage);
         }
-        viv_render_view(renderer, view, output, &damage);
-    }
 
-    // Then render the active view if necessary
-    if ((output->current_workspace->active_view != NULL) &&
-        (output->current_workspace->active_view->mapped) &&
-        (!output->current_workspace->active_view->is_fullscreen) &&
-        (!output->current_workspace->active_view->is_floating)) {
-        viv_render_view(renderer, output->current_workspace->active_view, output, &damage);
-    }
-
-    // Render floating views that may be overhanging other workspaces
-    struct viv_output *other_output;
-    wl_list_for_each(other_output, &output->server->outputs, link) {
-        if (other_output == output) {
-            continue;
+        // Then render the active view if necessary
+        if ((output->current_workspace->active_view != NULL) &&
+            (output->current_workspace->active_view->mapped) &&
+            (!output->current_workspace->active_view->is_floating)) {
+            viv_render_view(renderer, output->current_workspace->active_view, output, &damage);
         }
-        struct viv_workspace *other_workspace = other_output->current_workspace;
-        wl_list_for_each(view, &other_workspace->views, workspace_link) {
+
+        // Render floating views that may be overhanging other workspaces
+        struct viv_output *other_output;
+        wl_list_for_each(other_output, &output->server->outputs, link) {
+            if (other_output == output) {
+                continue;
+            }
+            struct viv_workspace *other_workspace = other_output->current_workspace;
+            wl_list_for_each(view, &other_workspace->views, workspace_link) {
+                if (!view->is_floating) {
+                    continue;
+                }
+                viv_render_view(renderer, view, output, &damage);
+            }
+        }
+
+        // Finally render all floating views on this output (which may include the active view)
+        wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
             if (!view->is_floating) {
                 continue;
             }
             viv_render_view(renderer, view, output, &damage);
         }
-    }
 
-    // Finally render all floating views on this output (which may include the active view)
-    wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (!view->is_floating || view->is_fullscreen) {
-            continue;
+        // Render any layer surfaces that should go on top of views
+        wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+            if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_TOP)) {
+                viv_render_layer_view(renderer, layer_view, output, &damage);
+            }
         }
-        viv_render_view(renderer, view, output, &damage);
-    }
-
-    // Render any layer surfaces that should go on top of views
-    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
-        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_TOP)) {
-            viv_render_layer_view(renderer, layer_view, output, &damage);
+        wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+            if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY)) {
+                viv_render_layer_view(renderer, layer_view, output, &damage);
+            }
         }
-    }
-    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
-        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY)) {
-            viv_render_layer_view(renderer, layer_view, output, &damage);
-        }
-    }
-
-    // Render fullscreen views last
-    wl_list_for_each_reverse(view, &output->current_workspace->views, workspace_link) {
-        if (!view->is_fullscreen) {
-            continue;
-        }
-        viv_render_view(renderer, view, output, &damage);
     }
 
     wlr_renderer_scissor(renderer, NULL);
