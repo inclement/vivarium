@@ -332,7 +332,7 @@ bool viv_view_set_fullscreen(struct viv_view *view, bool fullscreen) {
 
     char view_name[VIEW_NAME_LEN];
     viv_view_get_string_identifier(view, view_name, VIEW_NAME_LEN);
-    if (!view->mapped) {
+    if (!view->mapped && fullscreen) {
         wlr_log(WLR_DEBUG, "Preventing view %s from going fullscreen. Unmapped", view_name);
         return false;
     }
