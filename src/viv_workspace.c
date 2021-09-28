@@ -266,7 +266,9 @@ void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *vi
         }
     }
 
-	viv_view_focus(view, viv_view_get_toplevel_surface(view));
+    if (!workspace->fullscreen_view || (workspace->fullscreen_view == view)) {
+        viv_view_focus(view, viv_view_get_toplevel_surface(view));
+    }
 
     viv_workspace_mark_for_relayout(workspace);
 }
