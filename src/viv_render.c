@@ -514,10 +514,12 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
                 viv_render_layer_view(renderer, layer_view, output, &damage);
             }
         }
-        wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
-            if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY)) {
-                viv_render_layer_view(renderer, layer_view, output, &damage);
-            }
+    }
+
+    // Overlays on top of fullscreen views
+    wl_list_for_each_reverse(layer_view, &output->layer_views, output_link) {
+        if (viv_layer_is(layer_view, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY)) {
+            viv_render_layer_view(renderer, layer_view, output, &damage);
         }
     }
 
