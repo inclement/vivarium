@@ -203,7 +203,7 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
 
     if (view->server->config->allow_fullscreen) {
         viv_view_set_fullscreen(view, surface->fullscreen);
-        wlr_xwayland_surface_set_fullscreen(surface, view->is_fullscreen);
+        wlr_xwayland_surface_set_fullscreen(surface, view->workspace->fullscreen_view == view);
     }
 
     view->surface_tree = viv_surface_tree_root_create(view->server, view->xwayland_surface->surface, &add_xwayland_view_global_coords, view);
@@ -251,7 +251,7 @@ static void event_xwayland_request_fullscreen(struct wl_listener *listener, void
     }
 
     viv_view_set_fullscreen(view, surface->fullscreen);
-    wlr_xwayland_surface_set_fullscreen(surface, view->is_fullscreen);
+    wlr_xwayland_surface_set_fullscreen(surface, view->workspace->fullscreen_view == view );
 }
 
 static void event_xwayland_surface_destroy(struct wl_listener *listener, void *data) {
@@ -342,7 +342,7 @@ static bool implementation_oversized(struct viv_view *view) {
 }
 
 static void implementation_inform_unrequested_fullscreen_change(struct viv_view *view) {
-    wlr_xwayland_surface_set_fullscreen(view->xwayland_surface, view->is_fullscreen);
+    wlr_xwayland_surface_set_fullscreen(view->xwayland_surface, view->workspace->fullscreen_view == view);
 }
 
 static struct viv_view_implementation xwayland_view_implementation = {
