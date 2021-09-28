@@ -320,7 +320,7 @@ void viv_layout_apply(struct viv_workspace *workspace, uint32_t width, uint32_t 
     struct viv_view *view;
     wl_list_for_each(view, &workspace->views, workspace_link) {
         // Pull out only the non-floating views to be laid out
-        if (view->is_floating || view->is_fullscreen) {
+        if (view->is_floating || (view->workspace->fullscreen_view == view)) {
             continue;
         }
         viv_wl_array_append_view(&views_array, view);

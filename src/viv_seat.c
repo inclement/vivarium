@@ -227,7 +227,7 @@ void viv_seat_begin_interactive(struct viv_seat *seat, struct viv_view *view, en
 	 * compositor stops propegating pointer events to clients and instead
 	 * consumes them itself, to move or resize windows. */
 	struct wlr_surface *focused_surface = seat->wlr_seat->pointer_state.focused_surface;
-	if (viv_view_get_toplevel_surface(view) != focused_surface || view->is_fullscreen) {
+	if (viv_view_get_toplevel_surface(view) != focused_surface || (view->workspace->fullscreen_view == view)) {
 		/* Deny move/resize requests from unfocused and fullscreen clients. */
 		return;
 	}

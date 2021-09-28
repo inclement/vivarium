@@ -306,7 +306,7 @@ static bool implementation_oversized(struct viv_view *view) {
 }
 
 static void implementation_inform_unrequested_fullscreen_change(struct viv_view *view) {
-    view->xdg_surface->toplevel->server_pending.fullscreen = view->is_fullscreen;
+    view->xdg_surface->toplevel->server_pending.fullscreen = (view->workspace->fullscreen_view == view);
     wlr_xdg_surface_schedule_configure(view->xdg_surface);
 }
 
