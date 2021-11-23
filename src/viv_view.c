@@ -178,6 +178,13 @@ void viv_view_damage(struct viv_view *view) {
     struct viv_output *output;
     struct wlr_box geo_box = { 0 };
 
+    if (view->workspace->fullscreen_view == view) {
+        wl_list_for_each(output, &view->server->outputs, link) {
+            viv_output_damage(output);
+        }
+        return;
+    }
+
     viv_view_get_geometry(view, &geo_box);
 
     int border_width = view->server->config->border_width;
@@ -296,7 +303,10 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     int border_width = output->server->config->border_width;
     if (output->current_workspace->active_layout->no_borders ||
-        view->is_static || (view->workspace->fullscreen_view == view)) {
+        view->is_static) {
+        border_width = 0u;
+    } else if (view->workspace->fullscreen_view == view) {
+        gap_width = 0u;
         border_width = 0u;
     }
 
@@ -305,6 +315,25 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     viv_view_set_pos(view, x + border_width + gap_width, y + border_width + gap_width);
     viv_view_set_size(view, width, height);
+}
+
+void viv_view_match_target_box_with_surface_geometry(struct viv_view *view) {
+    struct wlr_box box;
+    viv_view_get_geometry(view, &box);
+
+    int gap_width = view->server->config->gap_width;
+    int border_width = view->server->config->border_width;
+    if (view->workspace->active_layout->no_borders || view->is_static) {
+        border_width = 0u;
+    } else if (view->workspace->fullscreen_view == view) {
+        gap_width = 0u;
+        border_width = 0u;
+    }
+    wlr_log(WLR_DEBUG, "MATCH %dx%d->%dx%d", view->target_box.width,
+        view->target_box.height, box.width, box.height);
+
+    view->target_box.width = box.width + 2 * border_width + 2 * gap_width;
+    view->target_box.height = box.height + 2 * border_width + 2 * gap_width;
 }
 
 void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
@@ -333,8 +362,7 @@ bool viv_view_set_fullscreen(struct viv_view *view, bool fullscreen) {
     char view_name[VIEW_NAME_LEN];
     viv_view_get_string_identifier(view, view_name, VIEW_NAME_LEN);
     if (!view->mapped && fullscreen) {
-        wlr_log(WLR_DEBUG, "Preventing view %s from going fullscreen. Unmapped", view_name);
-        return false;
+        wlr_log(WLR_DEBUG, "View %s requesting fullscreen before being mapped");
     }
     if (fullscreen && view->workspace->fullscreen_view) {
         wlr_log(WLR_DEBUG,
@@ -346,11 +374,8 @@ bool viv_view_set_fullscreen(struct viv_view *view, bool fullscreen) {
 
     if (fullscreen) {
         view->workspace->fullscreen_view = view;
-
-        int width = view->workspace->output->wlr_output->width;
-        int height = view->workspace->output->wlr_output->height;
         view->target_box_before_fullscreen = view->target_box;
-        viv_view_set_target_box(view, 0, 0, width, height);
+        view->implementation->grow_and_center_fullscreen(view);
 
     } else {
         view->workspace->fullscreen_view = NULL;
