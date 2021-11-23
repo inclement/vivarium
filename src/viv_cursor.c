@@ -107,6 +107,7 @@ static void process_cursor_pass_through_to_surface(struct viv_seat *seat, uint32
 
     // Find the uppermost view or layer view under the cursor
     if ((layer_view = viv_server_layer_view_at(server, seat->cursor->x, seat->cursor->y, &surface, &sx, &sy, VIV_LAYER_MASK_OVERLAY))) {
+    } else if (server->active_output && (view = server->active_output->current_workspace->fullscreen_view)) {
     } else if ((layer_view = viv_server_layer_view_at(server, seat->cursor->x, seat->cursor->y, &surface, &sx, &sy, VIV_LAYER_MASK_TOP))) {
     } else if ((view = viv_server_view_at(server, seat->cursor->x, seat->cursor->y, &surface, &sx, &sy))) {
     } else if ((layer_view = viv_server_layer_view_at(server, seat->cursor->x, seat->cursor->y, &surface, &sx, &sy, VIV_LAYER_MASK_BOTTOM))) {

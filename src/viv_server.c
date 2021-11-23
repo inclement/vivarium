@@ -137,6 +137,11 @@ struct viv_view *viv_server_view_at(
         return NULL;
     }
 
+    // Fullscreen view has priority
+    if (active_output->current_workspace->fullscreen_view) {
+      return active_output->current_workspace->fullscreen_view;
+    }
+
 	struct viv_view *view;
     // Try floating views first
 	wl_list_for_each(view, &active_output->current_workspace->views, workspace_link) {
