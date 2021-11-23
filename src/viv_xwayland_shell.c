@@ -165,18 +165,26 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
         uint32_t width = 500;
         uint32_t height = 300;
 
-        // All three of these options seem to be necessary/used by some applications.
-        // Probably a formally correct method of size resolution is written somewhere but
-        // I haven't found it.
-        if (surface->width && surface->height) {
+        // `width` and `height` are deprecated. base_{width,height} indicate the desired size
+        if (size_hints->base_width > 0 && size_hints->base_height > 0) {
+            width = size_hints->base_width;
+            height = size_hints->base_height;
+        } else if (surface->width && surface->height) {
             width = surface->width;
             height = surface->height;
-        } else if (size_hints->width > 0 && size_hints->height > 0) {
-            width = size_hints->width;
-            height = size_hints->height;
-        } else if (size_hints->min_width >= 0 && size_hints->min_height >= 0) {
+        }
+
+        if (size_hints->min_width > 0 && width < (uint32_t) size_hints->min_width) {
             width = size_hints->min_width;
+        }
+        if (size_hints->min_height > 0 && height < (uint32_t) size_hints->min_height) {
             height = size_hints->min_height;
+        }
+        if (size_hints->max_width > 0 && width > (uint32_t) size_hints->max_width) {
+            width = size_hints->max_width;
+        }
+        if (size_hints->max_height > 0 && height > (uint32_t) size_hints->max_height) {
+            height = size_hints->max_height;
         }
 
         if (x == 0 && y == 0) {
@@ -345,6 +353,33 @@ static void implementation_inform_unrequested_fullscreen_change(struct viv_view 
     wlr_xwayland_surface_set_fullscreen(view->xwayland_surface, view->workspace->fullscreen_view == view);
 }
 
+static void implementation_grow_and_center_fullscreen(struct viv_view *view) {
+    struct wlr_xwayland_surface_size_hints *hints = view->xwayland_surface->size_hints;
+
+    struct viv_output *output = view->workspace->output;
+    if (!output) {
+        return;
+    }
+
+    int width = output->wlr_output->width;
+    if ((hints->max_width > 0) && ((int) hints->max_width < width)) {
+        width = hints->max_width;
+    } else if ((hints->min_width > 0) && ((int) hints->min_width > width)) {
+        width = hints->min_width;
+    }
+
+    int height = output->wlr_output->height;
+    if ((hints->max_height > 0) && ((int) hints->max_height < height)) {
+        height = hints->max_height;
+    } else if ((hints->min_height > 0) && ((int) hints->min_height > height)) {
+        height = hints->min_height;
+    }
+
+    int x = (output->wlr_output->width - width) / 2;
+    int y = (output->wlr_output->height - height) / 2;
+    viv_view_set_target_box(view, x, y, width, height);
+}
+
 static struct viv_view_implementation xwayland_view_implementation = {
     .set_size = &implementation_set_size,
     .set_pos = &implementation_set_pos,
@@ -357,6 +392,7 @@ static struct viv_view_implementation xwayland_view_implementation = {
     .is_at = &implementation_is_at,
     .oversized = &implementation_oversized,
     .inform_unrequested_fullscreen_change = &implementation_inform_unrequested_fullscreen_change,
+    .grow_and_center_fullscreen = &implementation_grow_and_center_fullscreen,
 };
 
 void viv_xwayland_view_init(struct viv_view *view, struct wlr_xwayland_surface *xwayland_surface) {

@@ -189,6 +189,7 @@ struct viv_view_implementation {
     bool (*is_at)(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
     bool (*oversized)(struct viv_view *view);
     void (*inform_unrequested_fullscreen_change)(struct viv_view *view);
+    void (*grow_and_center_fullscreen)(struct viv_view *view);
 };
 
 struct viv_xdg_popup {

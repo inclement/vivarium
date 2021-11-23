@@ -159,6 +159,48 @@ static void render_rect(struct wlr_box *box, struct viv_output *output, pixman_r
     pixman_region32_fini(&box_region_damage);
 }
 
+/// Fills the screen around the fullscreen view with black
+static void render_fullscreen_fill(struct viv_view *view, struct viv_output *output, pixman_region32_t *output_damage) {
+    float black[] = {0, 0, 0, 255};
+    struct wlr_box box;
+
+    // top
+    box.x = 0;
+    box.y = 0;
+    box.width = output->wlr_output->width;
+    box.height = view->target_box.y;
+    if (box.width > 0 && box.height > 0) {
+        render_rect(&box, output, output_damage, black);
+    }
+
+    // left
+    box.x = 0;
+    box.y = view->target_box.y;
+    box.width = view->target_box.x;
+    box.height = view->target_box.height;
+    if (box.width > 0 && box.height > 0) {
+        render_rect(&box, output, output_damage, black);
+    }
+
+    // right
+    box.x = view->target_box.x + view->target_box.width;
+    box.y = view->target_box.y;
+    box.width = output->wlr_output->width - box.x;
+    box.height = view->target_box.height;
+    if (box.width > 0 && box.height > 0) {
+        render_rect(&box, output, output_damage, black);
+    }
+
+    // bottom
+    box.x = 0;
+    box.y = view->target_box.y + view->target_box.height;
+    box.width = output->wlr_output->width;
+    box.height = output->wlr_output->height - box.y;
+    if (box.width > 0 && box.height > 0) {
+        render_rect(&box, output, output_damage, black);
+    }
+}
+
 /// Render the given view's borders, on the given output. The border will be the active
 /// colour if is_active is true, or otherwise the inactive colour.
 static void render_borders(struct viv_view *view, struct viv_output *output, pixman_region32_t *output_damage, bool is_active) {
@@ -221,9 +263,13 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     clock_gettime(CLOCK_MONOTONIC, &now);
 
     // Note this renders both the toplevel and any popups
-    struct wlr_box actual_geometry = { 0 };
     struct wlr_box *target_geometry = &view->target_box;
-    wlr_xdg_surface_get_geometry(view->xdg_surface, &actual_geometry);
+
+    // Update floating view sizes, as the client has control over it
+    if (view->is_floating || (view->workspace->fullscreen_view == view)) {
+        viv_view_match_target_box_with_surface_geometry(view);
+        // TODO: recenter fullscreen?
+    }
 
     viv_output_layout_coords_box_to_output_coords(output, target_geometry);
 
@@ -260,7 +306,9 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
-    if ((view->is_floating || !view->workspace->active_layout->no_borders) && (view->workspace->fullscreen_view != view )) {
+    if (view->workspace->fullscreen_view == view) {
+        render_fullscreen_fill(view, output, damage);
+    } else if ((view->is_floating || !view->workspace->active_layout->no_borders)) {
         render_borders(view, output, damage, is_active);
     }
 
@@ -324,8 +372,9 @@ static void viv_render_xwayland_view(struct wlr_renderer *renderer, struct viv_v
     bool is_active_on_current_output = ((output == output->server->active_output) &
                                         (view == view->workspace->active_view));
     bool is_active = is_grabbed || is_active_on_current_output;
-    if (!view->is_static &&
-        (view->workspace->fullscreen_view != view) &&
+    if (view->workspace->fullscreen_view == view) {
+        render_fullscreen_fill(view, output, damage);
+    } else if (!view->is_static &&
         (view->is_floating || !view->workspace->active_layout->no_borders)) {
         render_borders(view, output, damage, is_active);
     }
