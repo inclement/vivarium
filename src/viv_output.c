@@ -127,8 +127,16 @@ static void output_enable(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_output *output = wl_container_of(listener, output, enable);
 
-    bool enabled = output->wlr_output->enabled;
-    wlr_log(WLR_INFO, "Output \"%s\" event: enable became %d", output->wlr_output->name, enabled);
+    bool enabled = output->wlr_output->enabled || output->powered_down;
+    wlr_log(WLR_INFO,
+        "Output \"%s\" event: enable became %d, power is %d",
+        output->wlr_output->name, output->wlr_output->enabled,
+        output->powered_down);
+
+    if (output->powered_down) {
+        wlr_log(WLR_DEBUG, "Not acting on changes to powered down outputs");
+        return;
+    }
 
     if (output->enabled == enabled) {
         wlr_log(WLR_ERROR, "Asked to set enable %d for output %p but this was already set", enabled, output);

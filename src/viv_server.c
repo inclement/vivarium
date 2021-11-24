@@ -610,10 +610,12 @@ static void handle_input_inhibit_deactivate(struct wl_listener *listener, void *
 }
 
 static void handle_output_power_manager_set_mode(struct wl_listener *listener, void *data) {
-    UNUSED(listener);
+    struct viv_server *server = wl_container_of(listener, server, output_power_manager_set_mode);
 
     struct wlr_output_power_v1_set_mode_event *event = data;
     bool enabling = event->mode == ZWLR_OUTPUT_POWER_V1_MODE_ON;
+    struct viv_output *output = viv_output_of_wlr_output(server, event->output);
+    output->powered_down = !enabling;
 
     wlr_log(WLR_INFO, "Setting %s power mode to %d", event->output->name, enabling);
 

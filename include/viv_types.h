@@ -128,6 +128,7 @@ struct viv_output {
 	struct wlr_output *wlr_output;
 
     bool enabled;
+    bool powered_down;
 
 	struct wl_listener frame;
 	struct wl_listener damage_event;
