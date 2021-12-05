@@ -19,7 +19,7 @@
 
 void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(workspace);
-    wlr_log(WLR_DEBUG, "Mappable do_exec %s\n", payload.do_exec.executable);
+    wlr_log(WLR_DEBUG, "Mappable do_exec %s", payload.do_exec.executable);
 
     pid_t p;
     if ((p = fork()) == 0) {
@@ -33,7 +33,7 @@ void viv_mappable_do_exec(struct viv_workspace *workspace, union viv_mappable_pa
 
 void viv_mappable_do_shell(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(workspace);
-    wlr_log(WLR_DEBUG, "Mappable do_shell %s\n", payload.do_shell.command);
+    wlr_log(WLR_DEBUG, "Mappable do_shell %s", payload.do_shell.command);
 
     pid_t p;
     if ((p = fork()) == 0) {
@@ -46,12 +46,12 @@ void viv_mappable_do_shell(struct viv_workspace *workspace, union viv_mappable_p
 }
 
 void viv_mappable_increment_divide(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    wlr_log(WLR_DEBUG, "Mappable increment divide by %f\n", payload.increment_divide.increment);
+    wlr_log(WLR_DEBUG, "Mappable increment divide by %f", payload.increment_divide.increment);
     viv_workspace_increment_divide(workspace, payload.increment_divide.increment);
 }
 
 void viv_mappable_increment_counter(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    wlr_log(WLR_DEBUG, "Mappable increment counter by %d\n", payload.increment_counter.increment);
+    wlr_log(WLR_DEBUG, "Mappable increment counter by %d", payload.increment_counter.increment);
     viv_workspace_increment_counter(workspace, payload.increment_counter.increment);
 }
 
