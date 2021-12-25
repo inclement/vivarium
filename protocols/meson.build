@@ -101,3 +101,27 @@ idle_protocol_dep = declare_dependency(
   link_with : idle_protocol,
   sources : idle_include,
 )
+
+screencopy_src = custom_target(
+  'wlr-screencopy-unstable-v1_protocol_c',
+  input : join_paths([local_protocols_dir, 'wlr-screencopy-unstable-v1.xml']),
+  output : '@BASENAME@-protocol.c',
+  command : [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'],
+)
+
+screencopy_include = custom_target(
+  'wlr-screencopy-unstable-v1_protocol_h',
+  input : join_paths([local_protocols_dir, 'wlr-screencopy-unstable-v1.xml']),
+  output : '@BASENAME@-protocol.h',
+  command : [wayland_scanner, 'server-header', '@INPUT@', '@OUTPUT@'],
+)
+
+screencopy_protocol = static_library(
+  'wlr-screencopy-unstable-v1_protocol',
+  [screencopy_src, screencopy_include],
+)
+
+screencopy_protocol_dep = declare_dependency(
+  link_with : screencopy_protocol,
+  sources : screencopy_include,
+)
