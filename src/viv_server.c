@@ -30,6 +30,7 @@
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_screencopy_v1.h>
+#include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/util/log.h>
 #include <wlr/version.h>
 #include <wordexp.h>
@@ -236,6 +237,8 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     CHECK_ALLOCATION(view);
     viv_xdg_view_init(view, xdg_surface);
     viv_view_init(view, server);
+
+    xdg_surface->data = view;
 }
 
 #ifdef XWAYLAND
@@ -250,6 +253,7 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
     viv_xwayland_view_init(view, xwayland_surface);
     viv_view_init(view, server);
 
+    xwayland_surface->data = view;
 }
 
 static void server_xwayland_ready(struct wl_listener *listener, void *data) {
@@ -291,6 +295,8 @@ static void server_new_layer_surface(struct wl_listener *listener, void *data) {
 
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
     viv_output_mark_for_relayout(output);
+
+    layer_surface->data = layer_view;
 
     wlr_log(WLR_INFO, "New layer surface props: layer %d, anchor %d, exclusive %d, margin (%d, %d, %d, %d), desired size (%d, %d), actual size (%d, %d)", state->layer, state->anchor, state->exclusive_zone, state->margin.top, state->margin.right, state->margin.bottom, state->margin.left, state->desired_width, state->desired_height, state->actual_width, state->actual_height);
 }
@@ -594,6 +600,22 @@ static void handle_output_power_manager_set_mode(struct wl_listener *listener, v
     }
 }
 
+static void handle_new_idle_inhibitor(struct wl_listener *listener, void *data) {
+    struct viv_server *server = wl_container_of(listener, server, new_idle_inhibitor);
+    struct wlr_idle_inhibitor_v1 *inhibitor = data;
+
+    wlr_log(WLR_DEBUG, "New idle inhibitor");
+    wl_signal_add(&inhibitor->events.destroy, &server->destroy_idle_inhibitor);
+    viv_server_update_idle_inhibitor_state(server);
+}
+
+static void handle_destroy_idle_inhibitor(struct wl_listener *listener, void *data) {
+    struct viv_server *server = wl_container_of(listener, server, destroy_idle_inhibitor);
+    UNUSED(data);
+    wlr_log(WLR_DEBUG, "Destroying idle inhibitor");
+    viv_server_update_idle_inhibitor_state(server);
+}
+
 /** Initialise the viv_server by setting up all the global state: the wayland display and
     renderer, output layout, event bindings etc.
  */
@@ -690,6 +712,14 @@ void viv_server_init(struct viv_server *server) {
 
     server->idle = wlr_idle_create(server->wl_display);
 
+    // TODO when introducing support for managing multiple displays
+    // Take into account that the idle inhibitor manager is bound to one
+    server->idle_inhibit_manager = wlr_idle_inhibit_v1_create(server->wl_display);
+    wl_signal_add(&server->idle_inhibit_manager->events.new_inhibitor, &server->new_idle_inhibitor);
+    server->new_idle_inhibitor.notify = handle_new_idle_inhibitor;
+    // handle destroy is added individually to inhibitors
+    server->destroy_idle_inhibitor.notify = handle_destroy_idle_inhibitor;
+
     struct wlr_server_decoration_manager *decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
     server->decoration_manager = decoration_manager;
     wlr_server_decoration_manager_set_default_mode(decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
@@ -740,6 +770,46 @@ struct viv_seat *viv_server_get_default_seat(struct viv_server *server) {
     // TODO: Work out how to actually handle transitions between seat events and do
     // something more interesting here when multiple seats are supported
     return server->default_seat;
+}
+
+void viv_server_update_idle_inhibitor_state(struct viv_server *server) {
+    bool inhibited = false;
+
+    const struct wlr_idle_inhibitor_v1 *inhibitor;
+    wl_list_for_each(inhibitor, &server->idle_inhibit_manager->inhibitors, link) {
+        if (wlr_surface_is_layer_surface(inhibitor->surface)) {
+            struct wlr_layer_surface_v1 *layer_surface = wlr_layer_surface_v1_from_wlr_surface(inhibitor->surface);
+            if (layer_surface) {
+                struct viv_layer_view *layer_view = layer_surface->data;
+                if (layer_view && layer_view->mapped && (layer_view->output == server->active_output)) {
+                    inhibited = true;
+                    break;
+                }
+            }
+        } else {
+            struct viv_view *view = NULL;
+            if (wlr_surface_is_xdg_surface(inhibitor->surface)) {
+                struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_from_wlr_surface(inhibitor->surface);
+                if (xdg_surface) {
+                    view = xdg_surface->data;
+                }
+#ifdef XWAYLAND
+            } else if (wlr_surface_is_xwayland_surface(inhibitor->surface)) {
+                struct wlr_xwayland_surface *xwayland_surface = wlr_xwayland_surface_from_wlr_surface(inhibitor->surface);
+                if (xwayland_surface) {
+                    view = xwayland_surface->data;
+                }
+#endif  // XWAYLAND
+            }
+
+            if (view && view->mapped && (view->workspace == server->active_output->current_workspace)) {
+                inhibited = true;
+                break;
+            }
+        }
+    }
+
+    wlr_idle_set_enabled(server->idle, NULL, !inhibited);
 }
 
 void viv_server_deinit(struct viv_server *server) {

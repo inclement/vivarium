@@ -5,6 +5,7 @@
 #include <wlr/types/wlr_box.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <xkbcommon/xkbcommon.h>
 
@@ -65,6 +66,10 @@ struct viv_server {
     struct wl_list seats;  // server_link
 
     struct wlr_idle *idle;
+
+    struct wlr_idle_inhibit_manager_v1 *idle_inhibit_manager;
+    struct wl_listener new_idle_inhibitor;
+    struct wl_listener destroy_idle_inhibitor;
 
 	struct wl_listener new_input;
 
