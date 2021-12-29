@@ -329,8 +329,6 @@ void viv_view_match_target_box_with_surface_geometry(struct viv_view *view) {
         gap_width = 0u;
         border_width = 0u;
     }
-    wlr_log(WLR_DEBUG, "MATCH %dx%d->%dx%d", view->target_box.width,
-        view->target_box.height, box.width, box.height);
 
     view->target_box.width = box.width + 2 * border_width + 2 * gap_width;
     view->target_box.height = box.height + 2 * border_width + 2 * gap_width;
