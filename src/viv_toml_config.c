@@ -246,6 +246,27 @@ static void parse_mappable_arguments(toml_table_t *table, char *action, union vi
         strncpy(payload->do_exec.executable, executable_string.u.s, 100);
         wlr_log(WLR_DEBUG, "Parsed argument \"%s\" = \"%s\" for action \"%s\"",
                 "executable", executable_string.u.s, action);
+
+        toml_array_t *args_array = toml_array_in(table, "args");
+        payload->do_exec.args[0] = executable_string.u.s;
+        if (args_array != NULL) {
+            int args_size = toml_array_nelem(args_array);
+            int loop_index;
+            size_t max_size = sizeof(payload->do_exec.args)/sizeof(*payload->do_exec.args);
+            if ((size_t)args_size >= (max_size - 1)) {
+                EXIT_WITH_FORMATTED_MESSAGE("Config error parsing [[keybind]] for action %s: maximum allowed argc is %zd, got %d",
+                        "executable", max_size - 1, args_size);
+            }
+            for (loop_index = 0; loop_index < args_size; loop_index++) {
+                toml_datum_t argument = toml_string_at(args_array, loop_index);
+                if (!argument.ok) {
+                    EXIT_WITH_FORMATTED_MESSAGE("Config error parsing [[keybind]] for action %s: found non-string element in args",
+                        "executable");
+                }
+                payload->do_exec.args[loop_index+1] = argument.u.s;
+            }
+            payload->do_exec.args[loop_index+1] = NULL;
+        }
     } else if (strcmp(action, "do_shell") == 0) {
         toml_datum_t command_string = toml_string_in(table, "command");
         if (!command_string.ok) {
