@@ -104,6 +104,8 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
 
     if (next_view != NULL) {
         viv_view_focus(next_view, NULL);
+    } else {
+        viv_view_clear_all_focus(view->server);
     }
 
     viv_workspace_mark_for_relayout(cur_workspace);
