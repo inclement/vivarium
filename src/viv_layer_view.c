@@ -108,6 +108,16 @@ static void layer_surface_new_popup(struct wl_listener *listener, void *data) {
 
 }
 
+static void layer_surface_surface_commit(struct wl_listener *listener, void *data) {
+    struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, surface_commit);
+    UNUSED(data);
+
+    // In wlroots >= 0.15, looking at layer_view->layer_surface->current.commited along
+    // with tracking changes to layer_view->layer_surface can be
+    // used to determine if any relayout worthy changes were committed. We always do it for now
+    viv_output_mark_for_relayout(layer_view->output);
+}
+
 void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *server, struct wlr_layer_surface_v1 *layer_surface) {
     layer_view->layer_surface = layer_surface;
     layer_view->server = server;
@@ -121,7 +131,8 @@ void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *s
 	wl_signal_add(&layer_surface->events.destroy, &layer_view->destroy);
 	layer_view->new_popup.notify = layer_surface_new_popup;
 	wl_signal_add(&layer_surface->events.new_popup, &layer_view->new_popup);
-    UNUSED(layer_surface_new_popup);
+    layer_view->surface_commit.notify = layer_surface_surface_commit;
+    wl_signal_add(&layer_surface->surface->events.commit, &layer_view->surface_commit);
 
     struct viv_output *output = viv_output_of_wlr_output(server, layer_surface->output);
     wl_list_insert(&output->layer_views, &layer_view->output_link);
