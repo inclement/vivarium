@@ -267,7 +267,8 @@ struct viv_workspace {
 
     struct wl_list views;  /// Ordered list of views associated with this workspace
     struct viv_view *active_view;  /// The view that currently has focus within the workspace
-    struct viv_view *fullscreen_view;
+    struct viv_view *fullscreen_view;  /// The view currently in the fullscreen state, i.e. drawn
+                                       /// on top of everything else regardless of the current layout
 
     struct wl_list server_link;
 };

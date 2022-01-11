@@ -222,7 +222,7 @@ static struct viv_config the_config = {
     // This may be overridden by the more sophisticated background settings below.
     .clear_colour = { 0.73, 0.73, 0.73, 1.0 },
 
-    // If false, acknowledge fullscreen requests, but don't act on them, keeping everything in windows
+    // Allow views to enter fullscreen state. If allowed this bypasses the current layout.
     .allow_fullscreen = true,
 
     // Background configuration. Applies to all outputs. Requires `swaybg` to be installed.

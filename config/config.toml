@@ -32,7 +32,7 @@ inactive-border-colour = [0.6, 0.6, 0.9, 1.0]  # rgba
 # Gap distance between windows
 gap-width = 0  # pixels
 
-# Allow views to go fullscreen
+# Allow views to enter fullscreen state. If allowed this bypasses the current layout.
 allow-fullscreen = true
 
 # Desktop background colour. Note this is overridden by the [background] if set.

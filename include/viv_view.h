@@ -96,7 +96,7 @@ void viv_view_match_target_box_with_surface_geometry(struct viv_view *view);
 /// useful for making sure focus goes somewhere when a view is unmapped.
 void viv_view_ensure_not_active_in_workspace(struct viv_view *view);
 
-/// Sets the view's fullscreen state. Returns true if the operatin was succesful, false otherwise
+/// Sets the view's fullscreen state. Returns true if the operation was succesful, false otherwise
 bool viv_view_set_fullscreen(struct viv_view *view, bool fullscreen);
 
 /// Sets a view to non-fullscreen and informs the client if necessary

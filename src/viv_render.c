@@ -161,7 +161,7 @@ static void render_rect(struct wlr_box *box, struct viv_output *output, pixman_r
 
 /// Fills the screen around the fullscreen view with black
 static void render_fullscreen_fill(struct viv_view *view, struct viv_output *output, pixman_region32_t *output_damage) {
-    float black[] = {0, 0, 0, 255};
+    float black[] = {0, 0, 0, 1};
     struct wlr_box box;
 
     // top
