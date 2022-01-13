@@ -243,7 +243,10 @@ struct viv_view {
     struct wl_listener surface_commit;
     struct wl_listener new_xdg_popup;
 
-    // Target positions, where the layout is trying to place the view
+    // Target positions where the layout is trying to place the view. These boxes describe
+    // the geometry that the application should output, they do not include any space for
+    // borders or gaps. That padding should be accounted for by whoever sets the target
+    // box.
     struct wlr_box target_box;
     struct wlr_box target_box_before_fullscreen;
 

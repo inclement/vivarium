@@ -323,17 +323,8 @@ void viv_view_match_target_box_with_surface_geometry(struct viv_view *view) {
     struct wlr_box box;
     viv_view_get_geometry(view, &box);
 
-    int gap_width = view->server->config->gap_width;
-    int border_width = view->server->config->border_width;
-    if (view->workspace->active_layout->no_borders || view->is_static) {
-        border_width = 0u;
-    } else if (view->workspace->fullscreen_view == view) {
-        gap_width = 0u;
-        border_width = 0u;
-    }
-
-    view->target_box.width = box.width + 2 * border_width + 2 * gap_width;
-    view->target_box.height = box.height + 2 * border_width + 2 * gap_width;
+    view->target_box.width = box.width;
+    view->target_box.height = box.height;
 }
 
 void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
