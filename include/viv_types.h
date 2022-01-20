@@ -188,6 +188,8 @@ struct viv_view_implementation {
     void (*close)(struct viv_view *view);
     bool (*is_at)(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);
     bool (*oversized)(struct viv_view *view);
+    void (*inform_unrequested_fullscreen_change)(struct viv_view *view);
+    void (*grow_and_center_fullscreen)(struct viv_view *view);
 };
 
 struct viv_xdg_popup {
@@ -241,8 +243,12 @@ struct viv_view {
     struct wl_listener surface_commit;
     struct wl_listener new_xdg_popup;
 
-    // Target positions, where the layout is trying to place the view
+    // Target positions where the layout is trying to place the view. These boxes describe
+    // the geometry that the application should output, they do not include any space for
+    // borders or gaps. That padding should be accounted for by whoever sets the target
+    // box.
     struct wlr_box target_box;
+    struct wlr_box target_box_before_fullscreen;
 
     bool is_floating;
     float floating_width, floating_height;  /// width and height to be used if the view becomes floating
@@ -264,6 +270,8 @@ struct viv_workspace {
 
     struct wl_list views;  /// Ordered list of views associated with this workspace
     struct viv_view *active_view;  /// The view that currently has focus within the workspace
+    struct viv_view *fullscreen_view;  /// The view currently in the fullscreen state, i.e. drawn
+                                       /// on top of everything else regardless of the current layout
 
     struct wl_list server_link;
 };
@@ -291,6 +299,8 @@ struct viv_config {
     float clear_colour[4];
 
     int gap_width;
+
+    bool allow_fullscreen;
 
     char workspaces[MAX_NUM_WORKSPACES][MAX_WORKSPACE_NAME_LENGTH];
 

@@ -13,11 +13,19 @@
 #include "viv_wlr_surface_tree.h"
 #include "viv_workspace.h"
 #include "viv_xdg_popup.h"
+#include "viv_output.h"
 
 /// Return true if the view looks like it should be floating.
-// TODO: Make this more robust
 static bool guess_should_be_floating(struct viv_view *view) {
-    return (view->xdg_surface->toplevel->parent != NULL);
+    if (view->xdg_surface->toplevel->parent) {
+        return true;
+    }
+
+    struct wlr_xdg_toplevel_state *current = &view->xdg_surface->toplevel->current;
+    if (!current->min_width || !current->min_height) {
+        return false;
+    }
+    return ((current->min_width == current->max_width) || (current->min_height == current->max_height));
 }
 
 static void add_xdg_view_global_coords(void *view_pointer, int *x, int *y) {
@@ -34,6 +42,29 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
     wl_list_remove(&view->workspace_link);
 
+    uint32_t view_name_len = 200;
+    char view_name[view_name_len];
+    viv_view_get_string_identifier(view, view_name, view_name_len);
+
+    struct wlr_xdg_toplevel_state *requested = &view->xdg_surface->toplevel->client_pending;
+    bool fullscreen_request_denied = false;
+
+    if (requested->fullscreen && requested->fullscreen_output) {
+        struct viv_output *requested_output = viv_output_of_wlr_output(view->server, requested->fullscreen_output);
+        if (!requested_output) {
+            wlr_log(WLR_ERROR, "Couldn't find requested fullscreen output for \"%s\"", view_name);
+            fullscreen_request_denied = true;
+        } else {
+            if (requested_output->current_workspace->fullscreen_view) {
+                wlr_log(WLR_DEBUG, "Output requested by \"%s\" already has a fullscreen view", view_name);
+                fullscreen_request_denied = true;
+            } else {
+                wlr_log(WLR_DEBUG,"Moving \"%s\" to another workspace before attempting to go fullscreen", view_name);
+                view->workspace = requested_output->current_workspace;
+            }
+        }
+    }
+
     // If this view is actually a child of some parent, which is the
     // case for e.g. file dialogs, we should make it float instead of tiling
     if (guess_should_be_floating(view)) {
@@ -45,9 +76,6 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
         struct wlr_box surface_geometry = { 0 };
         wlr_xdg_surface_get_geometry(xdg_surface, &surface_geometry);
 
-        uint32_t view_name_len = 200;
-        char view_name[view_name_len];
-        viv_view_get_string_identifier(view, view_name, view_name_len);
         wlr_log(WLR_DEBUG,
                 "Mapping xdg-shell surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
                 "min width %d, min height %d, max width %d, max height %d",
@@ -90,6 +118,13 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
         height += view->server->config->border_width * 2;
         viv_view_set_target_box(view, x, y, width, height);
 
+    }
+    if (view->server->config->allow_fullscreen &&
+        !fullscreen_request_denied &&
+        viv_view_set_fullscreen(view, requested->fullscreen)) {
+
+        view->xdg_surface->toplevel->server_pending.fullscreen = requested->fullscreen;
+        wlr_xdg_surface_schedule_configure(view->xdg_surface);
     }
 
     viv_workspace_add_view(view->workspace, view);
@@ -186,16 +221,41 @@ static void xdg_toplevel_set_title(struct wl_listener *listener, void *data) {
 static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *data) {
 	struct viv_view *view = wl_container_of(listener, view, request_fullscreen);
 	struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
-    UNUSED(event);
     const char *app_id = view->xdg_surface->toplevel->app_id;
     wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", app_id, event->fullscreen);
 
-    // Ignore the fullscreen request - we don't currently implement xdg-shell fullscreen,
-    // which requires the surface to be displayed in a specific way
+    if (!view->server->config->allow_fullscreen) {
+        wlr_log(WLR_DEBUG, "Ignoring \"%s\" fullscreen request. \"allow-fullscreen\" is set to false", app_id);
+        wlr_xdg_surface_schedule_configure(event->surface);
+        return;
+    }
 
-    // We are required by the xdg-shell protocol to send a configure to acknowledge the
-    // request, even though we ignored it.
-    wlr_xdg_surface_schedule_configure(view->xdg_surface);
+    if (event->surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+        wlr_log(WLR_ERROR, "\"%s\" requested fullscreen %d for a non-toplevel surface", app_id, event->fullscreen);
+        return;
+    }
+
+    bool fullscreen_request_denied = false;
+    if (event->fullscreen && event->output) {
+        struct viv_output *requested_output = viv_output_of_wlr_output(view->server, event->output);
+        if (!requested_output) {
+            wlr_log(WLR_ERROR, "Couldn't find requested fullscreen output for \"%s\"", app_id);
+            fullscreen_request_denied = true;
+        } else {
+            if (requested_output->current_workspace->fullscreen_view) {
+                wlr_log(WLR_DEBUG, "Output requested by \"%s\" already has a fullscreen view", app_id);
+                fullscreen_request_denied = true;
+            } else {
+                wlr_log(WLR_DEBUG, "Moving \"%s\" to another workspace before attempting to go fullscreen", app_id);
+                viv_view_shift_to_workspace(view, requested_output->current_workspace);
+            }
+        }
+    }
+
+    if (!fullscreen_request_denied && viv_view_set_fullscreen(view, event->fullscreen)) {
+        event->surface->toplevel->server_pending.fullscreen = event->fullscreen;
+    }
+    wlr_xdg_surface_schedule_configure(event->surface);
 }
 
 static void implementation_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
@@ -292,6 +352,38 @@ static bool implementation_oversized(struct viv_view *view) {
     return surface_exceeds_bounds;
 }
 
+static void implementation_inform_unrequested_fullscreen_change(struct viv_view *view) {
+    view->xdg_surface->toplevel->server_pending.fullscreen = (view->workspace->fullscreen_view == view);
+    wlr_xdg_surface_schedule_configure(view->xdg_surface);
+}
+
+static void implementation_grow_and_center_fullscreen(struct viv_view *view) {
+    struct wlr_xdg_toplevel_state *current = &view->xdg_surface->toplevel->current;
+
+    struct viv_output *output = view->workspace->output;
+    if (!output) {
+        return;
+    }
+
+    int width = output->wlr_output->width;
+    if (current->max_width && ((int) current->max_width < width)) {
+        width = current->max_width;
+    } else if (current->min_width && ((int) current->min_width > width)) {
+        width = current->min_width;
+    }
+
+    int height = output->wlr_output->height;
+    if (current->max_height && ((int) current->max_height < height)) {
+        height = current->max_height;
+    } else if (current->min_height && ((int) current->min_height > height)) {
+        height = current->min_height;
+    }
+
+    int x = (output->wlr_output->width - width) / 2;
+    int y = (output->wlr_output->height - height) / 2;
+    viv_view_set_target_box(view, x, y, width, height);
+}
+
 static struct viv_view_implementation xdg_view_implementation = {
     .set_size = &implementation_set_size,
     .set_pos = &implementation_set_pos,
@@ -303,6 +395,8 @@ static struct viv_view_implementation xdg_view_implementation = {
     .close = &implementation_close,
     .is_at = &implementation_is_at,
     .oversized = &implementation_oversized,
+    .inform_unrequested_fullscreen_change = &implementation_inform_unrequested_fullscreen_change,
+    .grow_and_center_fullscreen = &implementation_grow_and_center_fullscreen,
 };
 
 static void handle_xdg_surface_new_popup(struct wl_listener *listener, void *data) {

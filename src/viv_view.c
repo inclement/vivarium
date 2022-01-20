@@ -115,6 +115,19 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
     if (workspace->active_view == NULL) {
         workspace->active_view = view;
     }
+
+    if (cur_workspace->fullscreen_view == view) {
+      if (workspace->fullscreen_view) {
+          wlr_log(WLR_DEBUG, "Removing fullscreen from %s. New workspace already has a fullscreen view", view_name);
+          viv_view_force_remove_fullscreen(view);
+      } else {
+          workspace->fullscreen_view = view;
+          workspace->active_view = view;
+      }
+
+      cur_workspace->fullscreen_view = NULL;
+    }
+
     view->workspace = workspace;
 }
 
@@ -122,7 +135,9 @@ struct viv_view *viv_view_next_in_workspace(struct viv_view *view) {
     struct viv_workspace *workspace = view->workspace;
 
     struct viv_view *next_view;
-    if (wl_list_length(&workspace->views) > 1) {
+    if (workspace->fullscreen_view) {
+        next_view = workspace->fullscreen_view;
+    } else if (wl_list_length(&workspace->views) > 1) {
         struct wl_list *next_link = viv_wl_list_next_ignoring_root(&view->workspace_link, &workspace->views);
         next_view = wl_container_of(next_link, next_view, workspace_link);
     } else {
@@ -136,7 +151,9 @@ struct viv_view *viv_view_prev_in_workspace(struct viv_view *view) {
     struct viv_workspace *workspace = view->workspace;
 
     struct viv_view *prev_view;
-    if (wl_list_length(&workspace->views) > 1) {
+    if (workspace->fullscreen_view) {
+        prev_view = workspace->fullscreen_view;
+    } else if (wl_list_length(&workspace->views) > 1) {
         struct wl_list *prev_link = viv_wl_list_prev_ignoring_root(&view->workspace_link, &workspace->views);
         prev_view = wl_container_of(prev_link, prev_view, workspace_link);
     } else {
@@ -162,6 +179,13 @@ bool viv_view_oversized(struct viv_view *view) {
 void viv_view_damage(struct viv_view *view) {
     struct viv_output *output;
     struct wlr_box geo_box = { 0 };
+
+    if (view->workspace->fullscreen_view == view) {
+        wl_list_for_each(output, &view->server->outputs, link) {
+            viv_output_damage(output);
+        }
+        return;
+    }
 
     viv_view_get_geometry(view, &geo_box);
 
@@ -224,6 +248,10 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
 }
 
 void viv_view_destroy(struct viv_view *view) {
+    if (view->workspace->fullscreen_view == view) {
+        view->workspace->fullscreen_view = NULL;
+    }
+
 	wl_list_remove(&view->workspace_link);
     wlr_log(WLR_INFO, "Destroying view at %p", view);
 
@@ -262,7 +290,7 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     int ox = output_layout_output->x;
     int oy = output_layout_output->y;
     if (!output->current_workspace->active_layout->ignore_excluded_regions &&
-        !view->is_floating) {
+        !view->is_floating && (view->workspace->fullscreen_view != view)) {
         ox += output->excluded_margin.left;
         oy += output->excluded_margin.top;
     }
@@ -279,6 +307,9 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     if (output->current_workspace->active_layout->no_borders ||
         view->is_static) {
         border_width = 0u;
+    } else if (view->workspace->fullscreen_view == view) {
+        gap_width = 0u;
+        border_width = 0u;
     }
 
     width -= 2 * border_width + 2 * gap_width;
@@ -288,8 +319,20 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     viv_view_set_size(view, width, height);
 }
 
+void viv_view_match_target_box_with_surface_geometry(struct viv_view *view) {
+    struct wlr_box box;
+    viv_view_get_geometry(view, &box);
+
+    view->target_box.width = box.width;
+    view->target_box.height = box.height;
+}
+
 void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
     struct viv_workspace *workspace = view->workspace;
+
+    if (workspace->fullscreen_view == view) {
+        viv_view_force_remove_fullscreen(view);
+    }
     if  (view == workspace->active_view) {
         struct viv_seat *seat = viv_server_get_default_seat(view->server);
         seat->wlr_seat->keyboard_state.focused_surface = NULL;
@@ -299,4 +342,53 @@ void viv_view_ensure_not_active_in_workspace(struct viv_view *view) {
             workspace->active_view = NULL;
         }
     }
+}
+
+bool viv_view_set_fullscreen(struct viv_view *view, bool fullscreen) {
+    bool starting_fullscreen = (view->workspace->fullscreen_view == view);
+    if (starting_fullscreen == fullscreen) {
+        return true;
+    }
+
+    char view_name[VIEW_NAME_LEN];
+    viv_view_get_string_identifier(view, view_name, VIEW_NAME_LEN);
+    if (!view->mapped && fullscreen) {
+        wlr_log(WLR_DEBUG, "View %s requesting fullscreen before being mapped", view_name);
+    }
+    if (fullscreen && view->workspace->fullscreen_view) {
+        wlr_log(WLR_DEBUG,
+                "Preventing view %s from going fullscreen. Workspace already has a fullscreen view",
+                view_name);
+
+        return false;
+    }
+
+    if (fullscreen) {
+        view->workspace->fullscreen_view = view;
+        view->target_box_before_fullscreen = view->target_box;
+        view->implementation->grow_and_center_fullscreen(view);
+
+    } else {
+        view->workspace->fullscreen_view = NULL;
+
+        if (view->is_floating) {
+            struct wlr_box *box = &view->target_box_before_fullscreen;
+            if (box->width && box->height) {
+                viv_view_set_target_box(view, box->x, box->y, box->width, box->height);
+            }
+        }
+    }
+
+    viv_workspace_mark_for_relayout(view->workspace);
+
+    return true;
+}
+
+void viv_view_force_remove_fullscreen(struct viv_view *view) {
+    if (view->workspace->fullscreen_view != view) {
+      return;
+    }
+
+    viv_view_set_fullscreen(view, false);
+    view->implementation->inform_unrequested_fullscreen_change(view);
 }
