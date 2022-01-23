@@ -27,7 +27,6 @@ struct viv_render_data {
     struct viv_view *view;
     struct timespec *when;
     bool limit_render_count;
-    uint32_t max_surfaces_to_render;
     int sx;
     int sy;
     pixman_region32_t *damage;
@@ -40,11 +39,6 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
 
     sx += rdata->sx;
     sy += rdata->sy;
-
-    if (rdata->limit_render_count && !rdata->max_surfaces_to_render) {
-        // We already rendered as many surfaces as allowed in this recursive pass
-        return;
-    }
 
     struct viv_view *view = rdata->view;
     struct wlr_output *output = rdata->output;
@@ -113,10 +107,6 @@ static void render_surface(struct wlr_surface *surface, int sx, int sy, void *da
      * prepare another one now if it likes. */
     // TODO: Should be wlr_presentation_surface_sampled_on_output?
     wlr_surface_send_frame_done(surface, rdata->when);
-
-    if (rdata->limit_render_count) {
-        rdata->max_surfaces_to_render--;
-    }
 
     pixman_region32_fini(&applied_surface_bounds);
 }
@@ -282,14 +272,12 @@ static void viv_render_xdg_view(struct wlr_renderer *renderer, struct viv_view *
         pixman_region32_intersect_rect(&surface_bounds, &surface_bounds, target_geometry->x, target_geometry->y, target_geometry->width, target_geometry->height);
     }
 
-    struct wlr_surface *surface = view->xdg_surface->surface;
     struct viv_render_data rdata = {
         .output = output->wlr_output,
         .view = view,
         .renderer = renderer,
         .when = &now,
         .limit_render_count = true,
-        .max_surfaces_to_render = 1 + wl_list_length(&surface->subsurfaces_below) + wl_list_length(&surface->subsurfaces_above),
         .sx = 0,
         .sy = 0,
         .damage = damage,
