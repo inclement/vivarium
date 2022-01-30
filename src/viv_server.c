@@ -11,6 +11,7 @@
 #include <wlr/backend/headless.h>
 #endif
 #include <wlr/backend/libinput.h>
+#include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_device.h>
@@ -198,6 +199,8 @@ static void server_new_output(struct wl_listener *listener, void *data) {
             wlr_output->make,
             wlr_output->model,
             wlr_output->serial);
+
+    wlr_output_init_render(wlr_output, server->allocator, server->renderer);
 
     // Use the monitor's preferred mode for now
     // TODO: Make this configuarble
@@ -652,8 +655,10 @@ void viv_server_init(struct viv_server *server) {
     }
 
     // Init the default wlroots GLES2 renderer
-	server->renderer = wlr_backend_get_renderer(server->backend);
+	server->renderer = wlr_renderer_autocreate(server->backend);
 	wlr_renderer_init_wl_display(server->renderer, server->wl_display);
+
+    server->allocator = wlr_allocator_autocreate(server->backend, server->renderer);
 
     // Create some default wlroots interfaces:
     // Compositor to handle surface allocation
