@@ -33,8 +33,8 @@ jobs:
 
       - name: Install wayland-server
         run: |
-          # The ubuntu-20.04 Wayland Server version is lower than 1.19, so we must install wayland ourselves
-          git clone --depth 1 --branch 1.19.0 https://github.com/wayland-project/wayland.git
+          # The ubuntu-20.04 Wayland Server version is too low so we must install wayland ourselves
+          git clone --depth 1 --branch 1.20.0 https://github.com/wayland-project/wayland.git
           cd wayland
           meson build -Ddocumentation=false
           sudo ninja -C build install
