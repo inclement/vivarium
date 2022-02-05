@@ -165,26 +165,29 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
         uint32_t width = 500;
         uint32_t height = 300;
 
-        // `width` and `height` are deprecated. base_{width,height} indicate the desired size
-        if (size_hints->base_width > 0 && size_hints->base_height > 0) {
-            width = size_hints->base_width;
-            height = size_hints->base_height;
-        } else if (surface->width && surface->height) {
+        if (surface->width && surface->height) {
             width = surface->width;
             height = surface->height;
         }
 
-        if (size_hints->min_width > 0 && width < (uint32_t) size_hints->min_width) {
-            width = size_hints->min_width;
-        }
-        if (size_hints->min_height > 0 && height < (uint32_t) size_hints->min_height) {
-            height = size_hints->min_height;
-        }
-        if (size_hints->max_width > 0 && width > (uint32_t) size_hints->max_width) {
-            width = size_hints->max_width;
-        }
-        if (size_hints->max_height > 0 && height > (uint32_t) size_hints->max_height) {
-            height = size_hints->max_height;
+        if (size_hints) {
+            // `width` and `height` are deprecated. base_{width,height} indicate the desired size
+            if (size_hints->base_width > 0 && size_hints->base_height > 0) {
+                width = size_hints->base_width;
+                height = size_hints->base_height;
+            }
+            if (size_hints->min_width > 0 && width < (uint32_t) size_hints->min_width) {
+                width = size_hints->min_width;
+            }
+            if (size_hints->min_height > 0 && height < (uint32_t) size_hints->min_height) {
+                height = size_hints->min_height;
+            }
+            if (size_hints->max_width > 0 && width > (uint32_t) size_hints->max_width) {
+                width = size_hints->max_width;
+            }
+            if (size_hints->max_height > 0 && height > (uint32_t) size_hints->max_height) {
+                height = size_hints->max_height;
+            }
         }
 
         if (x == 0 && y == 0) {
