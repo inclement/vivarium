@@ -4,6 +4,7 @@
 #include "viv_cursor.h"
 #include "viv_layout.h"
 #include "viv_output.h"
+#include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
 #include "viv_wl_list_utils.h"
@@ -225,6 +226,9 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     viv_cursor_reset_focus(workspace->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+
+    // Inhibitor visibility may have changed
+    viv_server_update_idle_inhibitor_state(workspace->server);
 
     workspace->was_laid_out = true;
 
