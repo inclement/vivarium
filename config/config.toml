@@ -235,9 +235,12 @@ command = "amixer -q sset Master 3%+"
 # - left-handed : If true, switch left and right buttons. Defaults to false.
 # - natural-scroll : If true, switch the scrolling direction from default style (scroll down => go down)
 #                    to so-called "natural" style (scroll down => go up). Defaults to false.
-# - disable-while-typing : If true, disables the device while typing. Defaults to false
+# - disable-while-typing : If true, disables the device while typing. Defaults to false.
 # - click-method : Method for determining which button is being clicked.
 #                  One of "none", "areas" or "fingers". Defaults to "none"
+# - tap-to-click : If true, enable tap to click on touchpads and similar devices. Defaults to true.
+# - tap-button-map : Map from number of fingers (1,2,3) to clicked button when using tap-to-click.
+#                    One of "left-right-middle" or "left-middle-right", other options not supported.
 
 [[libinput-config]]
 # Example libinput-config for a popular trackball:
@@ -249,6 +252,9 @@ left-handed = false
 natural-scroll = false
 disable-while-typing = false
 click-method = "none"
+tap-to-click = true
+tap-button-map = "left-right-middle"
+
 
 ### DEBUG ###
 # Vivarium debug options included for completion. You will want to leave these with their
