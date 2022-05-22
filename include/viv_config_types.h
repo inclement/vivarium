@@ -33,6 +33,7 @@ struct viv_libinput_config {
     enum libinput_config_dwt_state disable_while_typing;
     enum libinput_config_click_method click_method;
     enum libinput_config_tap_state tap_to_click;
+    enum libinput_config_tap_button_map tap_button_map;
 };
 
 #endif

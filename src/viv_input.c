@@ -16,6 +16,7 @@ static void configure_libinput_device(struct libinput_device *device, struct viv
     libinput_device_config_dwt_set_enabled(device, config->disable_while_typing);
     libinput_device_config_click_set_method(device, config->click_method);
     libinput_device_config_tap_set_enabled(device, config->tap_to_click);
+    libinput_device_config_tap_set_button_map(device, config->tap_button_map);
 }
 
 static void try_configure_libinput_device(struct wlr_input_device *device, struct viv_libinput_config *libinput_configs) {

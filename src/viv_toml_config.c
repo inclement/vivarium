@@ -99,6 +99,12 @@ static struct string_map_pair click_method_map[] = {
     NULL_STRING_MAP_PAIR,
 };
 
+static struct string_map_pair tap_button_map_map[] = {
+    {"left-right-middle", LIBINPUT_CONFIG_TAP_MAP_LRM},
+    {"left-middle-right", LIBINPUT_CONFIG_TAP_MAP_LMR},
+    NULL_STRING_MAP_PAIR,
+};
+
 static struct string_map_pair damage_tracking_mode_map[] = {
     {"none", VIV_DAMAGE_TRACKING_NONE},
     {"frame", VIV_DAMAGE_TRACKING_FRAME},
@@ -524,6 +530,19 @@ static void parse_libinput_config_table(toml_table_t *libinput_table, struct viv
         enum libinput_config_tap_state tap_to_click_state = (
             do_tap_to_click ? LIBINPUT_CONFIG_TAP_ENABLED : LIBINPUT_CONFIG_TAP_DISABLED);
         libinput_config->tap_to_click = tap_to_click_state;
+    }
+
+    toml_datum_t tap_button_map = toml_string_in(libinput_table, "tap-button-map");
+    if (tap_button_map.ok) {
+        enum libinput_config_tap_button_map tap_button_map_enum;
+        bool success = look_up_string_in_map(tap_button_map.u.s, tap_button_map_map, &tap_button_map_enum);
+        if (!success) {
+            EXIT_WITH_FORMATTED_MESSAGE("Error parsing [[libinput-config]] for device \"%s\": click-method \"%s\" not recognised",
+                                        device_name.u.s, tap_button_map.u.s);
+        } else {
+            libinput_config->tap_button_map = tap_button_map_enum;
+        }
+        free(tap_button_map.u.s);
     }
 
     wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d, disable while typing %d, click method %d",

@@ -133,7 +133,9 @@ struct viv_libinput_config the_libinput_configs[] = {
         // Method used for registering the type of click (usually touchpad only)
         .click_method = LIBINPUT_CONFIG_CLICK_METHOD_NONE,
         // Enable tap to click (usually touchpad only)
-        .tap_to_click = LIBINPUT_CONFIG_TAP_ENABLED
+        .tap_to_click = LIBINPUT_CONFIG_TAP_ENABLED,
+        // Config used for interpreting tap to click, i.e. mapping from number of fingers to click button
+        .tap_button_map = LIBINPUT_CONFIG_TAP_MAP_LRM,
     },
     TERMINATE_LIBINPUT_CONFIG_LIST(),
 };
