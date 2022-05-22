@@ -515,6 +515,17 @@ static void parse_libinput_config_table(toml_table_t *libinput_table, struct viv
         free(click_method.u.s);
     }
 
+    toml_datum_t tap_to_click = toml_bool_in(libinput_table, "tap-to-click");
+    if (tap_to_click.ok) {
+        int do_tap_to_click = (int)tap_to_click.u.i;
+        // tap-to-click has only two (boolean) options but for some reason (future
+        // extension?) is abstracted as an enum, we provide a boolean interface for
+        // simplicity
+        enum libinput_config_tap_state tap_to_click_state = (
+            do_tap_to_click ? LIBINPUT_CONFIG_TAP_ENABLED : LIBINPUT_CONFIG_TAP_DISABLED);
+        libinput_config->tap_to_click = tap_to_click_state;
+    }
+
     wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d, disable while typing %d, click method %d",
             device_name.u.s, libinput_config->scroll_method, libinput_config->scroll_button,
             libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll, libinput_config->disable_while_typing, libinput_config->click_method);

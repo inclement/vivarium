@@ -132,6 +132,8 @@ struct viv_libinput_config the_libinput_configs[] = {
         .disable_while_typing = LIBINPUT_CONFIG_DWT_DISABLED,
         // Method used for registering the type of click (usually touchpad only)
         .click_method = LIBINPUT_CONFIG_CLICK_METHOD_NONE,
+        // Enable tap to click (usually touchpad only)
+        .tap_to_click = LIBINPUT_CONFIG_TAP_ENABLED
     },
     TERMINATE_LIBINPUT_CONFIG_LIST(),
 };
