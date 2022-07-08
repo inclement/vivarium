@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-    // Start the wlroots backend, which will manage outputs/inputs, becaome the DRM master
+    // Start the wlroots backend, which will manage outputs/inputs, become the DRM master
     // etc.
 	if (!wlr_backend_start(server.backend)) {
 		wlr_backend_destroy(server.backend);
