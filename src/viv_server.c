@@ -31,6 +31,7 @@
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
+#include <wlr/types/wlr_primary_selection_v1.h>
 #include <wlr/util/log.h>
 #include <wlr/version.h>
 #include <wordexp.h>
@@ -662,6 +663,8 @@ void viv_server_init(struct viv_server *server) {
 	wlr_data_device_manager_create(server->wl_display);
 
     wlr_screencopy_manager_v1_create(server->wl_display);
+
+    wlr_primary_selection_v1_device_manager_create(server->wl_display);
 
     // Create an output layout, for handling the arrangement of multiple outputs
 	server->output_layout = wlr_output_layout_create();

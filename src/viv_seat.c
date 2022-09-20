@@ -4,6 +4,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_idle.h>
 #include <wlr/util/edges.h>
+#include <wlr/types/wlr_primary_selection.h>
 
 #include "viv_cursor.h"
 #include "viv_config_support.h"
@@ -400,6 +401,12 @@ static void seat_cursor_frame(struct wl_listener *listener, void *data) {
 	wlr_seat_pointer_notify_frame(seat->wlr_seat);
 }
 
+static void seat_request_set_primary_selection(struct wl_listener *listener, void *data) {
+    struct viv_seat *seat = wl_container_of(listener, seat, request_set_primary_selection);
+    struct wlr_seat_request_set_primary_selection_event *event = data;
+    wlr_seat_set_primary_selection(seat->wlr_seat, event->source, event->serial);
+}
+
 struct viv_seat *viv_seat_create(struct viv_server *server, char *name) {
     struct wl_display *wl_display = server->wl_display;
 
@@ -445,6 +452,12 @@ struct viv_seat *viv_seat_create(struct viv_server *server, char *name) {
 	wl_signal_add(&seat->cursor->events.axis, &seat->cursor_axis);
 	seat->cursor_frame.notify = seat_cursor_frame;
 	wl_signal_add(&seat->cursor->events.frame, &seat->cursor_frame);
+
+
+    seat->request_set_primary_selection.notify = seat_request_set_primary_selection;
+    wl_signal_add(&seat->wlr_seat->events.request_set_primary_selection,
+        &seat->request_set_primary_selection);
+
 
     return seat;
 }
