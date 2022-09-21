@@ -48,8 +48,10 @@ void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
 
 	/* Activate the new surface */
     view->workspace->active_view = view;
-    viv_seat_focus_surface(viv_server_get_default_seat(server), surface);
-    viv_view_set_activated(view, true);
+    if (server->active_output->current_workspace == view->workspace) {
+        // Prevent focus from leaving current workspace
+        viv_seat_focus_view(viv_server_get_default_seat(server), view);
+    }
 }
 
 struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view) {
@@ -200,11 +202,6 @@ void viv_view_damage(struct viv_view *view) {
     }
 }
 
-void viv_view_make_active(struct viv_view *view) {
-    view->workspace->active_view = view;
-    viv_view_focus(view, view->xdg_surface->surface);
-}
-
 void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
     ASSERT(view->implementation->set_size != NULL);
     view->implementation->set_size(view, width, height);
@@ -261,10 +258,6 @@ void viv_view_destroy(struct viv_view *view) {
     }
 
 	free(view);
-}
-
-void viv_view_set_activated(struct viv_view *view, bool activated) {
-    view->implementation->set_activated(view, activated);
 }
 
 bool viv_view_is_at(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy) {

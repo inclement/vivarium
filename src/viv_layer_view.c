@@ -33,7 +33,7 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
 
     if (layer_view->layer_surface->current.keyboard_interactive) {
         struct viv_seat *seat = viv_server_get_default_seat(layer_view->server);
-        viv_seat_focus_surface(seat, layer_view->layer_surface->surface);
+        viv_seat_focus_layer_view(seat, layer_view);
     }
 }
 

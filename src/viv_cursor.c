@@ -119,7 +119,7 @@ static void process_cursor_pass_through_to_surface(struct viv_seat *seat, uint32
     // Act appropriately on whatever view type was found
     if (layer_view) {
         if (layer_view_wants_keyboard_focus(layer_view)) {
-            viv_seat_focus_surface(seat, surface);
+            viv_seat_focus_layer_view(seat, layer_view);
             server->active_output->current_workspace->active_view = NULL;
         }
     } else if (view) {

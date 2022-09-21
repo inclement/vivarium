@@ -46,9 +46,6 @@ bool viv_view_oversized(struct viv_view *view);
 /// Mark the view as damaged on every output
 void viv_view_damage(struct viv_view *view);
 
-/// Make the given view the active view within its workspace
-void viv_view_make_active(struct viv_view *view);
-
 /// Set the size of a view
 void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
 
@@ -64,8 +61,6 @@ void viv_view_init(struct viv_view *view, struct viv_server *server);
 
 /// Clear up view state, remove it from its workspace, and free its memory
 void viv_view_destroy(struct viv_view *view);
-
-void viv_view_set_activated(struct viv_view *view, bool activated);
 
 /// Get the wlr_surface that is the main/toplevel surface for this view
 struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view);

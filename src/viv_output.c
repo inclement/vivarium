@@ -232,15 +232,15 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
         output->current_workspace->output = NULL;
     }
 
+    output->current_workspace = workspace;
+    output->current_workspace->output = output;
+    viv_output_mark_for_relayout(output);
+
     if (workspace->active_view) {
         viv_view_focus(workspace->active_view, NULL);
     } else {
         viv_view_clear_all_focus(output->server);
     }
-
-    output->current_workspace = workspace;
-    output->current_workspace->output = output;
-    viv_output_mark_for_relayout(output);
 }
 
 void viv_output_init(struct viv_output *output, struct viv_server *server, struct wlr_output *wlr_output) {

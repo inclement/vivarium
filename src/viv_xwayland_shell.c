@@ -300,13 +300,6 @@ static void implementation_get_string_identifier(struct viv_view *view, char *ou
              view->xwayland_surface->class);
 }
 
-static void implementation_set_activated(struct viv_view *view, bool activated) {
-	wlr_xwayland_surface_activate(view->xwayland_surface, activated);
-    if (activated) {
-        wlr_xwayland_surface_restack(view->xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
-    }
-}
-
 static struct wlr_surface *implementation_get_toplevel_surface(struct viv_view *view) {
     return view->xwayland_surface->surface;
 }
@@ -392,7 +385,6 @@ static struct viv_view_implementation xwayland_view_implementation = {
     .get_geometry = &implementation_get_geometry,
     .set_tiled = &implementation_set_tiled,
     .get_string_identifier = &implementation_get_string_identifier,
-    .set_activated = &implementation_set_activated,
     .get_toplevel_surface = &implementation_get_toplevel_surface,
     .close = &implementation_close,
     .is_at = &implementation_is_at,
