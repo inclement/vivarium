@@ -144,7 +144,6 @@ void viv_seat_create_new_keyboard(struct viv_seat *seat, struct wlr_input_device
 	wl_list_insert(&seat->keyboards, &keyboard->link);
 }
 static void focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
-    ASSERT(surface != NULL);
     struct wlr_seat *wlr_seat = seat->wlr_seat;
 	struct wlr_surface *prev_surface = wlr_seat->keyboard_state.focused_surface;
 	if (prev_surface == surface) {
@@ -152,26 +151,28 @@ static void focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
 		return;
 	}
 
-    if (!viv_seat_input_allowed(seat, surface)) {
-        wlr_log(WLR_DEBUG, "Denied focus change to surface %p, surface not owned by the exclusive client", surface);
-        return;
-    }
-
-    if (wlr_surface_is_xdg_surface(surface)) {
-        struct wlr_xdg_surface *next = wlr_xdg_surface_from_wlr_surface(surface);
-        wlr_xdg_toplevel_set_activated(next, true);
-#ifdef XWAYLAND
-    } else if (wlr_surface_is_xwayland_surface(surface)) {
-        struct wlr_xwayland_surface *next = wlr_xwayland_surface_from_wlr_surface(surface);
-
-        // Don't change focus for popups
-        if (next->override_redirect) {
+    if (surface) {
+        if (!viv_seat_input_allowed(seat, surface)) {
+            wlr_log(WLR_DEBUG, "Denied focus change to surface %p, surface not owned by the exclusive client", surface);
             return;
         }
 
-        wlr_xwayland_surface_activate(next, true);
-        wlr_xwayland_surface_restack(next, NULL, XCB_STACK_MODE_ABOVE);
+        if (wlr_surface_is_xdg_surface(surface)) {
+            struct wlr_xdg_surface *next = wlr_xdg_surface_from_wlr_surface(surface);
+            wlr_xdg_toplevel_set_activated(next, true);
+#ifdef XWAYLAND
+        } else if (wlr_surface_is_xwayland_surface(surface)) {
+            struct wlr_xwayland_surface *next = wlr_xwayland_surface_from_wlr_surface(surface);
+
+            // Don't change focus for popups
+            if (next->override_redirect) {
+                return;
+            }
+
+            wlr_xwayland_surface_activate(next, true);
+            wlr_xwayland_surface_restack(next, NULL, XCB_STACK_MODE_ABOVE);
 #endif
+        }
     }
 
 	if (prev_surface) {
@@ -195,6 +196,11 @@ static void focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
         }
 	}
 
+    if (!surface) {
+        wlr_seat_keyboard_notify_clear_focus(seat->wlr_seat);
+        return;
+    }
+
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wlr_seat);
 
 	/*
@@ -206,11 +212,15 @@ static void focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
 }
 
 void viv_seat_focus_view(struct viv_seat *seat, struct viv_view *view) {
-  focus_surface(seat, viv_view_get_toplevel_surface(view));
+    focus_surface(seat, viv_view_get_toplevel_surface(view));
 }
 
 void viv_seat_focus_layer_view(struct viv_seat *seat, struct viv_layer_view *view) {
-  focus_surface(seat, view->layer_surface->surface);
+    focus_surface(seat, view->layer_surface->surface);
+}
+
+void viv_seat_clear_focus(struct viv_seat *seat) {
+    focus_surface(seat, NULL);
 }
 
 void viv_seat_set_exclusive_client(struct viv_seat *seat, struct wl_client *client) {

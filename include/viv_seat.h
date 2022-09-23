@@ -13,6 +13,9 @@ void viv_seat_focus_layer_view(struct viv_seat *seat, struct viv_layer_view *vie
 /// Give keyboard focus to the given view
 void viv_seat_focus_view(struct viv_seat *seat, struct viv_view *view);
 
+/// Clear the focus
+void viv_seat_clear_focus(struct viv_seat *seat);
+
 /// Create a new viv_keyboard in the given seat
 void viv_seat_create_new_keyboard(struct viv_seat *seat, struct wlr_input_device *device);
 

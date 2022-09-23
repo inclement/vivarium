@@ -27,7 +27,7 @@ void viv_view_bring_to_front(struct viv_view *view) {
 
 void viv_view_clear_all_focus(struct viv_server *server) {
     struct viv_seat *seat = viv_server_get_default_seat(server);
-    wlr_seat_keyboard_notify_clear_focus(seat->wlr_seat);
+    viv_seat_clear_focus(seat);
 }
 
 void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
