@@ -172,9 +172,9 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&output->mode.link);
     wl_list_remove(&output->destroy.link);
 
-    free(output);
-
     viv_server_update_output_manager_config(output->server);
+
+    free(output);
 }
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
