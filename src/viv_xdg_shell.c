@@ -123,7 +123,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
         !fullscreen_request_denied &&
         viv_view_set_fullscreen(view, requested->fullscreen)) {
 
-        view->xdg_surface->toplevel->pending.fullscreen = requested->fullscreen;
+        view->xdg_surface->toplevel->scheduled.fullscreen = requested->fullscreen;
         wlr_xdg_surface_schedule_configure(view->xdg_surface);
     }
 
@@ -253,7 +253,7 @@ static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *
     }
 
     if (!fullscreen_request_denied && viv_view_set_fullscreen(view, event->fullscreen)) {
-        event->surface->toplevel->pending.fullscreen = event->fullscreen;
+        event->surface->toplevel->scheduled.fullscreen = event->fullscreen;
     }
     wlr_xdg_surface_schedule_configure(event->surface);
 }
@@ -353,7 +353,7 @@ static bool implementation_oversized(struct viv_view *view) {
 }
 
 static void implementation_inform_unrequested_fullscreen_change(struct viv_view *view) {
-    view->xdg_surface->toplevel->pending.fullscreen = (view->workspace->fullscreen_view == view);
+    view->xdg_surface->toplevel->scheduled.fullscreen = (view->workspace->fullscreen_view == view);
     wlr_xdg_surface_schedule_configure(view->xdg_surface);
 }
 
