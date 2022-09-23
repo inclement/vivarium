@@ -1,4 +1,4 @@
 [wrap-git]
 directory = wlroots
 url = https://gitlab.freedesktop.org/wlroots/wlroots.git
-revision = tags/0.15.0
+revision = tags/0.15.1

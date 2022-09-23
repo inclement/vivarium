@@ -111,11 +111,11 @@ static void layer_surface_surface_commit(struct wl_listener *listener, void *dat
     struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, surface_commit);
     UNUSED(data);
 
-    if (!layer_view->layer_surface.current.committed && layer_view->layer_surface.mapped == layer_view->mapped) {
+    if (!layer_view->layer_surface->current.committed && layer_view->layer_surface->mapped == layer_view->mapped) {
         return;
     }
 
-    layer_view->mapped = layer_view->layer_surface.mapped;
+    layer_view->mapped = layer_view->layer_surface->mapped;
     viv_layers_arrange(layer_view->output);
     viv_output_mark_for_relayout(layer_view->output);
 }
