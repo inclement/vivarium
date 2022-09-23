@@ -26,7 +26,6 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
     wlr_log(WLR_DEBUG, "Mapping a layer surface");
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, map);
-	layer_view->mapped = true;
 
     viv_output_mark_for_relayout(layer_view->output);
 
@@ -112,9 +111,12 @@ static void layer_surface_surface_commit(struct wl_listener *listener, void *dat
     struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, surface_commit);
     UNUSED(data);
 
-    // In wlroots >= 0.15, looking at layer_view->layer_surface->current.commited along
-    // with tracking changes to layer_view->layer_surface can be
-    // used to determine if any relayout worthy changes were committed. We always do it for now
+    if (!layer_view->layer_surface.current.committed && layer_view->layer_surface.mapped == layer_view->mapped) {
+        return;
+    }
+
+    layer_view->mapped = layer_view->layer_surface.mapped;
+    viv_layers_arrange(layer_view->output);
     viv_output_mark_for_relayout(layer_view->output);
 }
 
