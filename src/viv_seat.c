@@ -389,7 +389,7 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
         }
 
         if (view != active_view) {
-            viv_view_focus(view, surface);
+            viv_view_focus(view);
         }
 
         // If making a window floating, always bring it to the front

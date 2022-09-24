@@ -58,7 +58,7 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
     }
 
     if (active_view != NULL) {
-        viv_view_focus(active_view, NULL);
+        viv_view_focus(active_view);
     }
 
     if (layer_view->surface_tree) {

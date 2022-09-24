@@ -11,9 +11,9 @@ void viv_view_bring_to_front(struct viv_view *view);
 /// Clear focus from all views handled by the server;
 void viv_view_clear_all_focus(struct viv_server *server);
 
-/// Make the given view and surface the current focus of keyboard input, and the active
+/// Make the given view the current focus of keyboard input, and the active
 /// view in the current workspace
-void viv_view_focus(struct viv_view *view, struct wlr_surface *surface);
+void viv_view_focus(struct viv_view *view);
 
 /// Mark the given view as floating, and trigger a workspace layout update if necessary
 void viv_view_ensure_floating(struct viv_view *view);

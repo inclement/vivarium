@@ -28,7 +28,7 @@ void viv_workspace_focus_next_window(struct viv_workspace *workspace) {
     }
 
     if (next_view) {
-        viv_view_focus(next_view, viv_view_get_toplevel_surface(next_view));
+        viv_view_focus(next_view);
     } else {
         wlr_log(WLR_DEBUG, "Could not get next window, no active view");
     }
@@ -44,7 +44,7 @@ void viv_workspace_focus_prev_window(struct viv_workspace *workspace) {
     }
 
     if (prev_view) {
-        viv_view_focus(prev_view, viv_view_get_toplevel_surface(prev_view));
+        viv_view_focus(prev_view);
     } else {
         wlr_log(WLR_DEBUG, "Could not get prev window, no active view");
     }
@@ -244,7 +244,7 @@ void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *vi
     }
 
     if (!workspace->fullscreen_view || (workspace->fullscreen_view == view)) {
-        viv_view_focus(view, viv_view_get_toplevel_surface(view));
+        viv_view_focus(view);
     }
 
     viv_workspace_mark_for_relayout(workspace);

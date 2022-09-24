@@ -30,13 +30,10 @@ void viv_view_clear_all_focus(struct viv_server *server) {
     viv_seat_clear_focus(seat);
 }
 
-void viv_view_focus(struct viv_view *view, struct wlr_surface *surface) {
+void viv_view_focus(struct viv_view *view) {
 	if (view == NULL) {
 		return;
 	}
-    if (surface == NULL) {
-        surface = viv_view_get_toplevel_surface(view);
-    }
 	struct viv_server *server = view->server;
 
     // Damage both previous and newly-active surface
@@ -105,7 +102,7 @@ void viv_view_shift_to_workspace(struct viv_view *view, struct viv_workspace *wo
     wl_list_insert(&workspace->views, &view->workspace_link);
 
     if (next_view != NULL) {
-        viv_view_focus(next_view, NULL);
+        viv_view_focus(next_view);
     } else {
         viv_view_clear_all_focus(view->server);
     }

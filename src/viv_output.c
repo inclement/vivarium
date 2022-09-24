@@ -181,7 +181,7 @@ void viv_output_make_active(struct viv_output *output) {
     viv_output_damage(output->server->active_output);
 
     if (output->current_workspace->active_view) {
-        viv_view_focus(output->current_workspace->active_view, NULL);
+        viv_view_focus(output->current_workspace->active_view);
     }
 }
 
@@ -237,7 +237,7 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
     viv_output_mark_for_relayout(output);
 
     if (workspace->active_view) {
-        viv_view_focus(workspace->active_view, NULL);
+        viv_view_focus(workspace->active_view);
     } else {
         viv_view_clear_all_focus(output->server);
     }

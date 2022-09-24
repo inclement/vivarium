@@ -132,7 +132,7 @@ static void process_cursor_pass_through_to_surface(struct viv_seat *seat, uint32
         }
 
         if ((view != active_view) && server->config->focus_follows_mouse) {
-            viv_view_focus(view, surface);
+            viv_view_focus(view);
         }
     } else {
         // No focusable surface under the cursor => use the default image
