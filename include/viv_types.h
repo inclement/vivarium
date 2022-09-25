@@ -379,6 +379,8 @@ struct viv_seat {
     struct wl_listener start_drag;
     struct wl_listener drag_destroy;
 
+    struct wl_listener request_set_primary_selection;
+
     struct wl_list server_link;
 };
 
