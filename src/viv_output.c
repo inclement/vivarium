@@ -241,6 +241,10 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
     } else {
         viv_view_clear_all_focus(output->server);
     }
+
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    viv_cursor_reset_focus(workspace->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
 }
 
 void viv_output_init(struct viv_output *output, struct viv_server *server, struct wlr_output *wlr_output) {
