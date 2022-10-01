@@ -2,7 +2,7 @@
 #define VIV_TYPES_H
 
 #include <wayland-server-core.h>
-#include <wlr/types/wlr_box.h>
+#include <wlr/util/box.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
@@ -45,6 +45,7 @@ struct viv_server {
 	struct wl_display *wl_display;
 	struct wlr_backend *backend;
 	struct wlr_renderer *renderer;
+    struct wlr_allocator *allocator;
     struct wlr_compositor *compositor;
 
 	struct wlr_xdg_shell *xdg_shell;

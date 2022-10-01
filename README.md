@@ -4,7 +4,7 @@
 
 IRC chat: [#vivarium](https://web.libera.chat/?channels=#vivarium) on [irc.libera.chat:6697](ircs://irc.libera.chat:6697)
 
-A dynamic tiling [Wayland](https://wayland.freedesktop.org/) compositor using [wlroots](https://github.com/swaywm/wlroots), with desktop semantics inspired by [xmonad](https://xmonad.org/).
+A dynamic tiling [Wayland](https://wayland.freedesktop.org/) compositor using [wlroots](https://gitlab.freedesktop.org/wlroots/wlroots), with desktop semantics inspired by [xmonad](https://xmonad.org/).
 
 <p align="center">
   <img src="media/readme_screenshot.png" width="80%" alt="Vivarium screenshot showing several tiled windows">
