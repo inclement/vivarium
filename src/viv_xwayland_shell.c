@@ -302,6 +302,9 @@ static void implementation_get_string_identifier(struct viv_view *view, char *ou
 
 static void implementation_set_activated(struct viv_view *view, bool activated) {
 	wlr_xwayland_surface_activate(view->xwayland_surface, activated);
+    if (activated) {
+        wlr_xwayland_surface_restack(view->xwayland_surface, NULL, XCB_STACK_MODE_ABOVE);
+    }
 }
 
 static struct wlr_surface *implementation_get_toplevel_surface(struct viv_view *view) {
