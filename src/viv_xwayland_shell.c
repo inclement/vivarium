@@ -265,6 +265,14 @@ static void event_xwayland_request_fullscreen(struct wl_listener *listener, void
     wlr_xwayland_surface_set_fullscreen(surface, view->workspace->fullscreen_view == view );
 }
 
+static void event_xwayland_request_configure(struct wl_listener *listener, void *data) {
+    struct viv_view *view = wl_container_of(listener, view, request_configure);
+    struct wlr_xwayland_surface_configure_event *event = data;
+    struct wlr_xwayland_surface *surface = view->xwayland_surface;
+
+    wlr_xwayland_surface_configure(surface, event->x, event->y, event->width, event->height);
+}
+
 static void event_xwayland_surface_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	struct viv_view *view = wl_container_of(listener, view, destroy);
@@ -414,6 +422,8 @@ void viv_xwayland_view_init(struct viv_view *view, struct wlr_xwayland_surface *
 	wl_signal_add(&xwayland_surface->events.destroy, &view->destroy);
     view->request_fullscreen.notify = event_xwayland_request_fullscreen;
     wl_signal_add(&xwayland_surface->events.request_fullscreen, &view->request_fullscreen);
+    view->request_configure.notify = event_xwayland_request_configure;
+    wl_signal_add(&xwayland_surface->events.request_configure, &view->request_configure);
 }
 
 void viv_xwayland_lookup_atoms(struct viv_server *server) {

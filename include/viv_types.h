@@ -242,6 +242,10 @@ struct viv_view {
 	struct wl_listener request_minimize;
 	struct wl_listener set_title;
 	struct wl_listener request_fullscreen;
+#ifdef XWAYLAND
+	struct wl_listener request_configure;
+#endif
+
 	bool mapped;
 	int x, y;
 
