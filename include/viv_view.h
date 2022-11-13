@@ -11,9 +11,9 @@ void viv_view_bring_to_front(struct viv_view *view);
 /// Clear focus from all views handled by the server;
 void viv_view_clear_all_focus(struct viv_server *server);
 
-/// Make the given view and surface the current focus of keyboard input, and the active
+/// Make the given view the current focus of keyboard input, and the active
 /// view in the current workspace
-void viv_view_focus(struct viv_view *view, struct wlr_surface *surface);
+void viv_view_focus(struct viv_view *view);
 
 /// Mark the given view as floating, and trigger a workspace layout update if necessary
 void viv_view_ensure_floating(struct viv_view *view);
@@ -46,9 +46,6 @@ bool viv_view_oversized(struct viv_view *view);
 /// Mark the view as damaged on every output
 void viv_view_damage(struct viv_view *view);
 
-/// Make the given view the active view within its workspace
-void viv_view_make_active(struct viv_view *view);
-
 /// Set the size of a view
 void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
 
@@ -64,8 +61,6 @@ void viv_view_init(struct viv_view *view, struct viv_server *server);
 
 /// Clear up view state, remove it from its workspace, and free its memory
 void viv_view_destroy(struct viv_view *view);
-
-void viv_view_set_activated(struct viv_view *view, bool activated);
 
 /// Get the wlr_surface that is the main/toplevel surface for this view
 struct wlr_surface *viv_view_get_toplevel_surface(struct viv_view *view);

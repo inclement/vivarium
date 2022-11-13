@@ -189,7 +189,6 @@ struct viv_view_implementation {
     void (*get_geometry)(struct viv_view *view, struct wlr_box *geo_box);
     void (*set_tiled)(struct viv_view *view, uint32_t edges);
     void (*get_string_identifier)(struct viv_view *view, char *output, size_t max_len);
-    void (*set_activated)(struct viv_view *view, bool activated);
     struct wlr_surface *(*get_toplevel_surface)(struct viv_view *view);
     void (*close)(struct viv_view *view);
     bool (*is_at)(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy);

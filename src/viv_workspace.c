@@ -28,7 +28,7 @@ void viv_workspace_focus_next_window(struct viv_workspace *workspace) {
     }
 
     if (next_view) {
-        viv_view_focus(next_view, viv_view_get_toplevel_surface(next_view));
+        viv_view_focus(next_view);
     } else {
         wlr_log(WLR_DEBUG, "Could not get next window, no active view");
     }
@@ -44,7 +44,7 @@ void viv_workspace_focus_prev_window(struct viv_workspace *workspace) {
     }
 
     if (prev_view) {
-        viv_view_focus(prev_view, viv_view_get_toplevel_surface(prev_view));
+        viv_view_focus(prev_view);
     } else {
         wlr_log(WLR_DEBUG, "Could not get prev window, no active view");
     }
@@ -111,33 +111,6 @@ void viv_workspace_increment_counter(struct viv_workspace *workspace, uint32_t i
     }
 
     viv_workspace_mark_for_relayout(workspace);
-}
-
-void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspaces) {
-    if (wl_list_length(workspaces) < 2) {
-        wlr_log(WLR_DEBUG, "Not switching workspaces as only %d present\n", wl_list_length(workspaces));
-        return;
-    }
-
-    struct wl_list *new_workspace_link = workspaces->prev;
-
-    struct viv_workspace *new_workspace = wl_container_of(new_workspace_link, new_workspace, server_link);
-    struct viv_workspace *old_workspace = wl_container_of(workspaces->next, old_workspace, server_link);
-
-    wl_list_remove(new_workspace_link);
-    wl_list_insert(workspaces, new_workspace_link);
-
-    old_workspace->output = NULL;
-    new_workspace->output = output;
-    output->current_workspace = new_workspace;
-
-    viv_output_mark_for_relayout(output);
-
-    if (new_workspace->active_view != NULL) {
-        viv_view_focus(new_workspace->active_view, viv_view_get_toplevel_surface(new_workspace->active_view));
-    }
-
-    wlr_log(WLR_INFO, "Workspace changed from %s to %s", old_workspace->name, new_workspace->name);
 }
 
 void viv_workspace_next_layout(struct viv_workspace *workspace) {
@@ -271,7 +244,7 @@ void viv_workspace_add_view(struct viv_workspace *workspace, struct viv_view *vi
     }
 
     if (!workspace->fullscreen_view || (workspace->fullscreen_view == view)) {
-        viv_view_focus(view, viv_view_get_toplevel_surface(view));
+        viv_view_focus(view);
     }
 
     viv_workspace_mark_for_relayout(workspace);

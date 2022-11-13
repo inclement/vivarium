@@ -181,7 +181,7 @@ void viv_output_make_active(struct viv_output *output) {
     viv_output_damage(output->server->active_output);
 
     if (output->current_workspace->active_view) {
-        viv_view_focus(output->current_workspace->active_view, NULL);
+        viv_view_focus(output->current_workspace->active_view);
     }
 }
 
@@ -232,15 +232,19 @@ void viv_output_display_workspace(struct viv_output *output, struct viv_workspac
         output->current_workspace->output = NULL;
     }
 
+    output->current_workspace = workspace;
+    output->current_workspace->output = output;
+    viv_output_mark_for_relayout(output);
+
     if (workspace->active_view) {
-        viv_view_focus(workspace->active_view, NULL);
+        viv_view_focus(workspace->active_view);
     } else {
         viv_view_clear_all_focus(output->server);
     }
 
-    output->current_workspace = workspace;
-    output->current_workspace->output = output;
-    viv_output_mark_for_relayout(output);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    viv_cursor_reset_focus(workspace->server, (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
 }
 
 void viv_output_init(struct viv_output *output, struct viv_server *server, struct wlr_output *wlr_output) {

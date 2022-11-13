@@ -8,8 +8,6 @@ void viv_workspace_increment_divide(struct viv_workspace *workspace, float incre
 
 void viv_workspace_increment_counter(struct viv_workspace *workspace, uint32_t increment);
 
-void viv_workspace_swap_out(struct viv_output *output, struct wl_list *workspaces);
-
 void viv_workspace_focus_next_window(struct viv_workspace *workspace);
 void viv_workspace_focus_prev_window(struct viv_workspace *workspace);
 

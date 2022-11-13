@@ -292,10 +292,6 @@ static void implementation_get_string_identifier(struct viv_view *view, char *ou
              view->xdg_surface->toplevel->title);
 }
 
-static void implementation_set_activated(struct viv_view *view, bool activated) {
-	wlr_xdg_toplevel_set_activated(view->xdg_surface, activated);
-}
-
 static struct wlr_surface *implementation_get_toplevel_surface(struct viv_view *view) {
     return view->xdg_surface->surface;
 }
@@ -390,7 +386,6 @@ static struct viv_view_implementation xdg_view_implementation = {
     .get_geometry = &implementation_get_geometry,
     .set_tiled = &implementation_set_tiled,
     .get_string_identifier = &implementation_get_string_identifier,
-    .set_activated = &implementation_set_activated,
     .get_toplevel_surface = &implementation_get_toplevel_surface,
     .close = &implementation_close,
     .is_at = &implementation_is_at,
