@@ -7,6 +7,7 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
+#include <wlr/types/wlr_gamma_control_v1.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "viv_config_support.h"
@@ -71,6 +72,8 @@ struct viv_server {
     struct wlr_idle_inhibit_manager_v1 *idle_inhibit_manager;
     struct wl_listener new_idle_inhibitor;
     struct wl_listener destroy_idle_inhibitor;
+
+    struct wlr_gamma_control_manager_v1 *gamma_control_manager;
 
 	struct wl_listener new_input;
 
