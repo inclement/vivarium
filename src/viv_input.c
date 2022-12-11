@@ -17,6 +17,9 @@ static void configure_libinput_device(struct libinput_device *device, struct viv
     libinput_device_config_click_set_method(device, config->click_method);
     libinput_device_config_tap_set_enabled(device, config->tap_to_click);
     libinput_device_config_tap_set_button_map(device, config->tap_button_map);
+    libinput_device_config_tap_set_button_map(device, config->tap_button_map);
+    libinput_device_config_accel_set_profile(device, config->accel_profile);
+    libinput_device_config_accel_set_speed(device, config->accel_speed);
 }
 
 static void try_configure_libinput_device(struct wlr_input_device *device, struct viv_libinput_config *libinput_configs) {

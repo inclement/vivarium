@@ -105,6 +105,13 @@ static struct string_map_pair tap_button_map_map[] = {
     NULL_STRING_MAP_PAIR,
 };
 
+static struct string_map_pair accel_profile_map[] = {
+    {"none", LIBINPUT_CONFIG_ACCEL_PROFILE_NONE},
+    {"flat", LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT},
+    {"adaptive", LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE},
+    NULL_STRING_MAP_PAIR,
+};
+
 static struct string_map_pair damage_tracking_mode_map[] = {
     {"none", VIV_DAMAGE_TRACKING_NONE},
     {"frame", VIV_DAMAGE_TRACKING_FRAME},
@@ -545,9 +552,28 @@ static void parse_libinput_config_table(toml_table_t *libinput_table, struct viv
         free(tap_button_map.u.s);
     }
 
-    wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d, disable while typing %d, click method %d",
+    toml_datum_t accel_profile = toml_string_in(libinput_table, "accel-profile");
+    if (accel_profile.ok) {
+        enum libinput_config_accel_profile accel_profile_enum;
+        bool success = look_up_string_in_map(accel_profile.u.s, accel_profile_map, &accel_profile_enum);
+        if (!success) {
+            EXIT_WITH_FORMATTED_MESSAGE("Error parsing [[libinput-config]] for device \"%s\": accel-profile \"%s\" not recognised",
+                                        device_name.u.s, accel_profile.u.s);
+        } else {
+            libinput_config->accel_profile = accel_profile_enum;
+        }
+        free(accel_profile.u.s);
+    }
+
+    toml_datum_t accel_speed = toml_double_in(libinput_table, "accel-speed");
+    if (accel_speed.ok) {
+        libinput_config->accel_speed = accel_speed.u.d;
+    }
+
+    wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d, disable while typing %d, click method %d, accel profile %d, accel speed %f",
             device_name.u.s, libinput_config->scroll_method, libinput_config->scroll_button,
-            libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll, libinput_config->disable_while_typing, libinput_config->click_method);
+            libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll, libinput_config->disable_while_typing, libinput_config->click_method, 
+            libinput_config->accel_profile, libinput_config->accel_speed);
 
     libinput_config->device_name = device_name.u.s;
 }
