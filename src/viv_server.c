@@ -728,6 +728,8 @@ void viv_server_init(struct viv_server *server) {
     // handle destroy is added individually to inhibitors
     server->destroy_idle_inhibitor.notify = handle_destroy_idle_inhibitor;
 
+    server->gamma_control_manager = wlr_gamma_control_manager_v1_create(server->wl_display);
+
     struct wlr_server_decoration_manager *decoration_manager = wlr_server_decoration_manager_create(server->wl_display);
     server->decoration_manager = decoration_manager;
     wlr_server_decoration_manager_set_default_mode(decoration_manager, WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
