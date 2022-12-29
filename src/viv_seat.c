@@ -208,7 +208,9 @@ static void focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
 	 * track of this and automatically send key events to the appropriate
 	 * clients without additional work on your part.
 	 */
-	wlr_seat_keyboard_notify_enter(wlr_seat, surface, keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+    if (keyboard) {
+        wlr_seat_keyboard_notify_enter(wlr_seat, surface, keyboard->keycodes, keyboard->num_keycodes, &keyboard->modifiers);
+    }
 }
 
 void viv_seat_focus_view(struct viv_seat *seat, struct viv_view *view) {
