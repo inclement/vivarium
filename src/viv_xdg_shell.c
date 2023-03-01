@@ -92,8 +92,8 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 
         uint32_t x = 0;
         uint32_t y = 0;
-        uint32_t width = surface_geometry.width;
-        uint32_t height = surface_geometry.height;
+        int32_t width = surface_geometry.width;
+        int32_t height = surface_geometry.height;
 
         if (width < current->min_width) {
             width = current->min_width;
@@ -219,25 +219,28 @@ static void xdg_toplevel_set_title(struct wl_listener *listener, void *data) {
 }
 
 static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *data) {
+    UNUSED(data);
 	struct viv_view *view = wl_container_of(listener, view, request_fullscreen);
-	struct wlr_xdg_toplevel_set_fullscreen_event *event = data;
+    struct wlr_xdg_surface *surface = view->xdg_surface;
+    bool fullscreen = surface->toplevel->requested.fullscreen;
+    struct wlr_output *fullscreen_output = surface->toplevel->requested.fullscreen_output;
     const char *app_id = view->xdg_surface->toplevel->app_id;
-    wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", app_id, event->fullscreen);
+    wlr_log(WLR_DEBUG, "\"%s\" requested fullscreen %d", app_id, fullscreen);
 
     if (!view->server->config->allow_fullscreen) {
         wlr_log(WLR_DEBUG, "Ignoring \"%s\" fullscreen request. \"allow-fullscreen\" is set to false", app_id);
-        wlr_xdg_surface_schedule_configure(event->surface);
+        wlr_xdg_surface_schedule_configure(surface);
         return;
     }
 
-    if (event->surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
-        wlr_log(WLR_ERROR, "\"%s\" requested fullscreen %d for a non-toplevel surface", app_id, event->fullscreen);
+    if (surface->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+        wlr_log(WLR_ERROR, "\"%s\" requested fullscreen %d for a non-toplevel surface", app_id, fullscreen);
         return;
     }
 
     bool fullscreen_request_denied = false;
-    if (event->fullscreen && event->output) {
-        struct viv_output *requested_output = viv_output_of_wlr_output(view->server, event->output);
+    if (fullscreen && fullscreen_output) {
+        struct viv_output *requested_output = viv_output_of_wlr_output(view->server, fullscreen_output);
         if (!requested_output) {
             wlr_log(WLR_ERROR, "Couldn't find requested fullscreen output for \"%s\"", app_id);
             fullscreen_request_denied = true;
@@ -252,15 +255,16 @@ static void xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *
         }
     }
 
-    if (!fullscreen_request_denied && viv_view_set_fullscreen(view, event->fullscreen)) {
-        event->surface->toplevel->scheduled.fullscreen = event->fullscreen;
+    if (!fullscreen_request_denied && viv_view_set_fullscreen(view, fullscreen)) {
+        surface->toplevel->scheduled.fullscreen = fullscreen;
     }
-    wlr_xdg_surface_schedule_configure(event->surface);
+    wlr_xdg_surface_schedule_configure(surface);
 }
 
 static void implementation_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
     ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
-    wlr_xdg_toplevel_set_size(view->xdg_surface, width, height);
+    ASSERT(view->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+    wlr_xdg_toplevel_set_size(view->xdg_surface->toplevel, width, height);
 }
 
 static void implementation_set_pos(struct viv_view *view, uint32_t x, uint32_t y) {
@@ -283,7 +287,8 @@ static void implementation_get_geometry(struct viv_view *view, struct wlr_box *g
 
 static void implementation_set_tiled(struct viv_view *view, uint32_t edges) {
     ASSERT(view->type == VIV_VIEW_TYPE_XDG_SHELL);
-    wlr_xdg_toplevel_set_tiled(view->xdg_surface, edges);
+    ASSERT(view->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+    wlr_xdg_toplevel_set_tiled(view->xdg_surface->toplevel, edges);
 }
 
 static void implementation_get_string_identifier(struct viv_view *view, char *output, size_t max_len) {
@@ -297,7 +302,8 @@ static struct wlr_surface *implementation_get_toplevel_surface(struct viv_view *
 }
 
 static void implementation_close(struct viv_view *view) {
-    wlr_xdg_toplevel_send_close(view->xdg_surface);
+    ASSERT(view->xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL);
+    wlr_xdg_toplevel_send_close(view->xdg_surface->toplevel);
 }
 
 static bool implementation_is_at(struct viv_view *view, double lx, double ly, struct wlr_surface **surface, double *sx, double *sy) {

@@ -48,6 +48,7 @@ struct viv_server {
 	struct wlr_renderer *renderer;
     struct wlr_allocator *allocator;
     struct wlr_compositor *compositor;
+    struct wlr_subcompositor *subcompositor;
 
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;
@@ -291,7 +292,7 @@ struct viv_workspace {
 struct viv_keyboard {
 	struct wl_list link;
     struct viv_seat *seat;
-	struct wlr_input_device *device;
+	struct wlr_keyboard *wlr_keyboard;
 
     struct wl_listener destroy;
 	struct wl_listener modifiers;
