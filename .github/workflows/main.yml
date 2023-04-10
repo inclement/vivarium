@@ -13,7 +13,7 @@ on:
 jobs:
   build:
     name: Build and run Vivarium
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
 
@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
            sudo apt-get update
-           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev xwayland waybar swaybg graphviz libxcb-icccm4 libxcb-ewmh-dev libxcb-ewmh2 libxcb-icccm4-dev libxcb-res0 libxcb-res0-dev libpciaccess0 libpciaccess-dev
+           sudo apt-get install libwayland-dev libwayland-server0 wayland-protocols libxkbcommon-dev libwayland-egl1 libegl-dev libdrm-dev libgles-dev libgbm-dev libinput-dev libudev-dev libpixman-1-dev libpixman-1-0 libxcb-composite0-dev xcb libxcb-render0-dev libxcb-xfixes0-dev xwayland waybar swaybg graphviz libxcb-icccm4 libxcb-ewmh-dev libxcb-ewmh2 libxcb-icccm4-dev libxcb-res0 libxcb-res0-dev libpciaccess0 libpciaccess-dev hwdata
            python -m pip install --upgrade pip
            python -m pip install ninja
            python -m pip install meson
@@ -33,28 +33,28 @@ jobs:
 
       - name: Install wayland-server
         run: |
-          # The ubuntu-20.04 Wayland Server version is too low so we must install wayland ourselves
-          git clone --depth 1 --branch 1.20.0 https://github.com/wayland-project/wayland.git
+          # The ubuntu-22.04 Wayland Server version is too low so we must install wayland ourselves
+          git clone --depth 1 --branch 1.21.0 https://gitlab.freedesktop.org/wayland/wayland.git
           cd wayland
-          meson build -Ddocumentation=false
+          meson setup build -Ddocumentation=false
           sudo ninja -C build install
           cd ..
 
       - name: Install libdrm
         run: |
-          # The ubuntu-20.04 libdrm version is too low so we must install it ourselves
-          git clone --depth 1 --branch libdrm-2.4.109 https://gitlab.freedesktop.org/mesa/drm.git
+          # The ubuntu-22.04 libdrm version is too low so we must install it ourselves
+          git clone --depth 1 --branch libdrm-2.4.115 https://gitlab.freedesktop.org/mesa/drm.git
           cd drm
-          meson build
+          meson setup build
           sudo ninja -C build install
           cd ..
 
       - name: Install wayland-protocols
         run: |
-          # The ubuntu-20.04 wayland-protocols version is too low so we must install it ourselves
-          git clone --depth 1 --branch 1.24 https://github.com/wayland-project/wayland-protocols.git
+          # The ubuntu-22.04 wayland-protocols version is too low so we must install it ourselves
+          git clone --depth 1 --branch 1.27 https://gitlab.freedesktop.org/wayland/wayland-protocols.git
           cd wayland-protocols
-          meson build
+          meson setup build
           sudo ninja -C build install
           cd ..
 
@@ -67,26 +67,26 @@ jobs:
 
       - name: Prepare build dir
         run: |
-          meson build
+          meson setup build
 
       - name: Build vivarium, debug=false, xwayland=disabled
         run: |
-          meson --reconfigure build -Dxwayland=disabled -Ddebug=false
+          meson setup --reconfigure build -Dxwayland=disabled -Ddebug=false
           ninja -C build
 
       - name: Build vivarium, debug=false, xwayland=enabled
         run: |
-          meson --reconfigure build -Dxwayland=enabled -Ddebug=false
+          meson setup --reconfigure build -Dxwayland=enabled -Ddebug=false
           ninja -C build
 
       - name: Build vivarium, debug=true xwayland=enabled
         run: |
-          meson --reconfigure build -Dxwayland=enabled -Ddebug=true
+          meson setup --reconfigure build -Dxwayland=enabled -Ddebug=true
           ninja -C build
 
       - name: Build vivarium, debug=true xwayland=enabled headless-test=true
         run: |
-          meson --reconfigure build -Dxwayland=enabled -Ddebug=true -Dheadless-test=true
+          meson setup --reconfigure build -Dxwayland=enabled -Ddebug=true -Dheadless-test=true
           ninja -C build
 
       - name: Run vivarium (headless) and check for clean exit
@@ -94,7 +94,7 @@ jobs:
           mkdir -p $XDG_RUNTIME_DIR
           ./build/src/vivarium
         env:
-            XDG_RUNTIME_DIR: xdg_runtime_dir
+            XDG_RUNTIME_DIR: /tmp/xdg_runtime_dir
 
       - name: Run vivarium (headless) with config.toml and check for clean exit
         run: |
@@ -103,7 +103,7 @@ jobs:
           cp config/config.toml ~/.config/vivarium/
           ./build/src/vivarium
         env:
-            XDG_RUNTIME_DIR: xdg_runtime_dir
+            XDG_RUNTIME_DIR: /tmp/xdg_runtime_dir
 
       - name: Run tests
         run: |
