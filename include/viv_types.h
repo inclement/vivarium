@@ -8,6 +8,7 @@
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
+#include <wlr/types/wlr_scene.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "viv_config_support.h"
@@ -49,6 +50,8 @@ struct viv_server {
     struct wlr_allocator *allocator;
     struct wlr_compositor *compositor;
     struct wlr_subcompositor *subcompositor;
+
+    struct wlr_scene *scene;
 
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;

@@ -2,6 +2,7 @@
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_scene.h>
 
 #include "viv_output.h"
 
@@ -88,6 +89,13 @@ static void output_frame(struct wl_listener *listener, void *data) {
 #endif
 
     viv_render_output(renderer, output);
+
+    struct wlr_scene_output *scene_output = wlr_scene_get_scene_output(output->server->scene,
+                                                                       output->wlr_output);
+    wlr_scene_output_commit(scene_output);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    wlr_scene_output_send_frame_done(scene_output, &now);
 
     // If the workspace has been been relayout recently, reset the pointer focus just in
     // case surfaces have changed size since the last frame
