@@ -221,6 +221,12 @@ struct viv_xdg_popup {
     struct wl_listener new_popup;
 };
 
+struct viv_view_scene_nodes {
+    struct wlr_scene_tree *scene_tree;
+    struct wlr_scene_rect *debug_rect;
+    struct wlr_scene_tree *implementation_surface_tree;
+};
+
 struct viv_view {
     enum viv_view_type type;
 
@@ -232,6 +238,9 @@ struct viv_view {
     struct viv_workspace *workspace;
 
     struct viv_surface_tree_node *surface_tree;
+
+    struct wlr_scene_tree *scene_tree;
+    struct viv_view_scene_nodes scene_nodes;
 
     union {
         struct wlr_xdg_surface *xdg_surface;

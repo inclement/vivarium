@@ -55,9 +55,15 @@ void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
 /// Get the geometry box of a view
 void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box);
 
-/// Perform generic initialisation of a viv_view. Requires that shell-specific
-/// configuration has already taken place.
+/// Perform generic initialisation of a viv_view. Should be performed before
+/// shell-specific initialisation. This includes creation if a wlr_scene node, ready for
+/// shell-specific initialisation to populate with one or more children.
 void viv_view_init(struct viv_view *view, struct viv_server *server);
+
+/// Add the view to the current output and set up all its state so that it's ready to
+/// appear in a workspace once mapped.  Requires that shell-specific configuration has
+/// already taken place.
+void viv_view_add_to_output(struct viv_view *view);
 
 /// Clear up view state, remove it from its workspace, and free its memory
 void viv_view_destroy(struct viv_view *view);
@@ -96,5 +102,7 @@ bool viv_view_set_fullscreen(struct viv_view *view, bool fullscreen);
 
 /// Sets a view to non-fullscreen and informs the client if necessary
 void viv_view_force_remove_fullscreen(struct viv_view *view);
+
+void viv_view_sync_target_box_to_scene(struct viv_view *view);
 
 #endif

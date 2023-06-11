@@ -88,7 +88,8 @@ static void output_frame(struct wl_listener *listener, void *data) {
     viv_check_data_consistency(output->server);
 #endif
 
-    viv_render_output(renderer, output);
+    /* viv_render_output(renderer, output); */
+    UNUSED(renderer);
 
     struct wlr_scene_output *scene_output = wlr_scene_get_scene_output(output->server->scene,
                                                                        output->wlr_output);
@@ -96,6 +97,7 @@ static void output_frame(struct wl_listener *listener, void *data) {
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     wlr_scene_output_send_frame_done(scene_output, &now);
+
 
     // If the workspace has been been relayout recently, reset the pointer focus just in
     // case surfaces have changed size since the last frame

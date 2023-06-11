@@ -241,8 +241,12 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     // Create a viv_view to track the xdg surface
 	struct viv_view *view = calloc(1, sizeof(struct viv_view));
     CHECK_ALLOCATION(view);
-    viv_xdg_view_init(view, xdg_surface);
+
+    view->server = server;
+
     viv_view_init(view, server);
+    viv_xdg_view_init(view, xdg_surface);
+    viv_view_add_to_output(view);
 
     xdg_surface->data = view;
 }
@@ -256,8 +260,10 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
     // Create a viv_view to track the xdg surface
     struct viv_view *view = calloc(1, sizeof(struct viv_view));
     CHECK_ALLOCATION(view);
-    viv_xwayland_view_init(view, xwayland_surface);
+
     viv_view_init(view, server);
+    viv_xwayland_view_init(view, xwayland_surface);
+    viv_view_add_to_output(view);
 
     xwayland_surface->data = view;
 }

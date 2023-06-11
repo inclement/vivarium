@@ -27,6 +27,7 @@ static void process_cursor_move_view(struct viv_seat *seat, uint32_t time) {
 
     view->target_box.x += (view->x - old_x);
     view->target_box.y += (view->y - old_y);
+    viv_view_sync_target_box_to_scene(view);
 
     // Move the grabbed view to the new output, if necessary
 	double cursor_x = seat->cursor->x;
@@ -87,6 +88,8 @@ static void process_cursor_resize_view(struct viv_seat *seat, uint32_t time) {
     view->target_box.y = new_top;
     view->target_box.width = new_width;
     view->target_box.height = new_height;
+
+    viv_view_sync_target_box_to_scene(view);
 
     viv_view_damage(view);
 }

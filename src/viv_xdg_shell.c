@@ -443,4 +443,11 @@ void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surfac
 	view->request_fullscreen.notify = xdg_toplevel_request_fullscreen;
 	wl_signal_add(&toplevel->events.request_fullscreen, &view->request_fullscreen);
 
+    view->scene_nodes.implementation_surface_tree = wlr_scene_xdg_surface_create(
+        view->scene_nodes.scene_tree, xdg_surface->toplevel->base);
+    view->scene_nodes.implementation_surface_tree->node.data = view;
+
+	wlr_scene_node_raise_to_top(&view->scene_nodes.implementation_surface_tree->node);
+	wlr_scene_node_raise_to_top(&view->scene_nodes.debug_rect->node);
+
 }

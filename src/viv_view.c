@@ -217,10 +217,23 @@ void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
 
 void viv_view_init(struct viv_view *view, struct viv_server *server) {
     // Check that the non-generic parts of the view have been initialised already
-    ASSERT(view->type != VIV_VIEW_TYPE_UNKNOWN);
-
 	view->server = server;
 	view->mapped = false;
+
+    // Prepare a scene node for the view, it will display both the surface node for the
+    // view's type and its rectangular border
+    view->scene_tree = wlr_scene_tree_create(&server->scene->tree);
+    view->scene_nodes.scene_tree = view->scene_tree;
+    float colour[4] = {0.8, 0.3, 0.05, 0.1};
+    view->scene_nodes.debug_rect = wlr_scene_rect_create(view->scene_tree, 100, 100, colour);
+}
+
+void viv_view_add_to_output(struct viv_view *view) {
+    // View must be fully initialised for us to add it to the server. If it isn't fully
+    // initialised then something would go wrong when we try to use it.
+    ASSERT(view->type != VIV_VIEW_TYPE_UNKNOWN);
+
+    struct viv_server *server = view->server;
 
     // Make sure the view gets added to a workspace
     struct viv_output *output = server->active_output;
@@ -233,17 +246,20 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
         view->workspace = workspace;
     }
 
-    viv_view_ensure_tiled(view);
-
     wl_list_init(&view->workspace_link);
     wl_list_insert(&server->unmapped_views, &view->workspace_link);
     /* wl_list_insert(&output->current_workspace->views, &view->workspace_link); */
+
+    viv_view_ensure_tiled(view);
+
 }
 
 void viv_view_destroy(struct viv_view *view) {
     if (view->workspace->fullscreen_view == view) {
         view->workspace->fullscreen_view = NULL;
     }
+
+    wlr_scene_node_destroy(&view->scene_tree->node);
 
 	wl_list_remove(&view->workspace_link);
     wlr_log(WLR_INFO, "Destroying view at %p", view);
@@ -287,6 +303,9 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     x += ox;
     y += oy;
 
+    // TODO: With wlr_scene, the view target box becomes its node position so set_pos
+    // etc. need renaming to reflect that they set the internal surface pos/size
+
     view->target_box.x = x;
     view->target_box.y = y;
     view->target_box.width = width;
@@ -306,6 +325,15 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     viv_view_set_pos(view, x + border_width + gap_width, y + border_width + gap_width);
     viv_view_set_size(view, width, height);
+
+    viv_view_sync_target_box_to_scene(view);
+}
+
+void viv_view_sync_target_box_to_scene(struct viv_view *view) {
+    wlr_log(WLR_DEBUG, "Syncing target position to %d %d %d %d", view->target_box.x, view->target_box.y, view->target_box.width, view->target_box.height);
+    wlr_scene_node_set_position(&view->scene_tree->node, view->target_box.x, view->target_box.y);
+    wlr_scene_rect_set_size(view->scene_nodes.debug_rect, view->target_box.width, view->target_box.height);
+
 }
 
 void viv_view_match_target_box_with_surface_geometry(struct viv_view *view) {
