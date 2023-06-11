@@ -224,7 +224,9 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
     // view's type and its rectangular border
     view->scene_tree = wlr_scene_tree_create(&server->scene->tree);
     view->scene_nodes.scene_tree = view->scene_tree;
-    float colour[4] = {0.8, 0.3, 0.05, 0.1};
+
+
+    float colour[4] = {0.8, 0.3, 0.05, 0.0};
     view->scene_nodes.debug_rect = wlr_scene_rect_create(view->scene_tree, 100, 100, colour);
 }
 
