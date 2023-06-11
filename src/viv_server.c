@@ -703,6 +703,12 @@ void viv_server_init(struct viv_server *server) {
     // Set up the scene graph
     server->scene = wlr_scene_create();
     wlr_scene_attach_output_layout(server->scene, server->output_layout);
+    /* wlr_scene_node_set_position(&server->scene->tree.node, 50, 50); */
+    /* const float colour[4] = {1.0f, 0.2f, 0.0f, 0.5f}; */
+    /* struct wlr_scene_rect *rect = wlr_scene_rect_create(&server->scene->tree, 50, 150, colour); */
+    /* wlr_scene_node_set_position(&rect->node, 100, 20); */
+    /* wlr_scene_node_set_enabled(&rect->node, false); */
+    /* UNUSED(rect); */
 
 	server->xwayland_ready.notify = server_xwayland_ready;
 	wl_signal_add(&server->xwayland_shell->events.new_surface, &server->xwayland_ready);

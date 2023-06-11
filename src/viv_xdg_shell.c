@@ -447,7 +447,5 @@ void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surfac
         view->scene_nodes.scene_tree, xdg_surface->toplevel->base);
     view->scene_nodes.implementation_surface_tree->node.data = view;
 
-	wlr_scene_node_raise_to_top(&view->scene_nodes.implementation_surface_tree->node);
-	wlr_scene_node_raise_to_top(&view->scene_nodes.debug_rect->node);
-
+	wlr_scene_node_lower_to_bottom(&view->scene_nodes.implementation_surface_tree->node);
 }

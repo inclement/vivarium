@@ -215,19 +215,28 @@ void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
     view->implementation->get_geometry(view, geo_box);
 }
 
-void viv_view_init(struct viv_view *view, struct viv_server *server) {
-    // Check that the non-generic parts of the view have been initialised already
-	view->server = server;
-	view->mapped = false;
+static void create_scene_nodes(struct viv_view *view) {
 
     // Prepare a scene node for the view, it will display both the surface node for the
     // view's type and its rectangular border
-    view->scene_tree = wlr_scene_tree_create(&server->scene->tree);
+    view->scene_tree = wlr_scene_tree_create(&view->server->scene->tree);
     view->scene_nodes.scene_tree = view->scene_tree;
 
+    float colour[4] = {0.8, 0.05, 0.3, 1.0};
+    view->scene_nodes.border.left = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
+    view->scene_nodes.border.right = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
+    view->scene_nodes.border.top = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
+    view->scene_nodes.border.bottom = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
 
-    float colour[4] = {0.8, 0.3, 0.05, 0.0};
-    view->scene_nodes.debug_rect = wlr_scene_rect_create(view->scene_tree, 100, 100, colour);
+    int border_width = view->server->config->border_width;
+    wlr_scene_node_set_position(&view->scene_nodes.scene_tree->node, border_width, border_width);
+}
+
+void viv_view_init(struct viv_view *view, struct viv_server *server) {
+	view->server = server;
+	view->mapped = false;
+
+    create_scene_nodes(view);
 }
 
 void viv_view_add_to_output(struct viv_view *view) {
@@ -250,10 +259,8 @@ void viv_view_add_to_output(struct viv_view *view) {
 
     wl_list_init(&view->workspace_link);
     wl_list_insert(&server->unmapped_views, &view->workspace_link);
-    /* wl_list_insert(&output->current_workspace->views, &view->workspace_link); */
 
     viv_view_ensure_tiled(view);
-
 }
 
 void viv_view_destroy(struct viv_view *view) {
@@ -333,9 +340,21 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
 void viv_view_sync_target_box_to_scene(struct viv_view *view) {
     wlr_log(WLR_DEBUG, "Syncing target position to %d %d %d %d", view->target_box.x, view->target_box.y, view->target_box.width, view->target_box.height);
-    wlr_scene_node_set_position(&view->scene_tree->node, view->target_box.x, view->target_box.y);
-    wlr_scene_rect_set_size(view->scene_nodes.debug_rect, view->target_box.width, view->target_box.height);
+    int border_width = view->server->config->border_width;
 
+    wlr_scene_node_set_position(&view->scene_tree->node, view->target_box.x - border_width, view->target_box.y - border_width);
+
+    wlr_scene_rect_set_size(view->scene_nodes.border.left, 2, view->target_box.height);
+    wlr_scene_rect_set_size(view->scene_nodes.border.right, 2, view->target_box.height);
+    wlr_scene_rect_set_size(view->scene_nodes.border.top, view->target_box.width, 2);
+    wlr_scene_rect_set_size(view->scene_nodes.border.bottom, view->target_box.width, 2);
+
+    wlr_scene_node_set_position(&view->scene_nodes.border.left->node, 0, 0);
+    wlr_scene_node_set_position(&view->scene_nodes.border.right->node,
+                                view->target_box.width - border_width, 0);
+    wlr_scene_node_set_position(&view->scene_nodes.border.top->node, 0, 0);
+    wlr_scene_node_set_position(&view->scene_nodes.border.bottom->node, 0,
+                                view->target_box.height - border_width);
 }
 
 void viv_view_match_target_box_with_surface_geometry(struct viv_view *view) {

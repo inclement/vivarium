@@ -223,8 +223,17 @@ struct viv_xdg_popup {
 
 struct viv_view_scene_nodes {
     struct wlr_scene_tree *scene_tree;
-    struct wlr_scene_rect *debug_rect;
+    /* struct wlr_scene_rect *debug_rect; */
+
+    // The main scene tree instantiated by the implementation, e.g. the xdg scene tree
     struct wlr_scene_tree *implementation_surface_tree;
+
+    struct {
+        struct wlr_scene_rect *left;
+        struct wlr_scene_rect *right;
+        struct wlr_scene_rect *top;
+        struct wlr_scene_rect *bottom;
+    } border;
 };
 
 struct viv_view {
