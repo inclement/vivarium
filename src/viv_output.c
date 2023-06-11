@@ -9,7 +9,6 @@
 #include "viv_cursor.h"
 #include "viv_ipc.h"
 #include "viv_layer_view.h"
-#include "viv_render.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
@@ -82,22 +81,23 @@ static void output_frame(struct wl_listener *listener, void *data) {
     // This has been called because a specific output is ready to display a frame,
     // retrieve this info
 	struct viv_output *output = wl_container_of(listener, output, frame);
-	struct wlr_renderer *renderer = output->server->renderer;
 
 #ifdef DEBUG
     viv_check_data_consistency(output->server);
 #endif
 
-    /* viv_render_output(renderer, output); */
-    UNUSED(renderer);
-
     struct wlr_scene_output *scene_output = wlr_scene_get_scene_output(output->server->scene,
                                                                        output->wlr_output);
-    wlr_scene_output_commit(scene_output);
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    wlr_scene_output_send_frame_done(scene_output, &now);
+    if (scene_output != NULL) {
 
+        wlr_scene_output_commit(scene_output);
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        wlr_scene_output_send_frame_done(scene_output, &now);
+    } else
+    {
+        wlr_log(WLR_ERROR, "Scene output is NULL!");
+    }
 
     // If the workspace has been been relayout recently, reset the pointer focus just in
     // case surfaces have changed size since the last frame

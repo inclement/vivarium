@@ -18,13 +18,6 @@
 #include "viv_xwayland_types.h"
 #endif
 
-enum viv_damage_tracking_mode {
-    VIV_DAMAGE_TRACKING_NONE,  // every frame is fully re-rendered
-    VIV_DAMAGE_TRACKING_FRAME,   // any damage triggers a full frame render
-    VIV_DAMAGE_TRACKING_FULL,  // only damaged regions are rendered
-    VIV_DAMAGE_TRACKING_MAX,
-};
-
 enum viv_cursor_mode {
 	VIV_CURSOR_PASSTHROUGH,  /// Pass through cursor data to views
 	VIV_CURSOR_MOVE,  /// A view is being moved
@@ -168,8 +161,6 @@ struct viv_layer_view {
     struct viv_server *server;
     struct viv_output *output;
 
-    struct viv_surface_tree_node *surface_tree;
-
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;
@@ -209,8 +200,6 @@ struct viv_xdg_popup {
     struct viv_xdg_popup *parent_popup;
     struct viv_server *server;
 
-    struct viv_surface_tree_node *surface_tree;
-
     int *lx;  // pointer to x of parent view/layer-view in layout coords
     int *ly;  // pointer to y of parent view/layer-view in layout coords
 
@@ -226,7 +215,7 @@ struct viv_view_scene_nodes {
     /* struct wlr_scene_rect *debug_rect; */
 
     // The main scene tree instantiated by the implementation, e.g. the xdg scene tree
-    struct wlr_scene_tree *implementation_surface_tree;
+    struct wlr_scene_tree *implementation_scene_tree;
 
     struct {
         struct wlr_scene_rect *left;
@@ -245,8 +234,6 @@ struct viv_view {
 
 	struct viv_server *server;
     struct viv_workspace *workspace;
-
-    struct viv_surface_tree_node *surface_tree;
 
     struct wlr_scene_tree *scene_tree;
     struct viv_view_scene_nodes scene_nodes;
@@ -364,8 +351,6 @@ struct viv_config {
     struct viv_layout *layouts;
 
     struct viv_libinput_config *libinput_configs;
-
-    enum viv_damage_tracking_mode damage_tracking_mode;
 
     bool debug_mark_views_by_shell;
     bool debug_mark_active_output;

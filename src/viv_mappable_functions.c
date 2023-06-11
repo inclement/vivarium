@@ -100,8 +100,6 @@ void viv_mappable_tile_window(struct viv_workspace *workspace, union viv_mappabl
         return;
     }
 
-    viv_view_damage(view);
-
     bool any_not_floating = false;
     struct viv_view *non_floating_view;
     wl_list_for_each(non_floating_view, &workspace->views, workspace_link) {
@@ -144,8 +142,6 @@ void viv_mappable_float_window(struct viv_workspace *workspace, union viv_mappab
         wlr_log(WLR_DEBUG, "Cannot float active view, it is fullscreen");
         return;
     }
-
-    viv_view_damage(view);
 
     wl_list_remove(&view->workspace_link);
 
@@ -321,41 +317,12 @@ void viv_mappable_reload_config(struct viv_workspace *workspace, union viv_mappa
     viv_server_reload_config(server);
 }
 
-void viv_mappable_debug_damage_all(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    UNUSED(payload);
-    struct viv_server *server = workspace->server;
-
-    struct viv_output *output;
-    wl_list_for_each(output, &server->outputs, link) {
-        viv_output_damage(output);
-    }
-}
-
 void viv_mappable_debug_swap_buffers(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     wlr_output_commit(workspace->output->wlr_output);
 }
 
-void viv_mappable_debug_toggle_show_undamaged_regions(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    UNUSED(payload);
-    workspace->server->config->debug_mark_undamaged_regions = !workspace->server->config->debug_mark_undamaged_regions;
-    struct viv_output *output;
-    wl_list_for_each(output, &workspace->server->outputs, link) {
-        viv_output_damage(output);
-    }
-}
-
 void viv_mappable_debug_toggle_mark_frame_draws(struct viv_workspace *workspace, union viv_mappable_payload payload) {
     UNUSED(payload);
     workspace->server->config->debug_mark_frame_draws = !workspace->server->config->debug_mark_frame_draws;
-}
-
-void viv_mappable_debug_next_damage_tracking_mode(struct viv_workspace *workspace, union viv_mappable_payload payload) {
-    UNUSED(payload);
-    struct viv_config *config = workspace->server->config;
-
-    config->damage_tracking_mode++;
-    if (config->damage_tracking_mode == VIV_DAMAGE_TRACKING_MAX) {
-        config->damage_tracking_mode = (enum viv_damage_tracking_mode)0;
-    }
 }

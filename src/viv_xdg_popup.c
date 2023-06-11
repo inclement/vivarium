@@ -1,10 +1,8 @@
 
-#include "viv_damage.h"
 #include "viv_output.h"
 #include "viv_types.h"
 
 #include "viv_xdg_popup.h"
-#include "viv_wlr_surface_tree.h"
 
 /// Add to x and y the global (i.e. output-layout) coords of the input popup, calculated
 /// by walking up the popup tree and adding the geometry of each parent.
@@ -37,8 +35,6 @@ static void handle_popup_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_xdg_popup *popup = wl_container_of(listener, popup, surface_map);
     wlr_log(WLR_INFO, "Map popup at %p", popup);
-
-    popup->surface_tree = viv_surface_tree_root_create(popup->server, popup->wlr_popup->base->surface, &add_popup_global_coords, popup);
 }
 
 static void handle_popup_surface_unmap(struct wl_listener *listener, void *data) {
@@ -46,9 +42,6 @@ static void handle_popup_surface_unmap(struct wl_listener *listener, void *data)
     struct viv_xdg_popup *popup = wl_container_of(listener, popup, surface_unmap);
 
     wlr_log(WLR_INFO, "Unmap popup at %p", popup);
-
-    viv_surface_tree_destroy(popup->surface_tree);
-    popup->surface_tree = NULL;
 
     int px = 0;
     int py = 0;
@@ -71,10 +64,6 @@ static void handle_popup_surface_destroy(struct wl_listener *listener, void *dat
     UNUSED(data);
     struct viv_xdg_popup *popup = wl_container_of(listener, popup, destroy);
     wlr_log(WLR_INFO, "Popup at %p being destroyed", popup);
-    if (popup->surface_tree) {
-        viv_surface_tree_destroy(popup->surface_tree);
-        popup->surface_tree = NULL;
-    }
     free(popup);
 }
 

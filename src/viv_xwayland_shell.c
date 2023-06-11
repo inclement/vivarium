@@ -3,7 +3,6 @@
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
 
-#include "viv_damage.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"

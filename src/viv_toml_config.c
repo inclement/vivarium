@@ -112,13 +112,6 @@ static struct string_map_pair accel_profile_map[] = {
     NULL_STRING_MAP_PAIR,
 };
 
-static struct string_map_pair damage_tracking_mode_map[] = {
-    {"none", VIV_DAMAGE_TRACKING_NONE},
-    {"frame", VIV_DAMAGE_TRACKING_FRAME},
-    {"full", VIV_DAMAGE_TRACKING_FULL},
-    NULL_STRING_MAP_PAIR,
-};
-
 static bool is_null_string_map_pair(struct string_map_pair *row) {
     return (strlen(row->key) == 0);
 }
@@ -572,7 +565,7 @@ static void parse_libinput_config_table(toml_table_t *libinput_table, struct viv
 
     wlr_log(WLR_DEBUG, "Parsed [[libinput-config]] for device \"%s\", scroll method %d, scroll button %d, middle emulation %d, left handed %d, natural scroll %d, disable while typing %d, click method %d, accel profile %d, accel speed %f",
             device_name.u.s, libinput_config->scroll_method, libinput_config->scroll_button,
-            libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll, libinput_config->disable_while_typing, libinput_config->click_method, 
+            libinput_config->middle_emulation, libinput_config->left_handed, libinput_config->natural_scroll, libinput_config->disable_while_typing, libinput_config->click_method,
             libinput_config->accel_profile, libinput_config->accel_speed);
 
     libinput_config->device_name = device_name.u.s;
@@ -714,8 +707,6 @@ void load_file_as_toml_config(FILE *fp, struct viv_config *config) {
     parse_config_bool(root, "debug", "mark-active-output", &config->debug_mark_active_output);
     parse_config_bool(root, "debug", "mark-undamaged-regions", &config->debug_mark_undamaged_regions);
     parse_config_bool(root, "debug", "mark-frame-draws", &config->debug_mark_frame_draws);
-    parse_config_string_map(root, "debug", "damage-tracking-mode", damage_tracking_mode_map,
-                            &config->damage_tracking_mode);
 
     // [[keybind]] list
     PARSE_CONFIG_ARRAY_VARIABLE_LENGTH(root, "keybind", struct viv_keybind, parse_keybind_table, TERMINATE_KEYBINDS_LIST(), &config->keybinds);

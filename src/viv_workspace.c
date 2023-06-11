@@ -12,10 +12,6 @@
 
 void viv_workspace_mark_for_relayout(struct viv_workspace *workspace) {
     workspace->needs_layout = true;
-    viv_workspace_damage_views(workspace);  // TODO: is this 100% redundant with damaging the output?
-    if (workspace->output) {
-        viv_output_damage(workspace->output);
-    }
 }
 
 void viv_workspace_focus_next_window(struct viv_workspace *workspace) {
@@ -169,16 +165,7 @@ void viv_workspace_swap_active_and_main(struct viv_workspace *workspace) {
     viv_workspace_mark_for_relayout(workspace);
 }
 
-void viv_workspace_damage_views(struct viv_workspace *workspace) {
-    struct viv_view *view;
-    wl_list_for_each(view, &workspace->views, workspace_link) {
-        viv_view_damage(view);
-    }
-}
-
 void viv_workspace_do_layout(struct viv_workspace *workspace) {
-    viv_workspace_damage_views(workspace);
-
     struct viv_output *output = workspace->output;
     ASSERT(output);
     struct viv_layout *layout = workspace->active_layout;
@@ -204,11 +191,6 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
     viv_server_update_idle_inhibitor_state(workspace->server);
 
     workspace->was_laid_out = true;
-
-    viv_workspace_damage_views(workspace);
-    if (workspace->output) {
-        viv_output_damage(workspace->output);
-    }
 }
 
 uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace) {
