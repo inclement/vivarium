@@ -39,6 +39,7 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
+	wlr_scene_node_set_enabled(&view->scene_nodes.scene_tree->node, true);
 
     wl_list_remove(&view->workspace_link);
 
@@ -137,6 +138,7 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	struct viv_view *view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
+	wlr_scene_node_set_enabled(&view->scene_nodes.scene_tree->node, false);
 
     viv_view_ensure_not_active_in_workspace(view);
 

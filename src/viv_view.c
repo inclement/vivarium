@@ -237,6 +237,8 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
 	view->mapped = false;
 
     create_scene_nodes(view);
+
+	wlr_scene_node_set_enabled(&view->scene_nodes.scene_tree->node, false);
 }
 
 void viv_view_add_to_output(struct viv_view *view) {
