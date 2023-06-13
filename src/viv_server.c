@@ -699,10 +699,6 @@ void viv_server_init(struct viv_server *server) {
 	server->new_xwayland_surface.notify = server_new_xwayland_surface;
 	wl_signal_add(&server->xwayland_shell->events.new_surface, &server->new_xwayland_surface);
 
-    // Set up the scene graph
-    server->scene = wlr_scene_create();
-    wlr_scene_attach_output_layout(server->scene, server->output_layout);
-
 	server->xwayland_ready.notify = server_xwayland_ready;
 	wl_signal_add(&server->xwayland_shell->events.new_surface, &server->xwayland_ready);
 
@@ -711,6 +707,11 @@ void viv_server_init(struct viv_server *server) {
     // Discourage X apps from starting in some other X server
     unsetenv("DISPLAY");
 #endif
+
+    // Set up the scene graph
+    server->scene = wlr_scene_create();
+    bool op = wlr_scene_attach_output_layout(server->scene, server->output_layout);
+    wlr_log(WLR_INFO, "Attach output layout returned %d", op);
 
     // Set up the layer-shell
     server->layer_shell = wlr_layer_shell_v1_create(server->wl_display);
