@@ -24,17 +24,11 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 /// workspace need layouting
 void viv_output_do_layout_if_necessary(struct viv_output *output);
 
-/// Mark the whole output as damaged
-void viv_output_damage(struct viv_output *output);
-
-/// Damage the given box, expected to be unscaled and in output-layout coordinates
-void viv_output_damage_layout_coords_box(struct viv_output *output, struct wlr_box *box);
-
-/// Damage the given region, expected to be unscaled an in output-layout coordinates
-void viv_output_damage_layout_coords_region(struct viv_output *output, pixman_region32_t *damage);
-
 void viv_output_layout_coords_box_to_output_coords(struct viv_output *output, struct wlr_box *geo_box);
 
 /// Mark that whatever workspace is active will need its layout function applying
 void viv_output_mark_for_relayout(struct viv_output *output);
+
+/// Force a frame draw event for this output
+void viv_output_schedule_frame(struct viv_output *output);
 #endif

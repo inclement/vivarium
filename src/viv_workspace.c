@@ -177,6 +177,8 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
         height -= (output->excluded_margin.top - output->excluded_margin.bottom);
     }
 
+    wlr_log(WLR_DEBUG, "Laying out workspace to output width %d height %d", width, height);
+
     viv_layout_apply(workspace, width, height);
 
     workspace->needs_layout = false;
@@ -191,6 +193,8 @@ void viv_workspace_do_layout(struct viv_workspace *workspace) {
     viv_server_update_idle_inhibitor_state(workspace->server);
 
     workspace->was_laid_out = true;
+
+    wlr_log(WLR_DEBUG, "do-layout on workspace %s", workspace->name);
 }
 
 uint32_t viv_workspace_num_tiled_views(struct viv_workspace *workspace) {

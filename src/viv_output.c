@@ -1,6 +1,5 @@
 #include <math.h>
 #include <wayland-server-core.h>
-#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_scene.h>
 
@@ -88,16 +87,10 @@ static void output_frame(struct wl_listener *listener, void *data) {
 
     struct wlr_scene_output *scene_output = wlr_scene_get_scene_output(output->server->scene,
                                                                        output->wlr_output);
-    if (scene_output != NULL) {
-
-        wlr_scene_output_commit(scene_output);
-        struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        wlr_scene_output_send_frame_done(scene_output, &now);
-    } else
-    {
-        wlr_log(WLR_ERROR, "Scene output is NULL!");
-    }
+    wlr_scene_output_commit(scene_output);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    wlr_scene_output_send_frame_done(scene_output, &now);
 
     // If the workspace has been been relayout recently, reset the pointer focus just in
     // case surfaces have changed size since the last frame
@@ -116,12 +109,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
     viv_output_do_layout_if_necessary(output);
 
     viv_routine_log_state(output->server);
-}
-
-static void output_damage_event(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_output *output = wl_container_of(listener, output, damage_event);
-    wlr_log(WLR_INFO, "Output \"%s\" event: damage", output->wlr_output->name);
 }
 
 static void output_present(struct wl_listener *listener, void *data) {
@@ -150,7 +137,6 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     stop_using_output(output);
 
     wl_list_remove(&output->frame.link);
-    wl_list_remove(&output->damage_event.link);
     wl_list_remove(&output->present.link);
     wl_list_remove(&output->enable.link);
     wl_list_remove(&output->mode.link);
@@ -184,11 +170,7 @@ void viv_output_make_active(struct viv_output *output) {
         return;
     }
 
-    if (output->server->active_output) {
-        viv_output_damage(output->server->active_output);
-    }
     output->server->active_output = output;
-    viv_output_damage(output->server->active_output);
 
     if (output->current_workspace->active_view) {
         viv_view_focus(output->current_workspace->active_view);
@@ -268,13 +250,8 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
     output->excluded_margin.left = 0;
     output->excluded_margin.right = 0;
 
-    output->damage = wlr_output_damage_create(output->wlr_output);
-
 	output->frame.notify = output_frame;
-	wl_signal_add(&output->damage->events.frame, &output->frame);
 
-	output->damage_event.notify = output_damage_event;
-	wl_signal_add(&output->wlr_output->events.damage, &output->damage_event);
 	output->present.notify = output_present;
 	wl_signal_add(&output->wlr_output->events.present, &output->present);
 	output->enable.notify = output_enable;
@@ -299,49 +276,6 @@ void viv_output_do_layout_if_necessary(struct viv_output *output) {
     viv_workspace_do_layout(workspace);
 }
 
-void viv_output_damage(struct viv_output *output) {
-    if (!output) {
-        wlr_log(WLR_ERROR, "Tried to damage NULL output");
-        return;
-    }
-    wlr_output_damage_add_whole(output->damage);
-}
-
-void viv_output_damage_layout_coords_box(struct viv_output *output, struct wlr_box *box) {
-    struct wlr_box scaled_box;
-    memcpy(&scaled_box, box, sizeof(struct wlr_box));
-
-    double lx = 0, ly = 0;
-    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
-
-    scaled_box.x += lx;
-    scaled_box.y += ly;
-
-    float scale = output->wlr_output->scale;
-
-    // TODO: Can we just round these rather than floor/ceil? Need to think through how
-    // scaling actually works out on different outputs
-    scaled_box.x = floor(scaled_box.x * scale);
-    scaled_box.y = floor(scaled_box.y * scale);
-    scaled_box.width = ceil((scaled_box.x + scaled_box.width) * scale) - floor(scaled_box.x * scale);
-    scaled_box.height = ceil((scaled_box.y + scaled_box.height) * scale) - floor(scaled_box.y * scale);
-
-    wlr_output_damage_add_box(output->damage, &scaled_box);
-}
-
-void viv_output_damage_layout_coords_region(struct viv_output *output, pixman_region32_t *damage) {
-    double lx = 0, ly = 0;
-    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
-
-    // Shift to output coords to apply damage
-    pixman_region32_translate(damage, lx, ly);
-
-    wlr_output_damage_add(output->damage, damage);
-
-    // Shift back to avoid permanently changing the damage
-    pixman_region32_translate(damage, -lx, -ly);
-}
-
 void viv_output_layout_coords_box_to_output_coords(struct viv_output *output, struct wlr_box *geo_box) {
     double lx = 0, ly = 0;
     wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
@@ -353,8 +287,12 @@ void viv_output_mark_for_relayout(struct viv_output *output) {
     if (output) {
         // The layout will be applied after the next frame
         output->needs_layout = true;
-        viv_output_damage(output);
+        viv_output_schedule_frame(output);
     } else {
         wlr_log(WLR_ERROR, "Tried to mark NULL output for relayout");
     }
+}
+
+void viv_output_schedule_frame(struct viv_output *output) {
+    wlr_output_schedule_frame(output->wlr_output);
 }
