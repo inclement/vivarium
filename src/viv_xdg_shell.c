@@ -1,6 +1,7 @@
 #include <pixman-1/pixman.h>
 #include <stdlib.h>
 #include <wlr/util/log.h>
+#include <wlr/types/wlr_output_damage.h>
 
 #include "viv_config_support.h"
 #include "viv_xdg_shell.h"
