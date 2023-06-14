@@ -46,18 +46,6 @@ static void handle_popup_surface_unmap(struct wl_listener *listener, void *data)
     int px = 0;
     int py = 0;
     add_popup_global_coords(popup, &px, &py);
-
-    struct wlr_box geo_box = {
-        .x = px,
-        .y = py,
-        .width = popup->wlr_popup->current.geometry.width,
-        .height = popup->wlr_popup->current.geometry.height,
-    };
-
-    struct viv_output *output;
-    wl_list_for_each(output, &popup->server->outputs, link) {
-        viv_output_damage_layout_coords_box(output, &geo_box);
-    }
 }
 
 static void handle_popup_surface_destroy(struct wl_listener *listener, void *data) {

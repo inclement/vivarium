@@ -184,11 +184,7 @@ void viv_output_make_active(struct viv_output *output) {
         return;
     }
 
-    if (output->server->active_output) {
-        viv_output_damage(output->server->active_output);
-    }
     output->server->active_output = output;
-    viv_output_damage(output->server->active_output);
 
     if (output->current_workspace->active_view) {
         viv_view_focus(output->current_workspace->active_view);
@@ -299,61 +295,11 @@ void viv_output_do_layout_if_necessary(struct viv_output *output) {
     viv_workspace_do_layout(workspace);
 }
 
-void viv_output_damage(struct viv_output *output) {
-    if (!output) {
-        wlr_log(WLR_ERROR, "Tried to damage NULL output");
-        return;
-    }
-    wlr_output_damage_add_whole(output->damage);
-}
-
-void viv_output_damage_layout_coords_box(struct viv_output *output, struct wlr_box *box) {
-    struct wlr_box scaled_box;
-    memcpy(&scaled_box, box, sizeof(struct wlr_box));
-
-    double lx = 0, ly = 0;
-    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
-
-    scaled_box.x += lx;
-    scaled_box.y += ly;
-
-    float scale = output->wlr_output->scale;
-
-    // TODO: Can we just round these rather than floor/ceil? Need to think through how
-    // scaling actually works out on different outputs
-    scaled_box.x = floor(scaled_box.x * scale);
-    scaled_box.y = floor(scaled_box.y * scale);
-    scaled_box.width = ceil((scaled_box.x + scaled_box.width) * scale) - floor(scaled_box.x * scale);
-    scaled_box.height = ceil((scaled_box.y + scaled_box.height) * scale) - floor(scaled_box.y * scale);
-
-    wlr_output_damage_add_box(output->damage, &scaled_box);
-}
-
-void viv_output_damage_layout_coords_region(struct viv_output *output, pixman_region32_t *damage) {
-    double lx = 0, ly = 0;
-    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
-
-    // Shift to output coords to apply damage
-    pixman_region32_translate(damage, lx, ly);
-
-    wlr_output_damage_add(output->damage, damage);
-
-    // Shift back to avoid permanently changing the damage
-    pixman_region32_translate(damage, -lx, -ly);
-}
-
-void viv_output_layout_coords_box_to_output_coords(struct viv_output *output, struct wlr_box *geo_box) {
-    double lx = 0, ly = 0;
-    wlr_output_layout_output_coords(output->server->output_layout, output->wlr_output, &lx, &ly);
-    geo_box->x += lx;
-    geo_box->y += ly;
-}
-
 void viv_output_mark_for_relayout(struct viv_output *output) {
     if (output) {
         // The layout will be applied after the next frame
         output->needs_layout = true;
-        viv_output_damage(output);
+        viv_output_schedule_frame(output);
     } else {
         wlr_log(WLR_ERROR, "Tried to mark NULL output for relayout");
     }
