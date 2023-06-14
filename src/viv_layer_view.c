@@ -1,6 +1,5 @@
 #include <pixman-1/pixman.h>
 #include <wayland-util.h>
-#include <wlr/types/wlr_output_damage.h>
 
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 

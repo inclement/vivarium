@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>

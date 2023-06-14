@@ -43,9 +43,6 @@ void viv_view_get_string_identifier(struct viv_view *view, char *buffer, size_t 
 /// True if the surface geometry size exceeds that of the target draw region, else false
 bool viv_view_oversized(struct viv_view *view);
 
-/// Mark the view as damaged on every output
-void viv_view_damage(struct viv_view *view);
-
 /// Set the size of a view
 void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height);
 

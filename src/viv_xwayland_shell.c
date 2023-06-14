@@ -1,5 +1,4 @@
 #include <pixman-1/pixman.h>
-#include <wlr/types/wlr_output_damage.h>
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
 
@@ -233,11 +232,6 @@ static void event_xwayland_surface_unmap(struct wl_listener *listener, void *dat
 
     struct viv_workspace *workspace = view->workspace;
     viv_workspace_mark_for_relayout(workspace);
-
-    viv_view_damage(view);
-
-    viv_surface_tree_destroy(view->surface_tree);
-    view->surface_tree = NULL;
 
     viv_server_clear_view_from_grab_state(view->server, view);
 }
