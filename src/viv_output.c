@@ -358,3 +358,7 @@ void viv_output_mark_for_relayout(struct viv_output *output) {
         wlr_log(WLR_ERROR, "Tried to mark NULL output for relayout");
     }
 }
+
+void viv_output_schedule_frame(struct viv_output *output) {
+    wlr_output_schedule_frame(output->wlr_output);
+}
