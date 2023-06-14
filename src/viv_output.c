@@ -1,6 +1,5 @@
 #include <math.h>
 #include <wayland-server-core.h>
-#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_scene.h>
 
@@ -118,12 +117,6 @@ static void output_frame(struct wl_listener *listener, void *data) {
     viv_routine_log_state(output->server);
 }
 
-static void output_damage_event(struct wl_listener *listener, void *data) {
-    UNUSED(data);
-    struct viv_output *output = wl_container_of(listener, output, damage_event);
-    wlr_log(WLR_INFO, "Output \"%s\" event: damage", output->wlr_output->name);
-}
-
 static void output_present(struct wl_listener *listener, void *data) {
     UNUSED(listener);
     UNUSED(data);
@@ -150,7 +143,6 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     stop_using_output(output);
 
     wl_list_remove(&output->frame.link);
-    wl_list_remove(&output->damage_event.link);
     wl_list_remove(&output->present.link);
     wl_list_remove(&output->enable.link);
     wl_list_remove(&output->mode.link);
@@ -264,13 +256,9 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
     output->excluded_margin.left = 0;
     output->excluded_margin.right = 0;
 
-    output->damage = wlr_output_damage_create(output->wlr_output);
-
 	output->frame.notify = output_frame;
-	wl_signal_add(&output->damage->events.frame, &output->frame);
+	wl_signal_add(&output->wlr_output->events.frame, &output->frame);
 
-	output->damage_event.notify = output_damage_event;
-	wl_signal_add(&output->wlr_output->events.damage, &output->damage_event);
 	output->present.notify = output_present;
 	wl_signal_add(&output->wlr_output->events.present, &output->present);
 	output->enable.notify = output_enable;
