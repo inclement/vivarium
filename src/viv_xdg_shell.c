@@ -1,16 +1,13 @@
 #include <pixman-1/pixman.h>
 #include <stdlib.h>
 #include <wlr/util/log.h>
-#include <wlr/types/wlr_output_damage.h>
 
 #include "viv_config_support.h"
-#include "viv_damage.h"
 #include "viv_xdg_shell.h"
 #include "viv_seat.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
-#include "viv_wlr_surface_tree.h"
 #include "viv_workspace.h"
 #include "viv_xdg_popup.h"
 #include "viv_output.h"
@@ -28,17 +25,12 @@ static bool guess_should_be_floating(struct viv_view *view) {
     return ((current->min_width == current->max_width) || (current->min_height == current->max_height));
 }
 
-static void add_xdg_view_global_coords(void *view_pointer, int *x, int *y) {
-    struct viv_view *view = view_pointer;
-    *x += view->x;
-    *y += view->y;
-}
-
 static void xdg_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
 	/* Called when the surface is mapped, or ready to display on-screen. */
 	struct viv_view *view = wl_container_of(listener, view, map);
 	view->mapped = true;
+	wlr_scene_node_set_enabled(&view->scene_nodes.scene_tree->node, true);
 
     wl_list_remove(&view->workspace_link);
 
@@ -128,8 +120,6 @@ static void xdg_surface_map(struct wl_listener *listener, void *data) {
     }
 
     viv_workspace_add_view(view->workspace, view);
-
-    view->surface_tree = viv_surface_tree_root_create(view->server, view->xdg_surface->surface, &add_xdg_view_global_coords, view);
 }
 
 static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
@@ -137,6 +127,7 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 	/* Called when the surface is unmapped, and should no longer be shown. */
 	struct viv_view *view = wl_container_of(listener, view, unmap);
 	view->mapped = false;
+	wlr_scene_node_set_enabled(&view->scene_nodes.scene_tree->node, false);
 
     viv_view_ensure_not_active_in_workspace(view);
 
@@ -145,11 +136,6 @@ static void xdg_surface_unmap(struct wl_listener *listener, void *data) {
 
     struct viv_workspace *workspace = view->workspace;
     viv_workspace_mark_for_relayout(workspace);
-
-    viv_view_damage(view);
-
-    viv_surface_tree_destroy(view->surface_tree);
-    view->surface_tree = NULL;
 }
 
 static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
@@ -157,11 +143,6 @@ static void xdg_surface_destroy(struct wl_listener *listener, void *data) {
 	/* Called when the surface is destroyed and should never be shown again. */
 	struct viv_view *view = wl_container_of(listener, view, destroy);
     wlr_log(WLR_INFO, "Destroying xdg-surface with view at %p", view);
-
-    if (view->surface_tree) {
-        viv_surface_tree_destroy(view->surface_tree);
-        view->surface_tree = NULL;
-    }
 
     viv_view_destroy(view);
 
@@ -443,4 +424,9 @@ void viv_xdg_view_init(struct viv_view *view, struct wlr_xdg_surface *xdg_surfac
 	view->request_fullscreen.notify = xdg_toplevel_request_fullscreen;
 	wl_signal_add(&toplevel->events.request_fullscreen, &view->request_fullscreen);
 
+    view->scene_nodes.implementation_scene_tree = wlr_scene_xdg_surface_create(
+        view->scene_nodes.scene_tree, xdg_surface->toplevel->base);
+    view->scene_nodes.implementation_scene_tree->node.data = view;
+
+	wlr_scene_node_lower_to_bottom(&view->scene_nodes.implementation_scene_tree->node);
 }

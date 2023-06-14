@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/edges.h>
@@ -14,7 +13,6 @@
 #include "viv_types.h"
 #include "viv_wl_list_utils.h"
 #include "viv_workspace.h"
-#include "viv_wlr_surface_tree.h"
 
 #define VIEW_NAME_LEN 100
 
@@ -34,13 +32,6 @@ void viv_view_focus(struct viv_view *view) {
 		return;
 	}
 	struct viv_server *server = view->server;
-
-    // Damage both previous and newly-active surface
-    // TODO: only damage the borders
-    if (view->workspace->active_view) {
-        viv_view_damage(view->workspace->active_view);
-    }
-    viv_view_damage(view);
 
 	/* Activate the new surface */
     view->workspace->active_view = view;
@@ -174,40 +165,14 @@ bool viv_view_oversized(struct viv_view *view) {
     return view->implementation->oversized(view);
 }
 
-void viv_view_damage(struct viv_view *view) {
-    struct viv_output *output;
-    struct wlr_box geo_box = { 0 };
-
-    if (view->workspace->fullscreen_view == view) {
-        wl_list_for_each(output, &view->server->outputs, link) {
-            viv_output_damage(output);
-        }
-        return;
-    }
-
-    viv_view_get_geometry(view, &geo_box);
-
-    int border_width = view->server->config->border_width;
-    geo_box.x -= border_width;
-    geo_box.y -= border_width;
-    geo_box.width += 2 * border_width;
-    geo_box.height += 2 * border_width;
-
-    wl_list_for_each(output, &view->server->outputs, link) {
-        viv_output_damage_layout_coords_box(output, &geo_box);
-    }
-}
-
 void viv_view_set_size(struct viv_view *view, uint32_t width, uint32_t height) {
     ASSERT(view->implementation->set_size != NULL);
     view->implementation->set_size(view, width, height);
-    viv_view_damage(view);
 }
 
 void viv_view_set_pos(struct viv_view *view, uint32_t width, uint32_t height) {
     ASSERT(view->implementation->set_pos != NULL);
     view->implementation->set_pos(view, width, height);
-    viv_view_damage(view);
 }
 
 void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
@@ -215,12 +180,38 @@ void viv_view_get_geometry(struct viv_view *view, struct wlr_box *geo_box) {
     view->implementation->get_geometry(view, geo_box);
 }
 
-void viv_view_init(struct viv_view *view, struct viv_server *server) {
-    // Check that the non-generic parts of the view have been initialised already
-    ASSERT(view->type != VIV_VIEW_TYPE_UNKNOWN);
+static void create_scene_nodes(struct viv_view *view) {
 
+    // Prepare a scene node for the view, it will display both the surface node for the
+    // view's type and its rectangular border
+    view->scene_tree = wlr_scene_tree_create(&view->server->scene->tree);
+    view->scene_nodes.scene_tree = view->scene_tree;
+
+    float colour[4] = {0.8, 0.05, 0.3, 1.0};
+    view->scene_nodes.border.left = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
+    view->scene_nodes.border.right = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
+    view->scene_nodes.border.top = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
+    view->scene_nodes.border.bottom = wlr_scene_rect_create(view->scene_tree, 2, 2, colour);
+
+    int border_width = view->server->config->border_width;
+    wlr_scene_node_set_position(&view->scene_nodes.scene_tree->node, border_width, border_width);
+}
+
+void viv_view_init(struct viv_view *view, struct viv_server *server) {
 	view->server = server;
 	view->mapped = false;
+
+    create_scene_nodes(view);
+
+	wlr_scene_node_set_enabled(&view->scene_nodes.scene_tree->node, false);
+}
+
+void viv_view_add_to_output(struct viv_view *view) {
+    // View must be fully initialised for us to add it to the server. If it isn't fully
+    // initialised then something would go wrong when we try to use it.
+    ASSERT(view->type != VIV_VIEW_TYPE_UNKNOWN);
+
+    struct viv_server *server = view->server;
 
     // Make sure the view gets added to a workspace
     struct viv_output *output = server->active_output;
@@ -233,11 +224,10 @@ void viv_view_init(struct viv_view *view, struct viv_server *server) {
         view->workspace = workspace;
     }
 
-    viv_view_ensure_tiled(view);
-
     wl_list_init(&view->workspace_link);
     wl_list_insert(&server->unmapped_views, &view->workspace_link);
-    /* wl_list_insert(&output->current_workspace->views, &view->workspace_link); */
+
+    viv_view_ensure_tiled(view);
 }
 
 void viv_view_destroy(struct viv_view *view) {
@@ -245,13 +235,10 @@ void viv_view_destroy(struct viv_view *view) {
         view->workspace->fullscreen_view = NULL;
     }
 
+    wlr_scene_node_destroy(&view->scene_tree->node);
+
 	wl_list_remove(&view->workspace_link);
     wlr_log(WLR_INFO, "Destroying view at %p", view);
-
-    if (view->surface_tree) {
-        viv_surface_tree_destroy(view->surface_tree);
-        view->surface_tree = NULL;
-    }
 
 	free(view);
 }
@@ -287,6 +274,9 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
     x += ox;
     y += oy;
 
+    // TODO: With wlr_scene, the view target box becomes its node position so set_pos
+    // etc. need renaming to reflect that they set the internal surface pos/size
+
     view->target_box.x = x;
     view->target_box.y = y;
     view->target_box.width = width;
@@ -306,6 +296,27 @@ void viv_view_set_target_box(struct viv_view *view, uint32_t x, uint32_t y, uint
 
     viv_view_set_pos(view, x + border_width + gap_width, y + border_width + gap_width);
     viv_view_set_size(view, width, height);
+
+    viv_view_sync_target_box_to_scene(view);
+}
+
+void viv_view_sync_target_box_to_scene(struct viv_view *view) {
+    wlr_log(WLR_DEBUG, "Syncing target position to %d %d %d %d", view->target_box.x, view->target_box.y, view->target_box.width, view->target_box.height);
+    int border_width = view->server->config->border_width;
+
+    wlr_scene_node_set_position(&view->scene_tree->node, view->target_box.x - border_width, view->target_box.y - border_width);
+
+    wlr_scene_rect_set_size(view->scene_nodes.border.left, 2, view->target_box.height);
+    wlr_scene_rect_set_size(view->scene_nodes.border.right, 2, view->target_box.height);
+    wlr_scene_rect_set_size(view->scene_nodes.border.top, view->target_box.width, 2);
+    wlr_scene_rect_set_size(view->scene_nodes.border.bottom, view->target_box.width, 2);
+
+    wlr_scene_node_set_position(&view->scene_nodes.border.left->node, 0, 0);
+    wlr_scene_node_set_position(&view->scene_nodes.border.right->node,
+                                view->target_box.width - border_width, 0);
+    wlr_scene_node_set_position(&view->scene_nodes.border.top->node, 0, 0);
+    wlr_scene_node_set_position(&view->scene_nodes.border.bottom->node, 0,
+                                view->target_box.height - border_width);
 }
 
 void viv_view_match_target_box_with_surface_geometry(struct viv_view *view) {

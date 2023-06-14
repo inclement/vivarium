@@ -100,7 +100,6 @@ struct viv_keybind the_keybinds[] = {
     KEYBIND_MAPPABLE(NO_MODIFIERS, XF86AudioRaiseVolume, do_shell, .command = "amixer -q sset Master 3%+"),
     /// How to bind your own function rather than an existing command:
     KEYBIND_USER_FUNCTION(META, F, &example_user_function),
-    KEYBIND_MAPPABLE(META, d, debug_damage_all),
     KEYBIND_MAPPABLE(META, p, debug_swap_buffers),
     /// Autogenerate keybindings to switch to and/or send windows to each workspace:
     FOR_EACH_WORKSPACE(BIND_SWITCH_TO_WORKSPACE)
@@ -271,15 +270,9 @@ static struct viv_config the_config = {
                                     // can be used by the bar process as an update trigger
     },
 
-    // The damage tracking mode: NONE to fully render every frame, FRAME to render only
-    // frames with any damage, FULL to render only damaged regions of damaged frames.
-    // Note: the default is currently FRAME because FULL damage tracking may still be buggy
-    .damage_tracking_mode = VIV_DAMAGE_TRACKING_FRAME,
-
     // Debug options, not useful outside development:
     .debug_mark_views_by_shell = false,  // mark xdg windows with a green rect, xwayland by a red rect
     .debug_mark_active_output = false,  // draw a blue rectangle in the top left of the active output
-    .debug_mark_undamaged_regions = false,  // draw only damaged regions leaving rest of output red
     .debug_mark_frame_draws = false,  // draw a small square that cycles through red/green/blue on frame draw
 };
 

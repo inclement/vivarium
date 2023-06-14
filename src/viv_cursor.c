@@ -18,15 +18,13 @@ static void process_cursor_move_view(struct viv_seat *seat, uint32_t time) {
     int old_x = view->x;
     int old_y = view->y;
 
-    // Damage before moving
-    viv_view_damage(view);
-
 	/* Move the grabbed view to the new position. */
 	view->x = seat->cursor->x - seat->grab_state.x;
 	view->y = seat->cursor->y - seat->grab_state.y;
 
     view->target_box.x += (view->x - old_x);
     view->target_box.y += (view->y - old_y);
+    viv_view_sync_target_box_to_scene(view);
 
     // Move the grabbed view to the new output, if necessary
 	double cursor_x = seat->cursor->x;
@@ -35,16 +33,11 @@ static void process_cursor_move_view(struct viv_seat *seat, uint32_t time) {
     if (output_at_point != view->workspace->output) {
         viv_view_shift_to_workspace(view, output_at_point->current_workspace);
     }
-
-    // Damage after moving
-    viv_view_damage(view);
 }
 
 static void process_cursor_resize_view(struct viv_seat *seat, uint32_t time) {
     UNUSED(time);
 	struct viv_view *view = seat->grab_state.view;
-
-    viv_view_damage(view);
 
 	double border_x = seat->cursor->x - seat->grab_state.x;
 	double border_y = seat->cursor->y - seat->grab_state.y;
@@ -88,7 +81,7 @@ static void process_cursor_resize_view(struct viv_seat *seat, uint32_t time) {
     view->target_box.width = new_width;
     view->target_box.height = new_height;
 
-    viv_view_damage(view);
+    viv_view_sync_target_box_to_scene(view);
 }
 
 static bool layer_view_wants_keyboard_focus(struct viv_layer_view *layer_view) {
@@ -199,6 +192,8 @@ void viv_cursor_reset_focus(struct viv_server *server, uint32_t time) {
     struct viv_seat *seat = viv_server_get_default_seat(server);
 	double sx, sy;
 	struct wlr_surface *surface = uppermost_surface_at_cursor(server, &sx, &sy);
+
+    wlr_log(WLR_DEBUG, "Resetting cursor focus");
 
 	if (surface) {
 		bool focus_changed = seat->wlr_seat->pointer_state.focused_surface != surface;

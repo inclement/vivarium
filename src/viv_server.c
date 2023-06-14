@@ -24,6 +24,7 @@
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_power_management_v1.h>
 #include <wlr/types/wlr_pointer.h>
+#include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #include <wlr/types/wlr_input_inhibitor.h>
@@ -51,7 +52,6 @@
 #include "viv_workspace.h"
 #include "viv_layout.h"
 #include "viv_output.h"
-#include "viv_render.h"
 #include "viv_seat.h"
 #include "viv_toml_config.h"
 #include "viv_layer_view.h"
@@ -240,8 +240,12 @@ static void server_new_xdg_surface(struct wl_listener *listener, void *data) {
     // Create a viv_view to track the xdg surface
 	struct viv_view *view = calloc(1, sizeof(struct viv_view));
     CHECK_ALLOCATION(view);
-    viv_xdg_view_init(view, xdg_surface);
+
+    view->server = server;
+
     viv_view_init(view, server);
+    viv_xdg_view_init(view, xdg_surface);
+    viv_view_add_to_output(view);
 
     xdg_surface->data = view;
 }
@@ -255,8 +259,10 @@ static void server_new_xwayland_surface(struct wl_listener *listener, void *data
     // Create a viv_view to track the xdg surface
     struct viv_view *view = calloc(1, sizeof(struct viv_view));
     CHECK_ALLOCATION(view);
-    viv_xwayland_view_init(view, xwayland_surface);
+
     viv_view_init(view, server);
+    viv_xwayland_view_init(view, xwayland_surface);
+    viv_view_add_to_output(view);
 
     xwayland_surface->data = view;
 }
@@ -701,6 +707,11 @@ void viv_server_init(struct viv_server *server) {
     // Discourage X apps from starting in some other X server
     unsetenv("DISPLAY");
 #endif
+
+    // Set up the scene graph
+    server->scene = wlr_scene_create();
+    bool op = wlr_scene_attach_output_layout(server->scene, server->output_layout);
+    wlr_log(WLR_INFO, "Attach output layout returned %d", op);
 
     // Set up the layer-shell
     server->layer_shell = wlr_layer_shell_v1_create(server->wl_display);

@@ -8,6 +8,7 @@
 #include <wlr/types/wlr_idle_inhibit_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
+#include <wlr/types/wlr_scene.h>
 #include <xkbcommon/xkbcommon.h>
 
 #include "viv_config_support.h"
@@ -16,13 +17,6 @@
 #include <wlr/xwayland.h>
 #include "viv_xwayland_types.h"
 #endif
-
-enum viv_damage_tracking_mode {
-    VIV_DAMAGE_TRACKING_NONE,  // every frame is fully re-rendered
-    VIV_DAMAGE_TRACKING_FRAME,   // any damage triggers a full frame render
-    VIV_DAMAGE_TRACKING_FULL,  // only damaged regions are rendered
-    VIV_DAMAGE_TRACKING_MAX,
-};
 
 enum viv_cursor_mode {
 	VIV_CURSOR_PASSTHROUGH,  /// Pass through cursor data to views
@@ -49,6 +43,8 @@ struct viv_server {
     struct wlr_allocator *allocator;
     struct wlr_compositor *compositor;
     struct wlr_subcompositor *subcompositor;
+
+    struct wlr_scene *scene;
 
 	struct wlr_xdg_shell *xdg_shell;
 	struct wl_listener new_xdg_surface;
@@ -125,13 +121,10 @@ struct viv_output {
 	struct wlr_output *wlr_output;
 
 	struct wl_listener frame;
-	struct wl_listener damage_event;
 	struct wl_listener present;
 	struct wl_listener enable;
 	struct wl_listener mode;
 	struct wl_listener destroy;
-
-    struct wlr_output_damage *damage;
 
     bool needs_layout;
     struct viv_workspace *current_workspace;
@@ -164,8 +157,6 @@ struct viv_layer_view {
     struct wlr_layer_surface_v1 *layer_surface;
     struct viv_server *server;
     struct viv_output *output;
-
-    struct viv_surface_tree_node *surface_tree;
 
     struct wl_listener map;
     struct wl_listener unmap;
@@ -206,8 +197,6 @@ struct viv_xdg_popup {
     struct viv_xdg_popup *parent_popup;
     struct viv_server *server;
 
-    struct viv_surface_tree_node *surface_tree;
-
     int *lx;  // pointer to x of parent view/layer-view in layout coords
     int *ly;  // pointer to y of parent view/layer-view in layout coords
 
@@ -216,6 +205,21 @@ struct viv_xdg_popup {
     struct wl_listener surface_unmap;
     struct wl_listener destroy;
     struct wl_listener new_popup;
+};
+
+struct viv_view_scene_nodes {
+    struct wlr_scene_tree *scene_tree;
+    /* struct wlr_scene_rect *debug_rect; */
+
+    // The main scene tree instantiated by the implementation, e.g. the xdg scene tree
+    struct wlr_scene_tree *implementation_scene_tree;
+
+    struct {
+        struct wlr_scene_rect *left;
+        struct wlr_scene_rect *right;
+        struct wlr_scene_rect *top;
+        struct wlr_scene_rect *bottom;
+    } border;
 };
 
 struct viv_view {
@@ -228,7 +232,8 @@ struct viv_view {
 	struct viv_server *server;
     struct viv_workspace *workspace;
 
-    struct viv_surface_tree_node *surface_tree;
+    struct wlr_scene_tree *scene_tree;
+    struct viv_view_scene_nodes scene_nodes;
 
     union {
         struct wlr_xdg_surface *xdg_surface;
@@ -343,8 +348,6 @@ struct viv_config {
     struct viv_layout *layouts;
 
     struct viv_libinput_config *libinput_configs;
-
-    enum viv_damage_tracking_mode damage_tracking_mode;
 
     bool debug_mark_views_by_shell;
     bool debug_mark_active_output;

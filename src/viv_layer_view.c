@@ -1,25 +1,16 @@
 #include <pixman-1/pixman.h>
 #include <wayland-util.h>
-#include <wlr/types/wlr_output_damage.h>
 
 #include "wlr-layer-shell-unstable-v1-protocol.h"
 
 #include "viv_cursor.h"
-#include "viv_damage.h"
 #include "viv_layer_view.h"
 #include "viv_output.h"
 #include "viv_seat.h"
 #include "viv_server.h"
 #include "viv_types.h"
 #include "viv_view.h"
-#include "viv_wlr_surface_tree.h"
 #include "viv_xdg_popup.h"
-
-static void add_layer_view_global_coords(void *layer_view_pointer, int *x, int *y) {
-    struct viv_layer_view *view = layer_view_pointer;
-    *x += view->x;
-    *y += view->y;
-}
 
 static void layer_surface_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -28,8 +19,6 @@ static void layer_surface_map(struct wl_listener *listener, void *data) {
 	struct viv_layer_view *layer_view = wl_container_of(listener, layer_view, map);
 
     viv_output_mark_for_relayout(layer_view->output);
-
-    layer_view->surface_tree = viv_surface_tree_root_create(layer_view->server, layer_view->layer_surface->surface, &add_layer_view_global_coords, layer_view);
 
     if (layer_view->layer_surface->current.keyboard_interactive) {
         struct viv_seat *seat = viv_server_get_default_seat(layer_view->server);
@@ -60,13 +49,6 @@ static void layer_surface_unmap(struct wl_listener *listener, void *data) {
     if (active_view != NULL) {
         viv_view_focus(active_view);
     }
-
-    if (layer_view->surface_tree) {
-        viv_surface_tree_destroy(layer_view->surface_tree);
-        layer_view->surface_tree = NULL;
-    } else {
-        wlr_log(WLR_ERROR, "Layer view had no surface tree during unmap");
-    }
 }
 
 static void layer_surface_destroy(struct wl_listener *listener, void *data) {
@@ -79,11 +61,6 @@ static void layer_surface_destroy(struct wl_listener *listener, void *data) {
 	wl_list_remove(&layer_view->output_link);
 
     viv_output_mark_for_relayout(layer_view->output);
-
-    if (layer_view->surface_tree) {
-        viv_surface_tree_destroy(layer_view->surface_tree);
-        layer_view->surface_tree = NULL;
-    }
 
     wl_list_remove(&layer_view->map.link);
     wl_list_remove(&layer_view->unmap.link);
