@@ -12,6 +12,7 @@
 
 void viv_workspace_mark_for_relayout(struct viv_workspace *workspace) {
     workspace->needs_layout = true;
+    viv_output_schedule_frame(workspace->output);
 }
 
 void viv_workspace_focus_next_window(struct viv_workspace *workspace) {
