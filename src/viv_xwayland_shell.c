@@ -369,17 +369,20 @@ static void implementation_grow_and_center_fullscreen(struct viv_view *view) {
     }
 
     int width = output->wlr_output->width;
-    if ((hints->max_width > 0) && ((int) hints->max_width < width)) {
-        width = hints->max_width;
-    } else if ((hints->min_width > 0) && ((int) hints->min_width > width)) {
-        width = hints->min_width;
-    }
-
     int height = output->wlr_output->height;
-    if ((hints->max_height > 0) && ((int) hints->max_height < height)) {
-        height = hints->max_height;
-    } else if ((hints->min_height > 0) && ((int) hints->min_height > height)) {
-        height = hints->min_height;
+
+    if (hints) {
+        if ((hints->max_width > 0) && ((int) hints->max_width < width)) {
+            width = hints->max_width;
+        } else if ((hints->min_width > 0) && ((int) hints->min_width > width)) {
+            width = hints->min_width;
+        }
+
+        if ((hints->max_height > 0) && ((int) hints->max_height < height)) {
+            height = hints->max_height;
+        } else if ((hints->min_height > 0) && ((int) hints->min_height > height)) {
+            height = hints->min_height;
+        }
     }
 
     int x = (output->wlr_output->width - width) / 2;
