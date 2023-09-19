@@ -1,6 +1,7 @@
 #include <pixman-1/pixman.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <xcb/xcb.h>
+#include <xcb/xcb_icccm.h>
 
 #include "viv_damage.h"
 #include "viv_server.h"
@@ -60,7 +61,7 @@ static void log_window_type_strings(struct wlr_xwayland_surface *surface) {
 static bool guess_should_be_floating(struct viv_view *view) {
 
     struct wlr_xwayland_surface *surface = view->xwayland_surface;
-    struct wlr_xwayland_surface_size_hints *size_hints = view->xwayland_surface->size_hints;
+    xcb_size_hints_t *size_hints = view->xwayland_surface->size_hints;
 
     xcb_atom_t *window_type_atoms = view->server->window_type_atoms;
 
@@ -129,7 +130,7 @@ static void event_xwayland_surface_map(struct wl_listener *listener, void *data)
     char view_name[view_name_len];
     viv_view_get_string_identifier(view, view_name, view_name_len);
     struct wlr_xwayland_surface *surface = view->xwayland_surface;
-    struct wlr_xwayland_surface_size_hints *size_hints = surface->size_hints;
+    xcb_size_hints_t *size_hints = surface->size_hints;
     if (size_hints) {
         wlr_log(WLR_DEBUG,
                 "Mapping xwayland surface \"%s\": actual width %d, actual height %d, width %d, height %d, "
@@ -361,7 +362,7 @@ static void implementation_inform_unrequested_fullscreen_change(struct viv_view 
 }
 
 static void implementation_grow_and_center_fullscreen(struct viv_view *view) {
-    struct wlr_xwayland_surface_size_hints *hints = view->xwayland_surface->size_hints;
+    xcb_size_hints_t *hints = view->xwayland_surface->size_hints;
 
     struct viv_output *output = view->workspace->output;
     if (!output) {

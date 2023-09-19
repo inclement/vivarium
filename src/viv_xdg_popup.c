@@ -16,8 +16,8 @@ static void add_popup_global_coords(void *popup_pointer, int *x, int *y) {
 
     struct viv_xdg_popup *cur_popup = popup;
     while (true) {
-        px += cur_popup->wlr_popup->geometry.x;
-        py += cur_popup->wlr_popup->geometry.y;
+        px += cur_popup->wlr_popup->current.geometry.x;
+        py += cur_popup->wlr_popup->current.geometry.y;
 
         if (cur_popup->parent_popup != NULL) {
             cur_popup = cur_popup->parent_popup;
@@ -57,8 +57,8 @@ static void handle_popup_surface_unmap(struct wl_listener *listener, void *data)
     struct wlr_box geo_box = {
         .x = px,
         .y = py,
-        .width = popup->wlr_popup->geometry.width,
-        .height = popup->wlr_popup->geometry.height,
+        .width = popup->wlr_popup->current.geometry.width,
+        .height = popup->wlr_popup->current.geometry.height,
     };
 
     struct viv_output *output;

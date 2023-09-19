@@ -1,5 +1,6 @@
 #include <time.h>
 
+#include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output_damage.h>
 #include <wlr/types/wlr_output_layout.h>

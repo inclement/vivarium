@@ -1,7 +1,7 @@
 #ifndef VIV_VIEW_H
 #define VIV_VIEW_H
 
-#include <wlr/types/wlr_surface.h>
+#include <wlr/types/wlr_compositor.h>
 
 #include "viv_types.h"
 

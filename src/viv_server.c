@@ -14,6 +14,7 @@
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
@@ -664,6 +665,8 @@ void viv_server_init(struct viv_server *server) {
     // Create some default wlroots interfaces:
     // Compositor to handle surface allocation
 	server->compositor = wlr_compositor_create(server->wl_display, server->renderer);
+	server->subcompositor = wlr_subcompositor_create(server->wl_display);
+
     // Data device manager to handle the clipboard
 	wlr_data_device_manager_create(server->wl_display);
 
@@ -680,7 +683,7 @@ void viv_server_init(struct viv_server *server) {
 	wl_signal_add(&server->backend->events.new_output, &server->new_output);
 
     // Set up the xdg-shell
-	server->xdg_shell = wlr_xdg_shell_create(server->wl_display);
+	server->xdg_shell = wlr_xdg_shell_create(server->wl_display, 2);
 	server->new_xdg_surface.notify = server_new_xdg_surface;
 	wl_signal_add(&server->xdg_shell->events.new_surface, &server->new_xdg_surface);
 

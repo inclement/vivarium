@@ -34,8 +34,6 @@
 static void headless_test(struct viv_server *server) {
     wlr_headless_add_output(server->backend, 1024, 768);
     wlr_headless_add_output(server->backend, 1920, 1200);
-    wlr_headless_add_input_device(server->backend, WLR_INPUT_DEVICE_KEYBOARD);
-    wlr_headless_add_input_device(server->backend, WLR_INPUT_DEVICE_POINTER);
 }
 #endif
 

@@ -4,6 +4,7 @@
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_idle.h>
 #include <wlr/util/edges.h>
+#include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_primary_selection.h>
 
 #include "viv_cursor.h"
@@ -17,7 +18,7 @@
 static bool global_meta_held(struct viv_seat *seat) {
     struct viv_keyboard *keyboard;
     wl_list_for_each(keyboard, &seat->keyboards, link) {
-        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
         if (modifiers & seat->server->config->global_meta_key) {
             return true;
         }
@@ -53,18 +54,18 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
     UNUSED(data);
 	struct viv_keyboard *keyboard = wl_container_of(listener, keyboard, modifiers);
     // Let the seat know about the key press: it handles all connected keyboards
-	wlr_seat_set_keyboard(keyboard->seat->wlr_seat, keyboard->device);
+	wlr_seat_set_keyboard(keyboard->seat->wlr_seat, keyboard->wlr_keyboard);
 
     // Send modifiers to the current client
 	wlr_seat_keyboard_notify_modifiers(keyboard->seat->wlr_seat,
-		&keyboard->device->keyboard->modifiers);
+		&keyboard->wlr_keyboard->modifiers);
 }
 
 /// Handle a key press event
 static void keyboard_handle_key(struct wl_listener *listener, void *data) {
 	struct viv_keyboard *keyboard = wl_container_of(listener, keyboard, key);
 	struct viv_server *server = keyboard->seat->server;
-	struct wlr_event_keyboard_key *event = data;
+	struct wlr_keyboard_key_event *event = data;
 	struct viv_seat *seat = keyboard->seat;
 
     wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
@@ -73,13 +74,13 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
 	uint32_t keycode = event->keycode + 8;
 	const xkb_keysym_t *syms;
 	int nsyms = xkb_state_key_get_syms(
-			keyboard->device->keyboard->xkb_state, keycode, &syms);
+			keyboard->wlr_keyboard->xkb_state, keycode, &syms);
 
     // If the key completes a configured keybinding, run the configured response function
 	bool handled = false;
     // Don't service hotkeys while locked
     if (!seat->exclusive_client) {
-        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->device->keyboard);
+        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
         if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
             for (int i = 0; i < nsyms; i++) {
                 wlr_log(WLR_DEBUG, "Keysym %d pressed, keycode %d", syms[i], keycode);
@@ -90,7 +91,7 @@ static void keyboard_handle_key(struct wl_listener *listener, void *data) {
 
     // If the key wasn't a shortcut, pass it through to the focused view
 	if (!handled) {
-		wlr_seat_set_keyboard(seat->wlr_seat, keyboard->device);
+		wlr_seat_set_keyboard(seat->wlr_seat, keyboard->wlr_keyboard);
         wlr_seat_keyboard_notify_key(seat->wlr_seat, event->time_msec, event->keycode, event->state);
 	}
 }
@@ -110,8 +111,10 @@ void viv_seat_create_new_keyboard(struct viv_seat *seat, struct wlr_input_device
 	struct viv_keyboard *keyboard = calloc(1, sizeof(struct viv_keyboard));
     CHECK_ALLOCATION(keyboard);
 
+    struct wlr_keyboard *wlr_keyboard = wlr_keyboard_from_input_device(device);
+
 	keyboard->seat = seat;
-	keyboard->device = device;
+	keyboard->wlr_keyboard = wlr_keyboard;
 
     struct viv_server *server = seat->server;
 	struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
@@ -124,17 +127,17 @@ void viv_seat_create_new_keyboard(struct viv_seat *seat, struct wlr_input_device
     };
     struct xkb_keymap *keymap = load_keymap(context, &rules);
 
-    wlr_keyboard_set_keymap(device->keyboard, keymap);
+    wlr_keyboard_set_keymap(wlr_keyboard, keymap);
     xkb_keymap_unref(keymap);
 	xkb_context_unref(context);
-	wlr_keyboard_set_repeat_info(device->keyboard, 25, 600);
+	wlr_keyboard_set_repeat_info(wlr_keyboard, 25, 600);
 
     // Handle events from the wlr_keyboard
 	keyboard->modifiers.notify = keyboard_handle_modifiers;
-	wl_signal_add(&device->keyboard->events.modifiers, &keyboard->modifiers);
+	wl_signal_add(&wlr_keyboard->events.modifiers, &keyboard->modifiers);
 	keyboard->key.notify = keyboard_handle_key;
-	wl_signal_add(&device->keyboard->events.key, &keyboard->key);
-	wlr_seat_set_keyboard(seat->wlr_seat, device);
+	wl_signal_add(&wlr_keyboard->events.key, &keyboard->key);
+	wlr_seat_set_keyboard(seat->wlr_seat, wlr_keyboard);
 
     // Handle the destruction of the input device
     keyboard->destroy.notify = keyboard_handle_destroy;
@@ -159,7 +162,7 @@ static void focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
 
         if (wlr_surface_is_xdg_surface(surface)) {
             struct wlr_xdg_surface *next = wlr_xdg_surface_from_wlr_surface(surface);
-            wlr_xdg_toplevel_set_activated(next, true);
+            wlr_xdg_toplevel_set_activated(next->toplevel, true);
 #ifdef XWAYLAND
         } else if (wlr_surface_is_xwayland_surface(surface)) {
             struct wlr_xwayland_surface *next = wlr_xwayland_surface_from_wlr_surface(surface);
@@ -184,7 +187,7 @@ static void focus_surface(struct viv_seat *seat, struct wlr_surface *surface) {
         struct wlr_surface *focused_surface = wlr_seat->keyboard_state.focused_surface;
         if (wlr_surface_is_xdg_surface(focused_surface)) {
             struct wlr_xdg_surface *previous = wlr_xdg_surface_from_wlr_surface(focused_surface);
-            wlr_xdg_toplevel_set_activated(previous, false);
+            wlr_xdg_toplevel_set_activated(previous->toplevel, false);
 #ifdef XWAYLAND
         } else if (wlr_surface_is_xwayland_surface(focused_surface)) {
             struct wlr_xwayland_surface *previous = wlr_xwayland_surface_from_wlr_surface(focused_surface);
@@ -341,12 +344,12 @@ static void seat_cursor_motion(struct wl_listener *listener, void *data) {
 	/* This event is forwarded by the cursor when a pointer emits a _relative_
 	 * pointer motion event (i.e. a delta) */
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_motion);
-	struct wlr_event_pointer_motion *event = data;
+	struct wlr_pointer_motion_event *event = data;
 
     wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
 
     // Pass the movement along (i.e. allow the cursor to actually move)
-	wlr_cursor_move(seat->cursor, event->device,
+	wlr_cursor_move(seat->cursor, &event->pointer->base,
 			event->delta_x, event->delta_y);
 
     // Do our own processing of the motion if necessary
@@ -357,11 +360,11 @@ static void seat_cursor_motion(struct wl_listener *listener, void *data) {
 /// window rather than KMS+DRM.
 static void seat_cursor_motion_absolute(struct wl_listener *listener, void *data) {
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_motion_absolute);
-	struct wlr_event_pointer_motion_absolute *event = data;
+	struct wlr_pointer_motion_absolute_event *event = data;
 
     wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
 
-	wlr_cursor_warp_absolute(seat->cursor, event->device, event->x, event->y);
+	wlr_cursor_warp_absolute(seat->cursor, &event->pointer->base, event->x, event->y);
 	viv_cursor_process_cursor_motion(seat, event->time_msec);
 }
 
@@ -371,7 +374,7 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
 	 * event. */
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_button);
 	struct viv_server *server = seat->server;
-	struct wlr_event_pointer_button *event = data;
+	struct wlr_pointer_button_event *event = data;
 	double sx, sy;
 	struct wlr_surface *surface;
 	struct viv_view *view = viv_server_view_at(server, seat->cursor->x, seat->cursor->y, &surface, &sx, &sy);
@@ -416,7 +419,7 @@ static void seat_cursor_button(struct wl_listener *listener, void *data) {
 /// Handle cursor axis event, e.g. from scroll wheel
 static void seat_cursor_axis(struct wl_listener *listener, void *data) {
     struct viv_seat *seat = wl_container_of(listener, seat, cursor_axis);
-	struct wlr_event_pointer_axis *event = data;
+	struct wlr_pointer_axis_event *event = data;
 
     wlr_idle_notify_activity(seat->server->idle, seat->wlr_seat);
 
