@@ -347,6 +347,7 @@ bool viv_server_handle_keybinding(struct viv_server *server, uint32_t keycode, x
     struct viv_output *output = server->active_output;
     if (!output) {
         wlr_log(WLR_ERROR, "Ignoring keybinding as no output active to act on");
+        return false;
     }
 
     struct viv_workspace *workspace = output->current_workspace;

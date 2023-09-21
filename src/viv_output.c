@@ -168,6 +168,9 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     struct viv_output *output = wl_container_of(listener, output, destroy);
     wlr_log(WLR_INFO, "Output \"%s\" event: destroy", output->wlr_output->name);
 
+    bool was_enabled = output->enabled;
+    struct viv_server *server = output->server;
+
     stop_using_output(output);
 
     wl_list_remove(&output->link);
@@ -181,6 +184,21 @@ static void output_destroy(struct wl_listener *listener, void *data) {
     viv_server_update_output_manager_config(output->server);
 
     free(output);
+
+    // If this was the only enabled display, silently enable another one
+    if (was_enabled) {
+        int num_left_enabled = 0;
+        struct viv_output *other_output;
+        wl_list_for_each(other_output, &server->outputs, link) {
+            if (other_output->enabled) {
+                num_left_enabled++;
+            }
+        }
+        if (!wl_list_empty(&server->outputs) && !num_left_enabled) {
+            struct viv_output *first_output = wl_container_of(server->outputs.next, first_output, link);
+            wlr_output_enable(first_output->wlr_output, true);
+        }
+    }
 }
 
 struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly) {
@@ -377,11 +395,14 @@ void viv_output_layout_coords_box_to_output_coords(struct viv_output *output, st
 }
 
 void viv_output_mark_for_relayout(struct viv_output *output) {
-    if (output) {
+    if (!output) {
+        wlr_log(WLR_ERROR, "Tried to mark NULL output for relayout");
+        return;
+    }
+
+    if (output->enabled) {
         // The layout will be applied after the next frame
         output->needs_layout = true;
         viv_output_damage(output);
-    } else {
-        wlr_log(WLR_ERROR, "Tried to mark NULL output for relayout");
     }
 }
