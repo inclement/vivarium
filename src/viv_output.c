@@ -16,8 +16,14 @@
 
 /// Start using the output, i.e. add it to our output layout and draw a workspace on it
 static void start_using_output(struct viv_output *output) {
+    if (output->enabled) {
+      wlr_log(WLR_INFO, "Attempted to start using an already enabled output %p", output);
+      return;
+    }
+
+    output->enabled = true;
+
     struct viv_server *server = output->server;
-    wl_list_insert(&server->outputs, &output->link);
 
     struct viv_workspace *current_workspace;
     wl_list_for_each(current_workspace, &server->workspaces, server_link) {
@@ -34,8 +40,21 @@ static void start_using_output(struct viv_output *output) {
 /// Remove the output from our output layout, revoke its workspace assignation, and clean
 /// any other references to it.
 static void stop_using_output(struct viv_output *output) {
+    if (!output->enabled) {
+      wlr_log(WLR_INFO, "Attempted to stop using an already disabled output %p", output);
+      return;
+    }
+
+    output->enabled = false;
+
     struct viv_server *server = output->server;
-    wl_list_remove(&output->link);
+
+    // Clean up layer views
+    struct viv_layer_view *layer_view, *tmp;
+    wl_list_for_each_safe(layer_view, tmp, &output->layer_views, output_link){
+        wlr_layer_surface_v1_destroy(layer_view->layer_surface);
+        layer_view->output = NULL;
+    }
 
     if (server->active_output == output) {
         server->active_output = NULL;
@@ -43,8 +62,10 @@ static void stop_using_output(struct viv_output *output) {
         // Set a new active output if any are available
         struct viv_output *new_active_output;
         wl_list_for_each(new_active_output, &server->outputs, link) {
-            viv_output_make_active(new_active_output);
-            break;
+            if (new_active_output->enabled) {
+              viv_output_make_active(new_active_output);
+              break;
+            }
         }
     }
 
@@ -63,15 +84,6 @@ static void stop_using_output(struct viv_output *output) {
     output->current_workspace = NULL;
 
     wlr_output_layout_remove(server->output_layout, output->wlr_output);
-
-    // Clean up layer views last, to ensure that none of the cleanup tries to access
-    // still-initialised output state
-    struct viv_layer_view *layer_view;
-    wl_list_for_each(layer_view, &output->layer_views, output_link){
-        layer_view->output = NULL;
-        wlr_layer_surface_v1_destroy(layer_view->layer_surface);
-    }
-
 }
 
 /// Handle a render frame event: render everything on the output, then do any scheduled relayouts
@@ -127,7 +139,7 @@ static void output_enable(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct viv_output *output = wl_container_of(listener, output, enable);
 
-    bool enabled = output->wlr_output->enabled || output->powered_down;
+    bool enabled = output->wlr_output->enabled;
     wlr_log(WLR_INFO,
         "Output \"%s\" event: enable became %d, power is %d",
         output->wlr_output->name, output->wlr_output->enabled,
@@ -138,18 +150,11 @@ static void output_enable(struct wl_listener *listener, void *data) {
         return;
     }
 
-    if (output->enabled == enabled) {
-        wlr_log(WLR_ERROR, "Asked to set enable %d for output %p but this was already set", enabled, output);
-        return;
-    }
-
-    if (output->enabled) {
+    if (enabled) {
         start_using_output(output);
     } else {
         stop_using_output(output);
     }
-
-    output->enabled = enabled;
 }
 
 static void output_mode(struct wl_listener *listener, void *data) {
@@ -165,6 +170,7 @@ static void output_destroy(struct wl_listener *listener, void *data) {
 
     stop_using_output(output);
 
+    wl_list_remove(&output->link);
     wl_list_remove(&output->frame.link);
     wl_list_remove(&output->damage_event.link);
     wl_list_remove(&output->present.link);
@@ -183,7 +189,7 @@ struct viv_output *viv_output_at(struct viv_server *server, double lx, double ly
 
     struct viv_output *output;
     wl_list_for_each(output, &server->outputs, link) {
-        if (output->wlr_output == wlr_output_at_point) {
+        if (output->enabled && output->wlr_output == wlr_output_at_point) {
             return output;
         }
     }
@@ -281,7 +287,7 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 	output->wlr_output = wlr_output;
 	output->server = server;
 
-    output->enabled = true;
+    output->enabled = false;
 
     output->excluded_margin.top = 0;
     output->excluded_margin.bottom = 0;
@@ -306,6 +312,7 @@ void viv_output_init(struct viv_output *output, struct viv_server *server, struc
 
     wlr_log(WLR_INFO, "New output width width %d, height %d", wlr_output->width, wlr_output->height);
 
+    wl_list_insert(&server->outputs, &output->link);
     start_using_output(output);
 }
 

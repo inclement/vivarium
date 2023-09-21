@@ -525,7 +525,7 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
         // Render floating views that may be overhanging other workspaces
         struct viv_output *other_output;
         wl_list_for_each(other_output, &output->server->outputs, link) {
-            if (other_output == output) {
+            if (other_output == output || !other_output->enabled) {
                 continue;
             }
             struct viv_workspace *other_workspace = other_output->current_workspace;
@@ -618,19 +618,5 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
     if (server->config->damage_tracking_mode == VIV_DAMAGE_TRACKING_NONE) {
         // Damage the full output so that it will be drawn again next frame
         viv_output_damage(output);
-    }
-
-    static int count = 0;
-    count++;
-    if (count % 200 == 0) {
-        struct viv_output *out;
-        wl_list_for_each(out, &server->outputs, link) {
-            wlr_log(WLR_INFO, "Output name \"%s\" description \"%s\" make \"%s\" model \"%s\" serial \"%s\"",
-                    out->wlr_output->name,
-                    out->wlr_output->description ? out->wlr_output->description : "",
-                    out->wlr_output->make,
-                    out->wlr_output->model,
-                    out->wlr_output->serial);
-        }
     }
 }

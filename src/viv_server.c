@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 #include <wayland-server-core.h>
 #include <libinput.h>
 #include <wlr/backend.h>
@@ -76,9 +77,11 @@ void viv_server_update_output_manager_config(struct viv_server *server) {
         struct wlr_output_configuration_head_v1 *head = wlr_output_configuration_head_v1_create(config, output->wlr_output);
         struct wlr_box *output_region = wlr_output_layout_get_box(server->output_layout, output->wlr_output);
         head->state.enabled = output->enabled;
-        head->state.mode = output->wlr_output->current_mode;
-        head->state.x = output_region->x;
-        head->state.y = output_region->y;
+        if (output->enabled) {
+            head->state.mode = output->wlr_output->current_mode;
+            head->state.x = output_region->x;
+            head->state.y = output_region->y;
+        }
     }
 
     wlr_output_manager_v1_set_configuration(server->output_manager, config);
@@ -678,12 +681,32 @@ static void queue_output_configuration_for_head(struct viv_server *server, struc
 
 }
 
-static void queue_output_configuration(struct viv_server *server, struct wlr_output_configuration_v1 *output_config) {
+static void move_outputs_to_origin(struct wlr_output_configuration_v1 *output_config) {
+    int min_x = INT_MAX;
+    int min_y = INT_MAX;
+
+    struct wlr_output_head_v1 *head;
+    wl_list_for_each(head, &output_config->heads, link) {
+        if (head->state.enabled) {
+            min_x = head->state.x < min_x? head->state.x : min_x;
+            min_y = head->state.y < min_y? head->state.y : min_y;
+        }
+    }
+    wl_list_for_each(head, &output_config->heads, link) {
+        if (head->state.enabled) {
+            head->state.x -= min_x;
+            head->state.y -= min_y;
+        }
+    }
+}
+
+static void fix_and_queue_output_configuration(struct viv_server *server, struct wlr_output_configuration_v1 *output_config) {
+    move_outputs_to_origin(output_config);
+
     struct wlr_output_head_v1 *head;
     wl_list_for_each(head, &output_config->heads, link) {
         queue_output_configuration_for_head(server, head);
     }
-
 }
 
 static bool test_queued_configuration(struct viv_server *server, struct wlr_output_configuration_v1 *output_config) {
@@ -719,13 +742,13 @@ static void handle_output_manager_apply(struct wl_listener *listener, void *data
 
     wlr_log(WLR_INFO, "Received output manager apply request");
 
-    queue_output_configuration(server, output_config);
+    fix_and_queue_output_configuration(server, output_config);
     bool commit_success = commit_new_output_configuration(output_config);
     if (commit_success) {
         wlr_log(WLR_INFO, "Commit succeeded for new output config");
         wlr_output_configuration_v1_send_succeeded(output_config);
     } else {
-        wlr_log(WLR_ERROR, "Some new output state failed to to commit");
+        wlr_log(WLR_ERROR, "Some new output state failed to commit");
         rollback_queued_configuration(output_config) ;
         wlr_output_configuration_v1_send_failed(output_config);
     }
@@ -733,6 +756,11 @@ static void handle_output_manager_apply(struct wl_listener *listener, void *data
     struct wlr_output_head_v1 *head;
     wl_list_for_each(head, &output_config->heads, link) {
         struct viv_output *output = viv_output_of_wlr_output(server, head->state.output);
+        // Skip disabled outputs
+        if (!output || !output->enabled) {
+            continue;
+        }
+
         wlr_log(WLR_INFO, "Setting output %p layout pos to %d,%d", output, head->state.x, head->state.y);
         wlr_output_layout_add(server->output_layout, output->wlr_output, head->state.x, head->state.y);
         viv_output_mark_for_relayout(output);
@@ -749,7 +777,7 @@ static void handle_output_manager_test(struct wl_listener *listener, void *data)
     struct wlr_output_configuration_v1 *output_config = data;
     wlr_log(WLR_INFO, "Received output manager test request");
 
-    queue_output_configuration(server, output_config);
+    fix_and_queue_output_configuration(server, output_config);
     bool test_success = test_queued_configuration(server, output_config);
     if (test_success) {
         wlr_log(WLR_ERROR, "Test passed for new output config");
