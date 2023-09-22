@@ -76,8 +76,7 @@ static void layer_surface_destroy(struct wl_listener *listener, void *data) {
 
     // TODO: unfocus this as the keyboard surface if necessary
 
-	wl_list_remove(&layer_view->output_link);
-
+    wl_list_remove(&layer_view->output_link);
     viv_output_mark_for_relayout(layer_view->output);
 
     if (layer_view->surface_tree) {
@@ -116,8 +115,10 @@ static void layer_surface_surface_commit(struct wl_listener *listener, void *dat
     }
 
     layer_view->mapped = layer_view->layer_surface->mapped;
-    viv_layers_arrange(layer_view->output);
-    viv_output_mark_for_relayout(layer_view->output);
+    if (layer_view->output) {
+      viv_layers_arrange(layer_view->output);
+      viv_output_mark_for_relayout(layer_view->output);
+    }
 }
 
 void viv_layer_view_init(struct viv_layer_view *layer_view, struct viv_server *server, struct wlr_layer_surface_v1 *layer_surface) {

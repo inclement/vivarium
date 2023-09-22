@@ -88,6 +88,10 @@ struct viv_server {
     struct wl_listener input_inhibit_activate;
     struct wl_listener input_inhibit_deactivate;
 
+    struct wlr_output_manager_v1 *output_manager;
+    struct wl_listener output_manager_apply;
+    struct wl_listener output_manager_test;
+
 	struct wlr_output_layout *output_layout;
     struct viv_output *active_output;
 	struct wl_list outputs;
@@ -122,6 +126,9 @@ struct viv_output {
 	struct wl_list link;
 	struct viv_server *server;
 	struct wlr_output *wlr_output;
+
+    bool enabled;
+    bool powered_down;
 
 	struct wl_listener frame;
 	struct wl_listener damage_event;

@@ -17,7 +17,9 @@ void viv_damage_surface(struct viv_server *server, struct wlr_surface *surface, 
 
     struct viv_output *output;
     wl_list_for_each(output, &server->outputs, link) {
-        viv_output_damage_layout_coords_region(output, &damage);
+        if (output->enabled) {
+            viv_output_damage_layout_coords_region(output, &damage);
+        }
     }
 
     pixman_region32_fini(&damage);

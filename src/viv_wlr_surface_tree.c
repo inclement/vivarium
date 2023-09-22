@@ -62,7 +62,9 @@ static void handle_subsurface_unmap (struct wl_listener *listener, void *data) {
 
         struct viv_output *output;
         wl_list_for_each(output, &node->server->outputs, link) {
-            viv_output_damage_layout_coords_box(output, &surface_extents);
+            if (output->enabled) {
+                viv_output_damage_layout_coords_box(output, &surface_extents);
+            }
         }
 
         viv_surface_tree_destroy(subsurface->child);

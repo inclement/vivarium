@@ -525,7 +525,7 @@ void viv_render_output(struct wlr_renderer *renderer, struct viv_output *output)
         // Render floating views that may be overhanging other workspaces
         struct viv_output *other_output;
         wl_list_for_each(other_output, &output->server->outputs, link) {
-            if (other_output == output) {
+            if (other_output == output || !other_output->enabled) {
                 continue;
             }
             struct viv_workspace *other_workspace = other_output->current_workspace;

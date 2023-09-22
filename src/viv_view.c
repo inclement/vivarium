@@ -176,26 +176,23 @@ bool viv_view_oversized(struct viv_view *view) {
 }
 
 void viv_view_damage(struct viv_view *view) {
-    struct viv_output *output;
     struct wlr_box geo_box = { 0 };
-
-    if (view->workspace->fullscreen_view == view) {
-        wl_list_for_each(output, &view->server->outputs, link) {
-            viv_output_damage(output);
-        }
-        return;
-    }
 
     viv_view_get_geometry(view, &geo_box);
 
     int border_width = view->server->config->border_width;
-    geo_box.x -= border_width;
-    geo_box.y -= border_width;
-    geo_box.width += 2 * border_width;
-    geo_box.height += 2 * border_width;
+    if (view->workspace->fullscreen_view != view) {
+        geo_box.x -= border_width;
+        geo_box.y -= border_width;
+        geo_box.width += 2 * border_width;
+        geo_box.height += 2 * border_width;
+    }
 
+    struct viv_output *output;
     wl_list_for_each(output, &view->server->outputs, link) {
-        viv_output_damage_layout_coords_box(output, &geo_box);
+        if (output->enabled) {
+            viv_output_damage_layout_coords_box(output, &geo_box);
+        }
     }
 }
 
