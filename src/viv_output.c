@@ -196,7 +196,15 @@ static void output_destroy(struct wl_listener *listener, void *data) {
         }
         if (!wl_list_empty(&server->outputs) && !num_left_enabled) {
             struct viv_output *first_output = wl_container_of(server->outputs.next, first_output, link);
+            wlr_log(WLR_INFO, "Last enabled output destroyed. Enabling %s", first_output->wlr_output->name);
+
+            // TODO: in the future we might want to read the mode from the config file
+            struct wlr_output_mode *mode = wlr_output_preferred_mode(first_output->wlr_output);
+            wlr_output_set_mode(first_output->wlr_output, mode);
             wlr_output_enable(first_output->wlr_output, true);
+            if (!wlr_output_commit(first_output->wlr_output)) {
+                wlr_log(WLR_INFO, "Failed to commit changes to %s", first_output->wlr_output->name);
+            }
         }
     }
 }
