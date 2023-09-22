@@ -63,7 +63,9 @@ static void handle_popup_surface_unmap(struct wl_listener *listener, void *data)
 
     struct viv_output *output;
     wl_list_for_each(output, &popup->server->outputs, link) {
-        viv_output_damage_layout_coords_box(output, &geo_box);
+        if (output->enabled) {
+            viv_output_damage_layout_coords_box(output, &geo_box);
+        }
     }
 }
 

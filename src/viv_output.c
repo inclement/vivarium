@@ -52,8 +52,8 @@ static void stop_using_output(struct viv_output *output) {
     // Clean up layer views
     struct viv_layer_view *layer_view, *tmp;
     wl_list_for_each_safe(layer_view, tmp, &output->layer_views, output_link){
-        wlr_layer_surface_v1_destroy(layer_view->layer_surface);
         layer_view->output = NULL;
+        wlr_layer_surface_v1_destroy(layer_view->layer_surface);
     }
 
     if (server->active_output == output) {
@@ -349,10 +349,19 @@ void viv_output_damage(struct viv_output *output) {
         wlr_log(WLR_ERROR, "Tried to damage NULL output");
         return;
     }
+    if (!output->enabled) {
+        wlr_log(WLR_ERROR, "Tried to damage disabled output");
+        return;
+    }
     wlr_output_damage_add_whole(output->damage);
 }
 
 void viv_output_damage_layout_coords_box(struct viv_output *output, struct wlr_box *box) {
+    if (!output->enabled) {
+        wlr_log(WLR_ERROR, "Tried to damage box in disabled output");
+        return;
+    }
+
     struct wlr_box scaled_box;
     memcpy(&scaled_box, box, sizeof(struct wlr_box));
 
